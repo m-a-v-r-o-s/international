@@ -193,9 +193,79 @@
   "admin": {
     "navLabel": "Admin sections",
     "nav": {
+      "movements": "Movements",
+      "fleetBoard": "Fleet board",
       "cars": "Fleet",
       "categories": "Categories",
-      "pricing": "Pricing"
+      "pricing": "Pricing",
+      "bookings": "Bookings"
+    },
+    "movements": {
+      "title": "Movements sheet",
+      "subtitle": "Every pickup and return due today, across every hotel, in time order.",
+      "day": "Day",
+      "go": "Go",
+      "print": "Print",
+      "pickups": "Pickups",
+      "returns": "Returns",
+      "noPickups": "No pickups on this day.",
+      "noReturns": "No returns on this day.",
+      "time": "Time",
+      "car": "Car",
+      "model": "Model",
+      "guest": "Guest",
+      "hotel": "Hotel",
+      "room": "Room",
+      "rep": "Rep"
+    },
+    "fleetBoard": {
+      "title": "Fleet board",
+      "summary": "{free} free · {out} out · {backToday} back today · {blocked} blocked",
+      "filterCategory": "Category",
+      "anyCategory": "Any category",
+      "filterStatus": "Status",
+      "anyStatus": "Any status",
+      "apply": "Apply",
+      "noneMatch": "No cars match.",
+      "unknownModel": "Model removed",
+      "status": {
+        "free": "Free",
+        "out": "Out",
+        "backToday": "Back today",
+        "blocked": "Blocked"
+      }
+    },
+    "bookings": {
+      "title": "Bookings",
+      "searchLabel": "Search bookings",
+      "searchPlaceholder": "Guest, plate, ref, hotel, rep or date",
+      "search": "Search",
+      "filterStatus": "Status",
+      "anyStatus": "Any status",
+      "apply": "Apply",
+      "count": "{n, plural, one {# booking} other {# bookings}}",
+      "empty": "No bookings yet.",
+      "noResults": "No bookings match.",
+      "backToBookings": "Back to bookings",
+      "editTitle": "Edit",
+      "statusLabel": "Status",
+      "collectedCents": "Amount collected (€)",
+      "payMethod": "Payment method",
+      "payMethodCash": "Cash",
+      "payMethodCard": "Card",
+      "payMethodTransfer": "Transfer",
+      "createdBy": "Created by",
+      "priceTitle": "Change price",
+      "priceHint": "The only way a booking's price is amended. Every change is logged.",
+      "newPrice": "New total (€)",
+      "priceSaved": "Price updated.",
+      "status": {
+        "booked": "Booked",
+        "out": "Out",
+        "returned": "Returned",
+        "cancelled": "Cancelled",
+        "no_show": "No-show"
+      }
     },
     "cars": {
       "title": "Car management",

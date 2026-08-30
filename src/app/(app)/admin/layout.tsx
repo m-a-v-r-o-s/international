@@ -13,11 +13,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="flex flex-col gap-5">
-      <nav aria-label={t('navLabel')} className="-mx-5 overflow-x-auto px-5">
+      <nav aria-label={t('navLabel')} className="-mx-5 overflow-x-auto px-5 print:hidden">
         <ul className="flex gap-1 whitespace-nowrap">
+          <li><Link href="/admin/movements" className="ir-btn-quiet !w-auto">{t('nav.movements')}</Link></li>
+          <li><Link href="/admin/fleet-board" className="ir-btn-quiet !w-auto">{t('nav.fleetBoard')}</Link></li>
           <li><Link href="/admin/cars" className="ir-btn-quiet !w-auto">{t('nav.cars')}</Link></li>
           <li><Link href="/admin/categories" className="ir-btn-quiet !w-auto">{t('nav.categories')}</Link></li>
           <li><Link href="/admin/pricing" className="ir-btn-quiet !w-auto">{t('nav.pricing')}</Link></li>
+          <li><Link href="/admin/bookings" className="ir-btn-quiet !w-auto">{t('nav.bookings')}</Link></li>
         </ul>
       </nav>
       {children}
