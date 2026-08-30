@@ -1,0 +1,502 @@
+<title>International Rentals Ops Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+  :root{
+    --paper:#F1F4F5; --surface:#FFFFFF; --sunk:#E7ECEE;
+    --ink:#111A21; --ink-2:#485966; --ink-3:#73858F;
+    --rule:#D5DDE1; --rule-soft:#E4EAED;
+    --marine:#0F3E60; --marine-2:#1D6799; --marine-wash:#E3EDF4;
+    --ochre:#8F5D0E; --ochre-wash:#F5EDDD;
+    --brick:#8E3220; --brick-wash:#F6E6E2;
+    --plate-ink:#141414; --plate-face:#FAFAF8; --plate-eu:#0B3F98;
+    --shadow:0 1px 2px rgba(17,26,33,.05), 0 10px 28px -18px rgba(17,26,33,.42);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0C1319; --surface:#131C23; --sunk:#0F171E;
+      --ink:#E2EAEE; --ink-2:#A1B1BC; --ink-3:#74858E;
+      --rule:#27333C; --rule-soft:#1D2931;
+      --marine:#7FB4DA; --marine-2:#A2CCEA; --marine-wash:#14273B;
+      --ochre:#D3A24A; --ochre-wash:#26200f;
+      --brick:#D98A76; --brick-wash:#2B1A16;
+      --plate-ink:#141414; --plate-face:#E9EAE6; --plate-eu:#0B3F98;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0C1319; --surface:#131C23; --sunk:#0F171E;
+    --ink:#E2EAEE; --ink-2:#A1B1BC; --ink-3:#74858E;
+    --rule:#27333C; --rule-soft:#1D2931;
+    --marine:#7FB4DA; --marine-2:#A2CCEA; --marine-wash:#14273B;
+    --ochre:#D3A24A; --ochre-wash:#26200f;
+    --brick:#D98A76; --brick-wash:#2B1A16;
+    --plate-ink:#141414; --plate-face:#E9EAE6; --plate-eu:#0B3F98;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"Source Serif 4",Georgia,"Times New Roman",serif;
+    font-size:17px; line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1120px; margin:0 auto; padding:0 24px 96px;}
+
+  /* ---------- masthead ---------- */
+  header.mast{
+    border-bottom:1px solid var(--rule);
+    padding:56px 0 34px; margin-bottom:8px;
+  }
+  .plate{
+    display:inline-flex; align-items:stretch; border-radius:5px; overflow:hidden;
+    border:1.5px solid var(--plate-ink); background:var(--plate-face);
+    font-family:"IBM Plex Mono",ui-monospace,monospace; box-shadow:var(--shadow);
+  }
+  .plate .eu{
+    background:var(--plate-eu); color:#fff; padding:7px 7px 5px; font-size:9px;
+    display:flex; flex-direction:column; align-items:center; justify-content:space-between;
+    letter-spacing:.06em; line-height:1;
+  }
+  .plate .eu span:first-child{font-size:11px}
+  .plate .num{
+    color:var(--plate-ink); padding:7px 14px 6px; font-size:19px; font-weight:600;
+    letter-spacing:.14em;
+  }
+  h1{
+    font-family:Archivo,system-ui,sans-serif; font-weight:700;
+    font-size:clamp(2.1rem,5.4vw,3.5rem); line-height:1.03; letter-spacing:-.028em;
+    margin:22px 0 0; text-wrap:balance; max-width:15ch;
+  }
+  .standfirst{
+    font-size:1.16rem; color:var(--ink-2); max-width:62ch; margin:16px 0 0;
+  }
+  .meta{
+    display:flex; flex-wrap:wrap; gap:10px 30px; margin-top:28px;
+    font-family:"IBM Plex Mono",monospace; font-size:11.5px;
+    text-transform:uppercase; letter-spacing:.09em; color:var(--ink-3);
+  }
+  .meta b{color:var(--ink-2); font-weight:500}
+
+  /* ---------- layout ---------- */
+  .cols{display:grid; grid-template-columns:1fr; gap:0;}
+  @media (min-width:940px){
+    .cols{grid-template-columns:186px minmax(0,1fr); gap:56px; align-items:start;}
+    nav.toc{position:sticky; top:24px; padding-top:52px;}
+  }
+  nav.toc ol{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px;}
+  nav.toc a{
+    display:flex; gap:9px; text-decoration:none; color:var(--ink-2);
+    font-family:Archivo,sans-serif; font-size:12.5px; padding:5px 0; line-height:1.3;
+    border-bottom:1px solid transparent;
+  }
+  nav.toc a:hover{color:var(--marine-2)}
+  nav.toc a:focus-visible{outline:2px solid var(--marine-2); outline-offset:3px; border-radius:2px}
+  nav.toc .n{font-family:"IBM Plex Mono",monospace; color:var(--ink-3); font-size:11px}
+  @media (max-width:939px){ nav.toc{display:none} }
+
+  /* ---------- sections ---------- */
+  section{padding-top:52px; scroll-margin-top:20px;}
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--marine-2); display:flex; align-items:center; gap:10px;
+    margin:0 0 12px;
+  }
+  .eyebrow::after{content:""; flex:1; height:1px; background:var(--rule)}
+  h2{
+    font-family:Archivo,sans-serif; font-weight:700; letter-spacing:-.02em;
+    font-size:clamp(1.5rem,3.1vw,2.05rem); line-height:1.14; margin:0 0 14px;
+    text-wrap:balance; max-width:22ch;
+  }
+  h3{
+    font-family:Archivo,sans-serif; font-weight:600; font-size:1.03rem; letter-spacing:-.008em;
+    margin:32px 0 8px; color:var(--ink);
+  }
+  p{margin:0 0 15px; max-width:66ch}
+  a{color:var(--marine-2)}
+  strong{font-weight:600}
+  .lede{font-size:1.08rem; color:var(--ink-2); max-width:64ch}
+
+  /* ---------- spec rows ---------- */
+  .spec{display:flex; flex-direction:column; gap:0; margin:22px 0 6px;
+        border-top:1px solid var(--rule);}
+  .spec .row{
+    display:grid; grid-template-columns:1fr; gap:2px 22px;
+    padding:13px 0; border-bottom:1px solid var(--rule-soft);
+  }
+  @media (min-width:620px){ .spec .row{grid-template-columns:170px minmax(0,1fr);} }
+  .spec dt{
+    font-family:Archivo,sans-serif; font-size:12px; font-weight:600; letter-spacing:.05em;
+    text-transform:uppercase; color:var(--ink-3); padding-top:3px;
+  }
+  .spec dd{margin:0; color:var(--ink); font-size:.98rem}
+  .spec dd em{color:var(--ink-2); font-style:italic}
+
+  /* ---------- callout ---------- */
+  .note{
+    background:var(--surface); border:1px solid var(--rule);
+    border-left:3px solid var(--marine-2);
+    padding:18px 20px; margin:26px 0; border-radius:0 6px 6px 0; box-shadow:var(--shadow);
+  }
+  .note.warn{border-left-color:var(--ochre); background:var(--ochre-wash)}
+  .note.warn strong{color:var(--ochre)}
+  .note h4{
+    font-family:Archivo,sans-serif; font-size:12px; text-transform:uppercase;
+    letter-spacing:.1em; margin:0 0 7px; color:var(--ink-3);
+  }
+  .note p:last-child{margin-bottom:0}
+
+  /* ---------- day diagram ---------- */
+  .diagram{
+    background:var(--surface); border:1px solid var(--rule); border-radius:8px;
+    padding:24px 22px 18px; margin:26px 0; box-shadow:var(--shadow); overflow-x:auto;
+  }
+  .diagram figcaption{
+    font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-3);
+    letter-spacing:.05em; margin-top:14px; text-align:center;
+  }
+
+  /* ---------- table ---------- */
+  .tablewrap{overflow-x:auto; margin:24px 0; border:1px solid var(--rule);
+             border-radius:8px; background:var(--surface); box-shadow:var(--shadow)}
+  table{border-collapse:collapse; width:100%; min-width:560px; font-size:.9rem}
+  th,td{padding:11px 14px; text-align:left; border-bottom:1px solid var(--rule-soft)}
+  thead th{
+    font-family:Archivo,sans-serif; font-size:11px; text-transform:uppercase;
+    letter-spacing:.08em; color:var(--ink-3); font-weight:600;
+    background:var(--sunk); border-bottom:1px solid var(--rule); white-space:nowrap;
+  }
+  tbody tr:last-child td{border-bottom:none}
+  td.c,th.c{text-align:center; font-family:"IBM Plex Mono",monospace}
+  .yes{color:var(--marine-2); font-weight:600}
+  .no{color:var(--ink-3)}
+  .only{color:var(--ochre); font-weight:600; font-size:.8rem;
+        font-family:Archivo,sans-serif; letter-spacing:.03em}
+
+  /* ---------- chips ---------- */
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:18px 0 4px; padding:0; list-style:none}
+  .chip{
+    font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.03em;
+    border:1px solid var(--rule); background:var(--surface); color:var(--ink-2);
+    padding:5px 11px; border-radius:99px;
+  }
+  .chip.out{color:var(--brick); border-color:var(--brick); background:var(--brick-wash)}
+
+  /* ---------- phase list ---------- */
+  .phases{list-style:none; margin:26px 0 0; padding:0; border-top:1px solid var(--rule)}
+  .phases li{
+    display:grid; grid-template-columns:1fr; gap:3px 20px;
+    padding:15px 0; border-bottom:1px solid var(--rule-soft);
+  }
+  @media (min-width:680px){ .phases li{grid-template-columns:96px minmax(0,1fr) 118px} }
+  .phases .ph{
+    font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--marine-2);
+    letter-spacing:.05em; padding-top:2px;
+  }
+  .phases .what{font-size:.97rem}
+  .phases .what b{font-family:Archivo,sans-serif; font-weight:600; font-size:.95rem}
+  .phases .when{
+    font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-3);
+    letter-spacing:.03em; padding-top:3px;
+  }
+  @media (min-width:680px){ .phases .when{text-align:right} }
+  .phases li.milestone{background:var(--marine-wash); border-bottom-color:var(--rule)}
+  .phases li.milestone .ph{color:var(--marine)}
+  .phases li.milestone .what b{color:var(--marine)}
+
+  /* ---------- needs list ---------- */
+  ol.needs{margin:22px 0 0; padding:0; list-style:none; counter-reset:need}
+  ol.needs li{
+    counter-increment:need; position:relative; padding:11px 0 11px 42px;
+    border-bottom:1px solid var(--rule-soft); font-size:.98rem;
+  }
+  ol.needs li::before{
+    content:counter(need,decimal-leading-zero); position:absolute; left:0; top:12px;
+    font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-3);
+    border:1px solid var(--rule); border-radius:4px; padding:2px 6px; line-height:1;
+  }
+
+  ul.plain{margin:14px 0; padding-left:20px}
+  ul.plain li{margin-bottom:7px; max-width:64ch}
+
+  footer{
+    margin-top:76px; padding-top:26px; border-top:1px solid var(--rule);
+    display:flex; flex-wrap:wrap; gap:12px 28px; justify-content:space-between;
+    align-items:baseline; font-family:"IBM Plex Mono",monospace; font-size:11.5px;
+    color:var(--ink-3); letter-spacing:.04em;
+  }
+  footer a{color:var(--ink-2); text-decoration:none; border-bottom:1px solid var(--rule)}
+  footer a:hover{color:var(--marine-2); border-bottom-color:var(--marine-2)}
+  :focus-visible{outline:2px solid var(--marine-2); outline-offset:2px}
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <div class="plate" aria-hidden="true">
+      <div class="eu"><span>★</span><span>GR</span></div>
+      <div class="num">INT · RENT</div>
+    </div>
+    <h1>International Rentals Ops Plan</h1>
+    <p class="standfirst">Everything the company runs on paper today — availability, bookings, licences, the signed agreement, the day sheet — rebuilt as one Android app. This is the agreed specification, written for sign-off before a line of code is committed.</p>
+    <div class="meta">
+      <span>Prepared <b>30 Aug 2026</b></span>
+      <span>Test build <b>early Oct 2026</b></span>
+      <span>Launch <b>1 Mar 2027</b></span>
+      <span>By <b>Akos Digital Services</b></span>
+    </div>
+  </header>
+
+  <div class="cols">
+    <nav class="toc" aria-label="Contents">
+      <ol>
+        <li><a href="#shape"><span class="n">01</span> The shape of it</a></li>
+        <li><a href="#days"><span class="n">02</span> How a day is counted</a></li>
+        <li><a href="#pricing"><span class="n">03</span> Pricing</a></li>
+        <li><a href="#seen"><span class="n">04</span> Who sees what</a></li>
+        <li><a href="#desk"><span class="n">05</span> At the desk</a></li>
+        <li><a href="#boss"><span class="n">06</span> The boss's app</a></li>
+        <li><a href="#platform"><span class="n">07</span> Platform &amp; data</a></li>
+        <li><a href="#plan"><span class="n">08</span> Build order</a></li>
+        <li><a href="#scope"><span class="n">09</span> Not in this build</a></li>
+        <li><a href="#need"><span class="n">10</span> What we need</a></li>
+      </ol>
+    </nav>
+
+    <main>
+
+      <section id="shape">
+        <p class="eyebrow">01 — The shape of it</p>
+        <h2>One boss, ten reps, a hundred cars</h2>
+        <p class="lede">The boss sees everything. Each rep sees their own bookings and the cars that are free — and nothing whatsoever about anyone else's business. That separation is the product, and it is enforced in the database rather than hidden in the interface.</p>
+
+        <dl class="spec">
+          <div class="row"><dt>Fleet</dt><dd>~100 cars · 20 models · 8 pricing categories, held as <strong>one shared pool</strong>. Any rep can book any free car in the company.</dd></div>
+          <div class="row"><dt>Locations</dt><dd>Each rep is stationed at one hotel and books for its guests — which is why a room number is taken. A rep covering another hotel books there too, and that booking stays visible to both of them.</dd></div>
+          <div class="row"><dt>Booking unit</dt><dd>A <strong>specific car</strong>, by plate. Availability is a per-plate calendar, not a count per category.</dd></div>
+          <div class="row"><dt>Volume</dt><dd>Up to roughly 200 pickups and drop-offs a day across the company at peak.</dd></div>
+          <div class="row"><dt>Windows</dt><dd>Pickups 08:30–11:30, drop-offs 18:00–21:00. Defaults, overridable per booking, override recorded.</dd></div>
+          <div class="row"><dt>Lifecycle</dt><dd><span style="font-family:'IBM Plex Mono',monospace;font-size:.9em">Booked → Out → Returned</span>, plus cancelled and no-show.</dd></div>
+        </dl>
+
+        <div class="note">
+          <h4>The rule everything else defers to</h4>
+          <p>Anything out of the ordinary — a fuel shortfall, new damage, a late return, a driver who fails the age check — is <strong>recorded by the rep and decided by the boss</strong>. Reps gather evidence. They never price a charge and never argue money with a guest.</p>
+        </div>
+      </section>
+
+      <section id="days">
+        <p class="eyebrow">02 — How a day is counted</p>
+        <h2>Morning to night, not 24 hours</h2>
+        <p>This is the single most misread rule in car rental software, so it is worth being exact. A rental is counted in <strong>calendar dates held, inclusive of both ends</strong>. Collected Monday morning and returned Wednesday evening is three days, and the guest keeps the car until 21:00 on Wednesday at no extra cost.</p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 640 178" width="100%" height="178" role="img" aria-label="Timeline showing a Monday pickup and Wednesday return counted as three days, with the same car free again from Thursday morning.">
+            <defs>
+              <marker id="ar" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+                <path d="M0,0 L7,3.5 L0,7 z" fill="currentColor"/>
+              </marker>
+            </defs>
+            <g font-family="IBM Plex Mono, monospace" font-size="11" style="fill:var(--ink-3)" letter-spacing="0.5">
+              <text x="40" y="24">MON</text><text x="190" y="24">TUE</text>
+              <text x="340" y="24">WED</text><text x="490" y="24">THU</text>
+            </g>
+            <g style="stroke:var(--rule)" stroke-width="1">
+              <line x1="30" y1="34" x2="30" y2="150"/><line x1="180" y1="34" x2="180" y2="150"/>
+              <line x1="330" y1="34" x2="330" y2="150"/><line x1="480" y1="34" x2="480" y2="150"/>
+              <line x1="620" y1="34" x2="620" y2="150"/>
+            </g>
+            <rect x="30" y="44" width="450" height="34" rx="4" style="fill:var(--marine-2)" opacity="0.9"/>
+            <text x="255" y="66" text-anchor="middle" font-family="Archivo, sans-serif" font-size="13" font-weight="600" fill="#fff">3 DAYS CHARGED</text>
+            <rect x="480" y="44" width="140" height="34" rx="4" fill="none" style="stroke:var(--marine-2)" stroke-width="1.4" stroke-dasharray="5 4"/>
+            <text x="550" y="66" text-anchor="middle" font-family="Archivo, sans-serif" font-size="12" font-weight="600" style="fill:var(--marine-2)">FREE 08:30</text>
+            <g font-family="IBM Plex Mono, monospace" font-size="10.5" style="fill:var(--ink-2)">
+              <text x="34" y="103">08:30 pickup</text>
+              <text x="476" y="103" text-anchor="end">21:00 return</text>
+            </g>
+            <g style="stroke:var(--ink-3)" stroke-width="1">
+              <line x1="30" y1="112" x2="30" y2="124"/><line x1="480" y1="112" x2="480" y2="124"/>
+              <line x1="30" y1="124" x2="480" y2="124"/>
+            </g>
+            <text x="255" y="145" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" style="fill:var(--ink-3)">car held through the whole of the final date</text>
+          </svg>
+          <figcaption>Mon → Wed = 3 days · no turnaround gap · bookable again Thursday 08:30</figcaption>
+        </figure>
+
+        <dl class="spec">
+          <div class="row"><dt>Early return</dt><dd><strong>No refund</strong> — the booked duration is charged in full. <strong>But the car is freed immediately</strong>, so the remaining dates reopen and it can be re-let the same week.</dd></div>
+          <div class="row"><dt>Turnaround</dt><dd>None. A car back at 19:00 is bookable at 08:30 the next morning.</dd></div>
+          <div class="row"><dt>Back-to-back</dt><dd>A booking ending the 15th and one starting the 16th are legal on the same car. Both starting the 15th is refused by the database itself, not by a check that a bug could skip.</dd></div>
+        </dl>
+      </section>
+
+      <section id="pricing">
+        <p class="eyebrow">03 — Pricing</p>
+        <h2>The boss types the numbers, the app never invents one</h2>
+        <p>Prices are entered as <strong>finished totals</strong> for each duration, so the +€5 first day and every other quirk of the price list is already inside the figures. The app performs no arithmetic of its own beyond adding extra days to a long rental.</p>
+
+        <dl class="spec">
+          <div class="row"><dt>Periods</dt><dd>Four or so pricing periods per season, defined as <strong>date ranges the admin sets himself</strong> and can redraw every year. Nothing about months or season boundaries is fixed in the software.</dd></div>
+          <div class="row"><dt>Table</dt><dd>A total for each <em>category × period × duration</em>, for one to seven days.</dd></div>
+          <div class="row"><dt>Eight days or more</dt><dd>The seven-day total plus a per-extra-day rate, also set per category and period.</dd></div>
+          <div class="row"><dt>Crossing a period</dt><dd>The <strong>pickup date decides</strong>. A 30 July collection is priced at the July rate for the whole rental, even if it runs into August.</dd></div>
+          <div class="row"><dt>Discounts</dt><dd><strong>None.</strong> The price is locked to the table. Only the boss can amend a price, and every amendment is logged.</dd></div>
+          <div class="row"><dt>Free of charge</dt><dd>Baby seats — infant, child and booster — and additional drivers. Recorded on the booking, never priced.</dd></div>
+        </dl>
+
+        <div class="note warn">
+          <h4>Deliberate safeguard</h4>
+          <p>Editing a price table <strong>never rewrites an existing booking</strong>. Each booking stores which period priced it, so last month's revenue stays exactly what it was when the money changed hands.</p>
+        </div>
+      </section>
+
+      <section id="seen">
+        <p class="eyebrow">04 — Who sees what</p>
+        <h2>A rep sees a blocked date, and nothing behind it</h2>
+        <p>When a rep looks at a car they have no booking on, they see occupied dates. Not the rep, not the hotel, not the guest, not the times, not the price, not the reason. A car in the garage for repairs and a colleague's rental look <strong>identical</strong> — which is exactly right, and is achieved by how the data is stored rather than by remembering to hide things.</p>
+
+        <div class="tablewrap">
+          <table>
+            <caption class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Permission matrix by role</caption>
+            <thead>
+              <tr><th scope="col">Capability</th><th scope="col" class="c">Boss</th><th scope="col" class="c">Rep — own&nbsp;booking</th><th scope="col" class="c">Rep — anyone else's</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Car specs, photos, free/occupied dates</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+              <tr><td>Who holds a booking, and why</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">✗</td></tr>
+              <tr><td>Guest details and licence images</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">✗</td></tr>
+              <tr><td>The price on a booking</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">✗</td></tr>
+              <tr><td>Own cash collected today</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">—</td></tr>
+              <tr><td>Any other total, sum or average</td><td class="c yes">✓</td><td class="c no">✗</td><td class="c no">✗</td></tr>
+              <tr><td>Revenue reports and CSV export</td><td class="c yes">✓</td><td class="c no">✗</td><td class="c no">✗</td></tr>
+              <tr><td>Create a booking at any hotel</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+              <tr><td>Edit a booking before pickup</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">✗</td></tr>
+              <tr><td>Change anything after pickup</td><td class="c yes">✓</td><td class="c only">extend only</td><td class="c no">✗</td></tr>
+              <tr><td>Change a price · override an age block</td><td class="c yes">✓</td><td class="c no">✗</td><td class="c no">✗</td></tr>
+              <tr><td>Add, archive or block a car</td><td class="c yes">✓</td><td class="c no">✗</td><td class="c no">✗</td></tr>
+              <tr><td>Read the audit log</td><td class="c yes">✓</td><td class="c no">✗</td><td class="c no">✗</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>Reps see <strong>one</strong> running figure, and only one: the cash they have taken today and not yet handed over, with a button to hand it over. No monthly totals, no booking counts, no averages — nothing from which company revenue could be worked out. There is no commission anywhere in the system, because this business does not pay one.</p>
+      </section>
+
+      <section id="desk">
+        <p class="eyebrow">05 — At the desk</p>
+        <h2>Ten pickups and ten returns, one hand, phone in sunlight</h2>
+        <p>The rep app opens on today: their pickups and returns in time order, each with a single large action. Everything else is one tap away.</p>
+
+        <h3>Pickup</h3>
+        <p>A sequence of single-purpose screens that survives being interrupted mid-way — because it will be.</p>
+        <ul class="plain">
+          <li><strong>Licence</strong> — camera captures front and back for every driver. The card is read automatically and the fields come back pre-filled and fully editable. Typing it in by hand always works, and a worn or unusual licence never blocks a pickup.</li>
+          <li><strong>Eligibility</strong> — 21 and over for categories A and B, 23 and over for the rest, licence held at least a year, and valid past the return date. A failure <strong>stops the pickup</strong> and names the rule that failed. Only the boss can override, and the override is recorded.</li>
+          <li><strong>Fuel</strong> — level out, on an eighths slider. Same level back on return.</li>
+          <li><strong>Damage</strong> — tap the car diagram to mark what is already there, with a photo per mark if it matters. At return, new marks appear in a different colour and go straight to the boss.</li>
+          <li><strong>Agreement</strong> — the bilingual contract is generated from the booking, the guest signs on the screen with a finger, and a copy is emailed if they want one.</li>
+          <li><strong>Payment</strong> — amount, method, paid or owing. No deposit is taken.</li>
+        </ul>
+
+        <h3>Changes</h3>
+        <p>Before the car goes out, a rep can edit or cancel their own booking freely. Afterwards it is locked, with one exception: they can <strong>extend</strong> it. If the same car is already booked later, the app offers a free car in the same category and the guest swaps vehicle rather than losing the extension.</p>
+      </section>
+
+      <section id="boss">
+        <p class="eyebrow">06 — The boss's app</p>
+        <h2>The day sheet, replaced</h2>
+        <dl class="spec">
+          <div class="row"><dt>Movements</dt><dd>Any chosen day, every hotel: pickups then returns in time order, with car, guest, room and rep. Printable. This is the morning screen.</dd></div>
+          <div class="row"><dt>Fleet board</dt><dd>All hundred cars live — out, free, blocked, back today.</dd></div>
+          <div class="row"><dt>Exceptions</dt><dd>His inbox. Fuel shortfalls, damage with photos, late returns, no-shows, override requests. He sets the charge and closes the item.</dd></div>
+          <div class="row"><dt>Bookings</dt><dd>Every booking ever made, searchable by guest, plate, date, rep or hotel, editable at any stage. Every edit is logged permanently — who, what, before, after, when.</dd></div>
+          <div class="row"><dt>Reports</dt><dd>Revenue by day, month, rep and category, with CSV export. Kept deliberately plain.</dd></div>
+          <div class="row"><dt>Fleet &amp; pricing</dt><dd>Add, archive and delete cars; block a car's dates for service with a reason only he can see; set the pricing periods and tables.</dd></div>
+        </dl>
+        <p>He stays signed in on his <strong>desktop and his phone at the same time</strong> — logging in on one never signs out the other.</p>
+      </section>
+
+      <section id="platform">
+        <p class="eyebrow">07 — Platform &amp; data</p>
+        <h2>An Android app from the Play Store, built as one web app</h2>
+        <p>The system is a web application wrapped as a native Android package and published to the Play Store, so it installs with a real icon and listing while remaining a single codebase the boss can also open on a laptop. Bug fixes go live the moment they deploy, with no store review queue in the middle of a season.</p>
+
+        <dl class="spec">
+          <div class="row"><dt>Devices</dt><dd>Android only, via the Play Store. Desktop browser for the boss.</dd></div>
+          <div class="row"><dt>Connection</dt><dd>Required. A form in progress is held safely if signal drops and sent when it returns, so nothing is lost mid-pickup.</dd></div>
+          <div class="row"><dt>Languages</dt><dd>Greek and English, switchable per person. The rental agreement always prints in both.</dd></div>
+          <div class="row"><dt>Notifications</dt><dd>Reps get a morning list and an evening reminder. The boss gets exceptions as they happen.</dd></div>
+          <div class="row"><dt>Licence images</dt><dd>Stored privately, never on a public address, and <strong>deleted automatically</strong> once the retention window the boss sets has passed — 24 months by default. Every deletion is logged.</dd></div>
+          <div class="row"><dt>Compliance</dt><dd>GDPR-compliant handling throughout, with a real privacy policy, terms page and cookie consent. Accessibility to WCAG 2.1 AA.</dd></div>
+        </dl>
+
+        <div class="note">
+          <h4>Where the security actually sits</h4>
+          <p>The realistic risk is not an outside attacker — it is a signed-in rep with a curious browser. So the separation between reps is enforced inside the database on every single query, not by which buttons the app chooses to draw. A rep who edits a request by hand still gets nothing back.</p>
+        </div>
+      </section>
+
+      <section id="plan">
+        <p class="eyebrow">08 — Build order</p>
+        <h2>Foundations first, because everything visible rests on them</h2>
+        <p>The order below is deliberate: availability and pricing are built and tested before a single screen, because a mistake in either one poisons everything downstream. If the schedule tightens, what gives is at the bottom of the list, never the top.</p>
+
+        <ol class="phases">
+          <li><span class="ph">PHASE 0</span><span class="what"><b>Foundations</b> — project, hosting, accounts, both languages, sign-in</span><span class="when">~3 days</span></li>
+          <li><span class="ph">PHASE 1</span><span class="what"><b>Data &amp; engines</b> — availability, pricing, the separation between reps, fleet import</span><span class="when">~1 week</span></li>
+          <li><span class="ph">PHASE 2</span><span class="what"><b>Booking core</b> — availability screen, new booking, day sheet, fleet board</span><span class="when">~1 week</span></li>
+          <li><span class="ph">PHASE 3</span><span class="what"><b>Pickup &amp; return</b> — camera, eligibility, fuel, damage, exceptions, cash</span><span class="when">~1 week</span></li>
+          <li><span class="ph">PHASE 4</span><span class="what"><b>Contract &amp; licence reading</b> — bilingual PDF, on-screen signature, automatic licence read</span><span class="when">~1 week</span></li>
+          <li class="milestone"><span class="ph">TEST</span><span class="what"><b>Pilot at one hotel</b>, running alongside paper for a fortnight — paper is the safety net and the comparison is the test</span><span class="when">early Oct 2026</span></li>
+          <li><span class="ph">PHASE 5</span><span class="what"><b>Refinement</b> — act on what the reps actually did, then reports, notifications, Play Store listing, accessibility and speed audits, training</span><span class="when">Oct – Feb</span></li>
+          <li class="milestone"><span class="ph">LAUNCH</span><span class="what"><b>Live</b>, with two months of real running before the season opens</span><span class="when">1 Mar 2027</span></li>
+        </ol>
+
+        <div class="note warn">
+          <h4>An honest word about October</h4>
+          <p>"As close to release as possible" in five weeks is achievable for the operational core and tight for everything at once. The order above protects the parts that must be right — availability, the separation between reps, and the two flows the reps live in all day. Automatic licence reading degrades to typing, and reports can wait until there is real data to report on. Neither would spoil the pilot.</p>
+        </div>
+      </section>
+
+      <section id="scope">
+        <p class="eyebrow">09 — Not in this build</p>
+        <h2>Deliberately left out</h2>
+        <p>Agreed as out of scope. The data is being modelled so a public booking channel could be added later without a rewrite, but no effort goes into it now.</p>
+        <ul class="chips">
+          <li class="chip out">Customer-facing online booking</li>
+          <li class="chip out">Invoicing · receipts · myDATA</li>
+          <li class="chip out">WhatsApp &amp; SMS to guests</li>
+          <li class="chip out">Odometer &amp; service scheduling</li>
+          <li class="chip out">Commission</li>
+          <li class="chip out">Security deposits</li>
+          <li class="chip out">Offline booking</li>
+          <li class="chip out">Insurance &amp; ΚΤΕΟ expiry alerts</li>
+        </ul>
+      </section>
+
+      <section id="need">
+        <p class="eyebrow">10 — What we need</p>
+        <h2>Eight things from the company</h2>
+        <p>Items 1 to 4 are on the critical path — the price and availability work cannot be finished against invented data. Item 5 is needed by mid-September at the latest.</p>
+        <ol class="needs">
+          <li>The eight category names, and which of the twenty models sit in each</li>
+          <li>Model specifications, including tank size in litres</li>
+          <li>The fleet list — one hundred plates with model, year and colour, as a spreadsheet</li>
+          <li>Price tables — at least one pricing period, ideally all four</li>
+          <li>A scan of the current paper rental agreement and its terms, in both languages</li>
+          <li>The hotel list, and which rep covers each</li>
+          <li>Company legal details for the contract: registered name, ΑΦΜ, address, phone, insurer</li>
+          <li>A domain name, and a Google Play developer account</li>
+        </ol>
+      </section>
+
+      <footer>
+        <span>International Rentals · operations specification · v1.0</span>
+        <span>© 2026 <a href="https://akosds.com">Akos Digital Services</a></span>
+      </footer>
+
+    </main>
+  </div>
+</div>

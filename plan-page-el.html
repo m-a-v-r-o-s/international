@@ -1,0 +1,477 @@
+<title>Σχέδιο Λειτουργίας International Rentals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans+Condensed:wght@500;600;700&family=Noto+Sans+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+  :root{
+    --paper:#F1F4F5; --surface:#FFFFFF; --sunk:#E7ECEE;
+    --ink:#111A21; --ink-2:#485966; --ink-3:#73858F;
+    --rule:#D5DDE1; --rule-soft:#E4EAED;
+    --marine:#0F3E60; --marine-2:#1D6799; --marine-wash:#E3EDF4;
+    --ochre:#8F5D0E; --ochre-wash:#F5EDDD;
+    --brick:#8E3220; --brick-wash:#F6E6E2;
+    --plate-ink:#141414; --plate-face:#FAFAF8; --plate-eu:#0B3F98;
+    --shadow:0 1px 2px rgba(17,26,33,.05), 0 10px 28px -18px rgba(17,26,33,.42);
+    --display:"Fira Sans Condensed","Helvetica Neue",Arial,sans-serif;
+    --mono:"Noto Sans Mono",ui-monospace,"DejaVu Sans Mono",monospace;
+    --body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0C1319; --surface:#131C23; --sunk:#0F171E;
+      --ink:#E2EAEE; --ink-2:#A1B1BC; --ink-3:#74858E;
+      --rule:#27333C; --rule-soft:#1D2931;
+      --marine:#7FB4DA; --marine-2:#A2CCEA; --marine-wash:#14273B;
+      --ochre:#D3A24A; --ochre-wash:#26200F;
+      --brick:#D98A76; --brick-wash:#2B1A16;
+      --plate-ink:#141414; --plate-face:#E9EAE6; --plate-eu:#0B3F98;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0C1319; --surface:#131C23; --sunk:#0F171E;
+    --ink:#E2EAEE; --ink-2:#A1B1BC; --ink-3:#74858E;
+    --rule:#27333C; --rule-soft:#1D2931;
+    --marine:#7FB4DA; --marine-2:#A2CCEA; --marine-wash:#14273B;
+    --ochre:#D3A24A; --ochre-wash:#26200F;
+    --brick:#D98A76; --brick-wash:#2B1A16;
+    --plate-ink:#141414; --plate-face:#E9EAE6; --plate-eu:#0B3F98;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:var(--body); font-size:17px; line-height:1.64;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1120px; margin:0 auto; padding:0 24px 96px;}
+
+  /* ---------- προμετωπίδα ---------- */
+  header.mast{border-bottom:1px solid var(--rule); padding:56px 0 34px; margin-bottom:8px;}
+  .plate{
+    display:inline-flex; align-items:stretch; border-radius:5px; overflow:hidden;
+    border:1.5px solid var(--plate-ink); background:var(--plate-face);
+    font-family:var(--mono); box-shadow:var(--shadow);
+  }
+  .plate .eu{
+    background:var(--plate-eu); color:#fff; padding:7px 7px 5px; font-size:9px;
+    display:flex; flex-direction:column; align-items:center; justify-content:space-between;
+    letter-spacing:.06em; line-height:1;
+  }
+  .plate .eu span:first-child{font-size:11px}
+  .plate .num{color:var(--plate-ink); padding:7px 14px 6px; font-size:19px; font-weight:600; letter-spacing:.14em;}
+  h1{
+    font-family:var(--display); font-weight:700;
+    font-size:clamp(2.2rem,5.8vw,3.7rem); line-height:1.02; letter-spacing:-.018em;
+    margin:22px 0 0; text-wrap:balance; max-width:18ch;
+  }
+  .standfirst{font-size:1.16rem; color:var(--ink-2); max-width:62ch; margin:16px 0 0;}
+  .meta{
+    display:flex; flex-wrap:wrap; gap:10px 30px; margin-top:28px;
+    font-family:var(--mono); font-size:11.5px; text-transform:uppercase;
+    letter-spacing:.08em; color:var(--ink-3);
+  }
+  .meta b{color:var(--ink-2); font-weight:500}
+
+  /* ---------- διάταξη ---------- */
+  .cols{display:grid; grid-template-columns:1fr; gap:0;}
+  @media (min-width:940px){
+    .cols{grid-template-columns:200px minmax(0,1fr); gap:56px; align-items:start;}
+    nav.toc{position:sticky; top:24px; padding-top:52px;}
+  }
+  nav.toc ol{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px;}
+  nav.toc a{
+    display:flex; gap:9px; text-decoration:none; color:var(--ink-2);
+    font-family:var(--display); font-size:13.5px; padding:5px 0; line-height:1.3;
+  }
+  nav.toc a:hover{color:var(--marine-2)}
+  nav.toc a:focus-visible{outline:2px solid var(--marine-2); outline-offset:3px; border-radius:2px}
+  nav.toc .n{font-family:var(--mono); color:var(--ink-3); font-size:11px}
+  @media (max-width:939px){ nav.toc{display:none} }
+
+  /* ---------- ενότητες ---------- */
+  section{padding-top:52px; scroll-margin-top:20px;}
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.13em; text-transform:uppercase;
+    color:var(--marine-2); display:flex; align-items:center; gap:10px; margin:0 0 12px;
+  }
+  .eyebrow::after{content:""; flex:1; height:1px; background:var(--rule)}
+  h2{
+    font-family:var(--display); font-weight:700; letter-spacing:-.012em;
+    font-size:clamp(1.6rem,3.4vw,2.25rem); line-height:1.12; margin:0 0 14px;
+    text-wrap:balance; max-width:26ch;
+  }
+  h3{
+    font-family:var(--display); font-weight:600; font-size:1.12rem;
+    margin:32px 0 8px; color:var(--ink);
+  }
+  p{margin:0 0 15px; max-width:66ch}
+  a{color:var(--marine-2)}
+  strong{font-weight:600}
+  .lede{font-size:1.08rem; color:var(--ink-2); max-width:64ch}
+
+  /* ---------- γραμμές προδιαγραφών ---------- */
+  .spec{display:flex; flex-direction:column; margin:22px 0 6px; border-top:1px solid var(--rule);}
+  .spec .row{
+    display:grid; grid-template-columns:1fr; gap:2px 22px;
+    padding:13px 0; border-bottom:1px solid var(--rule-soft);
+  }
+  @media (min-width:620px){ .spec .row{grid-template-columns:190px minmax(0,1fr);} }
+  .spec dt{
+    font-family:var(--display); font-size:13px; font-weight:600; letter-spacing:.04em;
+    text-transform:uppercase; color:var(--ink-3); padding-top:3px;
+  }
+  .spec dd{margin:0; color:var(--ink); font-size:.98rem}
+
+  /* ---------- πλαίσια ---------- */
+  .note{
+    background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--marine-2);
+    padding:18px 20px; margin:26px 0; border-radius:0 6px 6px 0; box-shadow:var(--shadow);
+  }
+  .note.warn{border-left-color:var(--ochre); background:var(--ochre-wash)}
+  .note h4{
+    font-family:var(--display); font-size:13px; text-transform:uppercase;
+    letter-spacing:.09em; margin:0 0 7px; color:var(--ink-3); font-weight:600;
+  }
+  .note p:last-child{margin-bottom:0}
+
+  /* ---------- διάγραμμα ---------- */
+  .diagram{
+    background:var(--surface); border:1px solid var(--rule); border-radius:8px;
+    padding:24px 22px 18px; margin:26px 0; box-shadow:var(--shadow); overflow-x:auto;
+  }
+  .diagram figcaption{
+    font-family:var(--mono); font-size:11.5px; color:var(--ink-3);
+    letter-spacing:.03em; margin-top:14px; text-align:center;
+  }
+
+  /* ---------- πίνακας ---------- */
+  .tablewrap{overflow-x:auto; margin:24px 0; border:1px solid var(--rule);
+             border-radius:8px; background:var(--surface); box-shadow:var(--shadow)}
+  table{border-collapse:collapse; width:100%; min-width:620px; font-size:.9rem}
+  th,td{padding:11px 14px; text-align:left; border-bottom:1px solid var(--rule-soft)}
+  thead th{
+    font-family:var(--display); font-size:12px; text-transform:uppercase;
+    letter-spacing:.06em; color:var(--ink-3); font-weight:600;
+    background:var(--sunk); border-bottom:1px solid var(--rule);
+  }
+  tbody tr:last-child td{border-bottom:none}
+  td.c,th.c{text-align:center; font-family:var(--mono)}
+  .yes{color:var(--marine-2); font-weight:600}
+  .no{color:var(--ink-3)}
+  .only{color:var(--ochre); font-weight:600; font-size:.82rem; font-family:var(--display)}
+
+  /* ---------- ετικέτες ---------- */
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:18px 0 4px; padding:0; list-style:none}
+  .chip{
+    font-family:var(--mono); font-size:11.5px; border:1px solid var(--rule);
+    background:var(--surface); color:var(--ink-2); padding:5px 11px; border-radius:99px;
+  }
+  .chip.out{color:var(--brick); border-color:var(--brick); background:var(--brick-wash)}
+
+  /* ---------- φάσεις ---------- */
+  .phases{list-style:none; margin:26px 0 0; padding:0; border-top:1px solid var(--rule)}
+  .phases li{
+    display:grid; grid-template-columns:1fr; gap:3px 20px;
+    padding:15px 0; border-bottom:1px solid var(--rule-soft);
+  }
+  @media (min-width:680px){ .phases li{grid-template-columns:104px minmax(0,1fr) 132px} }
+  .phases .ph{font-family:var(--mono); font-size:11.5px; color:var(--marine-2); letter-spacing:.04em; padding-top:3px;}
+  .phases .what{font-size:.97rem}
+  .phases .what b{font-family:var(--display); font-weight:600; font-size:1rem}
+  .phases .when{font-family:var(--mono); font-size:11.5px; color:var(--ink-3); padding-top:4px}
+  @media (min-width:680px){ .phases .when{text-align:right} }
+  .phases li.milestone{background:var(--marine-wash); border-bottom-color:var(--rule)}
+  .phases li.milestone .ph{color:var(--marine)}
+  .phases li.milestone .what b{color:var(--marine)}
+
+  /* ---------- λίστα αναγκών ---------- */
+  ol.needs{margin:22px 0 0; padding:0; list-style:none; counter-reset:need}
+  ol.needs li{
+    counter-increment:need; position:relative; padding:11px 0 11px 44px;
+    border-bottom:1px solid var(--rule-soft); font-size:.98rem;
+  }
+  ol.needs li::before{
+    content:counter(need,decimal-leading-zero); position:absolute; left:0; top:12px;
+    font-family:var(--mono); font-size:11.5px; color:var(--ink-3);
+    border:1px solid var(--rule); border-radius:4px; padding:2px 6px; line-height:1;
+  }
+
+  ul.plain{margin:14px 0; padding-left:20px}
+  ul.plain li{margin-bottom:8px; max-width:64ch}
+
+  footer{
+    margin-top:76px; padding-top:26px; border-top:1px solid var(--rule);
+    display:flex; flex-wrap:wrap; gap:12px 28px; justify-content:space-between;
+    align-items:baseline; font-family:var(--mono); font-size:11.5px; color:var(--ink-3);
+  }
+  footer a{color:var(--ink-2); text-decoration:none; border-bottom:1px solid var(--rule)}
+  footer a:hover{color:var(--marine-2); border-bottom-color:var(--marine-2)}
+  :focus-visible{outline:2px solid var(--marine-2); outline-offset:2px}
+  .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
+</style>
+
+<div class="wrap" lang="el">
+
+  <header class="mast">
+    <div class="plate" aria-hidden="true">
+      <div class="eu"><span>★</span><span>GR</span></div>
+      <div class="num">INT · RENT</div>
+    </div>
+    <h1>Σχέδιο Λειτουργίας International Rentals</h1>
+    <p class="standfirst">Όλα όσα η εταιρεία κρατά σήμερα στο χαρτί — διαθεσιμότητα, κρατήσεις, διπλώματα, το υπογεγραμμένο μισθωτήριο, το ημερήσιο δελτίο κινήσεων — ξαναχτισμένα σε μία εφαρμογή Android. Αυτή είναι η συμφωνημένη προδιαγραφή, γραμμένη για έγκριση πριν γραφτεί γραμμή κώδικα.</p>
+    <div class="meta">
+      <span>Σύνταξη <b>30 Αυγ 2026</b></span>
+      <span>Δοκιμαστική <b>αρχές Οκτ 2026</b></span>
+      <span>Παράδοση <b>1 Μαρ 2027</b></span>
+      <span>Από <b>Akos Digital Services</b></span>
+    </div>
+  </header>
+
+  <div class="cols">
+    <nav class="toc" aria-label="Περιεχόμενα">
+      <ol>
+        <li><a href="#shape"><span class="n">01</span> Η γενική εικόνα</a></li>
+        <li><a href="#days"><span class="n">02</span> Πώς μετριέται η ημέρα</a></li>
+        <li><a href="#pricing"><span class="n">03</span> Τιμολόγηση</a></li>
+        <li><a href="#seen"><span class="n">04</span> Ποιος βλέπει τι</a></li>
+        <li><a href="#desk"><span class="n">05</span> Στο γκισέ</a></li>
+        <li><a href="#boss"><span class="n">06</span> Η εφαρμογή του ιδιοκτήτη</a></li>
+        <li><a href="#platform"><span class="n">07</span> Πλατφόρμα &amp; δεδομένα</a></li>
+        <li><a href="#plan"><span class="n">08</span> Σειρά υλοποίησης</a></li>
+        <li><a href="#scope"><span class="n">09</span> Εκτός έκδοσης</a></li>
+        <li><a href="#need"><span class="n">10</span> Τι χρειαζόμαστε</a></li>
+      </ol>
+    </nav>
+
+    <main>
+
+      <section id="shape">
+        <p class="eyebrow">01 — Η γενική εικόνα</p>
+        <h2>Ένας ιδιοκτήτης, δέκα εκπρόσωποι, εκατό αυτοκίνητα</h2>
+        <p class="lede">Ο ιδιοκτήτης βλέπει τα πάντα. Κάθε εκπρόσωπος βλέπει τις δικές του κρατήσεις και ποια αυτοκίνητα είναι ελεύθερα — και απολύτως τίποτα για τη δουλειά των υπολοίπων. Αυτός ο διαχωρισμός είναι το ίδιο το προϊόν, και επιβάλλεται μέσα στη βάση δεδομένων αντί να κρύβεται στην οθόνη.</p>
+
+        <dl class="spec">
+          <div class="row"><dt>Στόλος</dt><dd>~100 αυτοκίνητα · 20 μοντέλα · 8 κατηγορίες τιμολόγησης, σε <strong>έναν κοινό στόλο</strong>. Κάθε εκπρόσωπος μπορεί να κλείσει οποιοδήποτε ελεύθερο αυτοκίνητο της εταιρείας.</dd></div>
+          <div class="row"><dt>Σημεία</dt><dd>Κάθε εκπρόσωπος έχει έδρα ένα ξενοδοχείο και κλείνει για τους πελάτες του — γι' αυτό καταγράφεται αριθμός δωματίου. Όταν καλύπτει άλλο ξενοδοχείο κλείνει και εκεί, και η κράτηση παραμένει ορατή και στους δύο.</dd></div>
+          <div class="row"><dt>Μονάδα κράτησης</dt><dd><strong>Συγκεκριμένο αυτοκίνητο</strong>, με πινακίδα. Η διαθεσιμότητα είναι ημερολόγιο ανά πινακίδα, όχι μέτρημα ανά κατηγορία.</dd></div>
+          <div class="row"><dt>Όγκος</dt><dd>Έως περίπου 200 παραλαβές και επιστροφές την ημέρα σε όλη την εταιρεία, στην αιχμή.</dd></div>
+          <div class="row"><dt>Ωράρια</dt><dd>Παραλαβές 08:30–11:30, επιστροφές 18:00–21:00. Προεπιλογές, με δυνατότητα αλλαγής ανά κράτηση και καταγραφή της αλλαγής.</dd></div>
+          <div class="row"><dt>Κύκλος ζωής</dt><dd><span style="font-family:var(--mono);font-size:.88em">Κρατημένο → Σε ενοικίαση → Επιστράφηκε</span>, συν ακυρωμένο και μη εμφάνιση.</dd></div>
+        </dl>
+
+        <div class="note">
+          <h4>Ο κανόνας στον οποίο υποχωρούν όλοι οι υπόλοιποι</h4>
+          <p>Οτιδήποτε εκτός ρουτίνας — έλλειμμα καυσίμου, νέα ζημιά, καθυστερημένη επιστροφή, οδηγός που κόβεται στον έλεγχο ηλικίας — <strong>καταγράφεται από τον εκπρόσωπο και αποφασίζεται από τον ιδιοκτήτη</strong>. Οι εκπρόσωποι συγκεντρώνουν στοιχεία. Ποτέ δεν ορίζουν χρέωση και ποτέ δεν διαπραγματεύονται χρήματα με πελάτη.</p>
+        </div>
+      </section>
+
+      <section id="days">
+        <p class="eyebrow">02 — Πώς μετριέται η ημέρα</p>
+        <h2>Από το πρωί ως το βράδυ, όχι 24ωρο</h2>
+        <p>Αυτός είναι ο κανόνας που παρανοείται συχνότερα σε λογισμικό ενοικιάσεων, οπότε αξίζει ακρίβεια. Η ενοικίαση μετριέται σε <strong>ημερολογιακές ημέρες κατοχής, με τις δύο άκρες να προσμετρώνται</strong>. Παραλαβή Δευτέρα πρωί και επιστροφή Τετάρτη βράδυ είναι τρεις ημέρες, και ο πελάτης κρατά το αυτοκίνητο μέχρι τις 21:00 της Τετάρτης χωρίς επιπλέον χρέωση.</p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 640 178" width="100%" height="178" role="img" aria-label="Χρονογραμμή που δείχνει παραλαβή Δευτέρα και επιστροφή Τετάρτη, οι οποίες μετρούν ως τρεις ημέρες, με το αυτοκίνητο ξανά ελεύθερο από Πέμπτη πρωί.">
+            <g font-family="Noto Sans Mono, monospace" font-size="11" style="fill:var(--ink-3)" letter-spacing="0.5">
+              <text x="40" y="24">ΔΕΥ</text><text x="190" y="24">ΤΡΙ</text>
+              <text x="340" y="24">ΤΕΤ</text><text x="490" y="24">ΠΕΜ</text>
+            </g>
+            <g style="stroke:var(--rule)" stroke-width="1">
+              <line x1="30" y1="34" x2="30" y2="150"/><line x1="180" y1="34" x2="180" y2="150"/>
+              <line x1="330" y1="34" x2="330" y2="150"/><line x1="480" y1="34" x2="480" y2="150"/>
+              <line x1="620" y1="34" x2="620" y2="150"/>
+            </g>
+            <rect x="30" y="44" width="450" height="34" rx="4" style="fill:var(--marine-2)" opacity="0.9"/>
+            <text x="255" y="66" text-anchor="middle" font-family="Fira Sans Condensed, sans-serif" font-size="14" font-weight="600" fill="#ffffff">ΧΡΕΩΣΗ 3 ΗΜΕΡΩΝ</text>
+            <rect x="480" y="44" width="140" height="34" rx="4" fill="none" style="stroke:var(--marine-2)" stroke-width="1.4" stroke-dasharray="5 4"/>
+            <text x="550" y="66" text-anchor="middle" font-family="Fira Sans Condensed, sans-serif" font-size="13" font-weight="600" style="fill:var(--marine-2)">ΕΛΕΥΘΕΡΟ 08:30</text>
+            <g font-family="Noto Sans Mono, monospace" font-size="10.5" style="fill:var(--ink-2)">
+              <text x="34" y="103">08:30 παραλαβή</text>
+              <text x="476" y="103" text-anchor="end">21:00 επιστροφή</text>
+            </g>
+            <g style="stroke:var(--ink-3)" stroke-width="1">
+              <line x1="30" y1="112" x2="30" y2="124"/><line x1="480" y1="112" x2="480" y2="124"/>
+              <line x1="30" y1="124" x2="480" y2="124"/>
+            </g>
+            <text x="255" y="145" text-anchor="middle" font-family="Noto Sans Mono, monospace" font-size="10.5" style="fill:var(--ink-3)">το αυτοκίνητο δεσμεύεται ολόκληρη την τελευταία ημέρα</text>
+          </svg>
+          <figcaption>Δευ → Τετ = 3 ημέρες · χωρίς κενό προετοιμασίας · ξανά διαθέσιμο Πέμπτη 08:30</figcaption>
+        </figure>
+
+        <dl class="spec">
+          <div class="row"><dt>Πρόωρη επιστροφή</dt><dd><strong>Καμία επιστροφή χρημάτων</strong> — χρεώνεται ολόκληρη η κρατημένη διάρκεια. <strong>Όμως το αυτοκίνητο ελευθερώνεται αμέσως</strong>, οπότε οι υπόλοιπες ημέρες ξανανοίγουν και μπορεί να ξαναδοθεί μέσα στην ίδια εβδομάδα.</dd></div>
+          <div class="row"><dt>Προετοιμασία</dt><dd>Κανένα κενό. Αυτοκίνητο που γυρίζει στις 19:00 δίνεται στις 08:30 το επόμενο πρωί.</dd></div>
+          <div class="row"><dt>Συνεχόμενες</dt><dd>Μια κράτηση που λήγει στις 15 και μία που ξεκινά στις 16 είναι έγκυρες στο ίδιο αυτοκίνητο. Δύο που ξεκινούν στις 15 απορρίπτονται από την ίδια τη βάση δεδομένων, όχι από έναν έλεγχο που ένα σφάλμα θα μπορούσε να προσπεράσει.</dd></div>
+        </dl>
+      </section>
+
+      <section id="pricing">
+        <p class="eyebrow">03 — Τιμολόγηση</p>
+        <h2>Ο ιδιοκτήτης γράφει τα ποσά, η εφαρμογή δεν βγάζει δικά της</h2>
+        <p>Οι τιμές καταχωρούνται ως <strong>τελικά σύνολα</strong> για κάθε διάρκεια, οπότε τα +5&nbsp;€ της πρώτης ημέρας και κάθε άλλη ιδιαιτερότητα του τιμοκαταλόγου βρίσκονται ήδη μέσα στα νούμερα. Η εφαρμογή δεν κάνει καμία δική της πράξη, πέρα από την προσθήκη επιπλέον ημερών σε μακρά ενοικίαση.</p>
+
+        <dl class="spec">
+          <div class="row"><dt>Περίοδοι</dt><dd>Περίπου τέσσερις τιμολογιακές περίοδοι ανά σεζόν, ως <strong>εύρη ημερομηνιών που ορίζει ο ίδιος ο ιδιοκτήτης</strong> και ξαναχαράζει κάθε χρόνο. Τίποτα για μήνες ή όρια σεζόν δεν είναι κλειδωμένο μέσα στο λογισμικό.</dd></div>
+          <div class="row"><dt>Πίνακας</dt><dd>Ένα σύνολο για κάθε <em>κατηγορία × περίοδο × διάρκεια</em>, από μία έως επτά ημέρες.</dd></div>
+          <div class="row"><dt>Οκτώ και πάνω</dt><dd>Το σύνολο των επτά ημερών, συν χρέωση ανά επιπλέον ημέρα, επίσης ανά κατηγορία και περίοδο.</dd></div>
+          <div class="row"><dt>Αλλαγή περιόδου</dt><dd><strong>Αποφασίζει η ημερομηνία παραλαβής.</strong> Παραλαβή στις 30 Ιουλίου τιμολογείται με τον Ιούλιο για όλη την ενοικίαση, ακόμη κι αν συνεχιστεί μέσα στον Αύγουστο.</dd></div>
+          <div class="row"><dt>Εκπτώσεις</dt><dd><strong>Καμία.</strong> Η τιμή είναι κλειδωμένη στον πίνακα. Μόνο ο ιδιοκτήτης μπορεί να τη μεταβάλει, και κάθε μεταβολή καταγράφεται.</dd></div>
+          <div class="row"><dt>Χωρίς χρέωση</dt><dd>Παιδικά καθίσματα — βρεφικό, παιδικό και booster — και πρόσθετοι οδηγοί. Καταγράφονται στην κράτηση, ποτέ δεν τιμολογούνται.</dd></div>
+        </dl>
+
+        <div class="note warn">
+          <h4>Σκόπιμη δικλείδα ασφαλείας</h4>
+          <p>Η αλλαγή ενός τιμοκαταλόγου <strong>δεν ξαναγράφει ποτέ υπάρχουσα κράτηση</strong>. Κάθε κράτηση κρατά ποια περίοδος την τιμολόγησε, ώστε ο τζίρος του περασμένου μήνα να μένει ακριβώς όπως ήταν όταν εισπράχθηκαν τα χρήματα.</p>
+        </div>
+      </section>
+
+      <section id="seen">
+        <p class="eyebrow">04 — Ποιος βλέπει τι</p>
+        <h2>Ο εκπρόσωπος βλέπει δεσμευμένη ημέρα, και τίποτα από πίσω της</h2>
+        <p>Όταν ένας εκπρόσωπος κοιτάζει αυτοκίνητο στο οποίο δεν έχει κράτηση, βλέπει δεσμευμένες ημέρες. Όχι ποιος, όχι ποιο ξενοδοχείο, όχι τον πελάτη, όχι τις ώρες, όχι την τιμή, όχι τον λόγο. Ένα αυτοκίνητο στο συνεργείο και η ενοικίαση ενός συναδέλφου φαίνονται <strong>πανομοιότυπα</strong> — που είναι ακριβώς το σωστό, και προκύπτει από τον τρόπο που αποθηκεύονται τα δεδομένα, όχι από το να θυμάται κάποιος να κρύψει πράγματα.</p>
+
+        <div class="tablewrap">
+          <table>
+            <caption class="sr">Πίνακας δικαιωμάτων ανά ρόλο</caption>
+            <thead>
+              <tr><th scope="col">Δυνατότητα</th><th scope="col" class="c">Ιδιοκτήτης</th><th scope="col" class="c">Εκπρόσωπος<br>δική του κράτηση</th><th scope="col" class="c">Εκπρόσωπος<br>ξένη κράτηση</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Χαρακτηριστικά, φωτογραφίες, ελεύθερες ημέρες</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+              <tr><td>Ποιος κρατά μια κράτηση, και γιατί</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">✗</td></tr>
+              <tr><td>Στοιχεία πελάτη και φωτογραφίες διπλώματος</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">✗</td></tr>
+              <tr><td>Η τιμή της κράτησης</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">✗</td></tr>
+              <tr><td>Τα δικά του μετρητά της ημέρας</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">—</td></tr>
+              <tr><td>Οποιοδήποτε άλλο σύνολο ή μέσος όρος</td><td class="c yes">✓</td><td class="c no">✗</td><td class="c no">✗</td></tr>
+              <tr><td>Αναφορές τζίρου και εξαγωγή CSV</td><td class="c yes">✓</td><td class="c no">✗</td><td class="c no">✗</td></tr>
+              <tr><td>Δημιουργία κράτησης σε οποιοδήποτε ξενοδοχείο</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+              <tr><td>Επεξεργασία κράτησης πριν την παραλαβή</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">✗</td></tr>
+              <tr><td>Οποιαδήποτε αλλαγή μετά την παραλαβή</td><td class="c yes">✓</td><td class="c only">μόνο παράταση</td><td class="c no">✗</td></tr>
+              <tr><td>Αλλαγή τιμής · παράκαμψη ορίου ηλικίας</td><td class="c yes">✓</td><td class="c no">✗</td><td class="c no">✗</td></tr>
+              <tr><td>Προσθήκη, αρχειοθέτηση ή δέσμευση αυτοκινήτου</td><td class="c yes">✓</td><td class="c no">✗</td><td class="c no">✗</td></tr>
+              <tr><td>Ανάγνωση ιστορικού ενεργειών</td><td class="c yes">✓</td><td class="c no">✗</td><td class="c no">✗</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>Οι εκπρόσωποι βλέπουν <strong>ένα και μόνο</strong> τρέχον ποσό: τα μετρητά που εισέπραξαν σήμερα και δεν έχουν ακόμη παραδώσει, με ένα κουμπί παράδοσης. Κανένα μηνιαίο σύνολο, κανένα πλήθος κρατήσεων, κανένας μέσος όρος — τίποτα από το οποίο θα μπορούσε να υπολογιστεί ο τζίρος της εταιρείας. Δεν υπάρχει προμήθεια πουθενά στο σύστημα, γιατί η επιχείρηση δεν δίνει.</p>
+      </section>
+
+      <section id="desk">
+        <p class="eyebrow">05 — Στο γκισέ</p>
+        <h2>Δέκα παραλαβές και δέκα επιστροφές, με το ένα χέρι, στον ήλιο</h2>
+        <p>Η εφαρμογή του εκπροσώπου ανοίγει στο σήμερα: οι δικές του παραλαβές και επιστροφές με τη σειρά της ώρας, με μία μεγάλη ενέργεια η καθεμία. Όλα τα υπόλοιπα απέχουν ένα άγγιγμα.</p>
+
+        <h3>Παραλαβή</h3>
+        <p>Μια αλληλουχία οθονών με έναν σκοπό η καθεμία, που αντέχει να διακοπεί στη μέση — γιατί θα διακοπεί.</p>
+        <ul class="plain">
+          <li><strong>Δίπλωμα</strong> — η κάμερα φωτογραφίζει μπρος και πίσω για κάθε οδηγό. Η κάρτα διαβάζεται αυτόματα και τα πεδία επιστρέφουν συμπληρωμένα και πλήρως επεξεργάσιμα. Η πληκτρολόγηση στο χέρι δουλεύει πάντα, και ένα φθαρμένο ή ασυνήθιστο δίπλωμα δεν μπλοκάρει ποτέ την παραλαβή.</li>
+          <li><strong>Προϋποθέσεις</strong> — 21 ετών και άνω για τις κατηγορίες Α και Β, 23 και άνω για τις υπόλοιπες, δίπλωμα τουλάχιστον ενός έτους, και σε ισχύ πέρα από την ημερομηνία επιστροφής. Η αποτυχία <strong>σταματά την παραλαβή</strong> και ονομάζει τον κανόνα που δεν πέρασε. Μόνο ο ιδιοκτήτης παρακάμπτει, και η παράκαμψη καταγράφεται.</li>
+          <li><strong>Καύσιμο</strong> — στάθμη κατά την παράδοση, σε όγδοα. Ίδια στάθμη κατά την επιστροφή.</li>
+          <li><strong>Ζημιές</strong> — άγγιγμα στο διάγραμμα του αυτοκινήτου για να σημειωθεί ό,τι ήδη υπάρχει, με φωτογραφία ανά σημείο όπου χρειάζεται. Στην επιστροφή, τα νέα σημάδια εμφανίζονται σε άλλο χρώμα και πηγαίνουν κατευθείαν στον ιδιοκτήτη.</li>
+          <li><strong>Μισθωτήριο</strong> — το δίγλωσσο συμβόλαιο παράγεται από την κράτηση, ο πελάτης υπογράφει στην οθόνη με το δάχτυλο, και στέλνεται αντίγραφο με email αν το θέλει.</li>
+          <li><strong>Πληρωμή</strong> — ποσό, τρόπος, εξοφλημένο ή υπόλοιπο. Δεν λαμβάνεται εγγύηση.</li>
+        </ul>
+
+        <h3>Αλλαγές</h3>
+        <p>Πριν βγει το αυτοκίνητο, ο εκπρόσωπος επεξεργάζεται ή ακυρώνει ελεύθερα τη δική του κράτηση. Μετά κλειδώνει, με μία εξαίρεση: μπορεί να την <strong>παρατείνει</strong>. Αν το ίδιο αυτοκίνητο είναι ήδη κρατημένο αργότερα, η εφαρμογή προτείνει ελεύθερο αυτοκίνητο της ίδιας κατηγορίας και ο πελάτης αλλάζει όχημα αντί να χάσει την παράταση.</p>
+      </section>
+
+      <section id="boss">
+        <p class="eyebrow">06 — Η εφαρμογή του ιδιοκτήτη</p>
+        <h2>Το ημερήσιο δελτίο, αντικατεστημένο</h2>
+        <dl class="spec">
+          <div class="row"><dt>Κινήσεις</dt><dd>Οποιαδήποτε ημέρα, όλα τα ξενοδοχεία: πρώτα οι παραλαβές, μετά οι επιστροφές, με τη σειρά της ώρας, με αυτοκίνητο, πελάτη, δωμάτιο και εκπρόσωπο. Εκτυπώσιμο. Αυτή είναι η πρωινή οθόνη.</dd></div>
+          <div class="row"><dt>Πίνακας στόλου</dt><dd>Και τα εκατό αυτοκίνητα ζωντανά — έξω, ελεύθερα, δεσμευμένα, επιστρέφουν σήμερα.</dd></div>
+          <div class="row"><dt>Εκκρεμότητες</dt><dd>Τα εισερχόμενά του. Ελλείμματα καυσίμου, ζημιές με φωτογραφίες, καθυστερημένες επιστροφές, μη εμφανίσεις, αιτήματα παράκαμψης. Ορίζει τη χρέωση και κλείνει το θέμα.</dd></div>
+          <div class="row"><dt>Κρατήσεις</dt><dd>Κάθε κράτηση που έγινε ποτέ, με αναζήτηση σε πελάτη, πινακίδα, ημερομηνία, εκπρόσωπο ή ξενοδοχείο, και επεξεργασία σε κάθε στάδιο. Κάθε αλλαγή καταγράφεται μόνιμα — ποιος, τι, πριν, μετά, πότε.</dd></div>
+          <div class="row"><dt>Αναφορές</dt><dd>Τζίρος ανά ημέρα, μήνα, εκπρόσωπο και κατηγορία, με εξαγωγή CSV. Σκόπιμα απλές.</dd></div>
+          <div class="row"><dt>Στόλος &amp; τιμές</dt><dd>Προσθήκη, αρχειοθέτηση και διαγραφή αυτοκινήτων· δέσμευση ημερών για συνεργείο με λόγο που βλέπει μόνο αυτός· ορισμός τιμολογιακών περιόδων και πινάκων.</dd></div>
+        </dl>
+        <p>Μένει συνδεδεμένος στον <strong>υπολογιστή και στο κινητό ταυτόχρονα</strong> — η σύνδεση στο ένα δεν αποσυνδέει ποτέ το άλλο.</p>
+      </section>
+
+      <section id="platform">
+        <p class="eyebrow">07 — Πλατφόρμα &amp; δεδομένα</p>
+        <h2>Εφαρμογή Android από το Play Store, χτισμένη ως μία web εφαρμογή</h2>
+        <p>Το σύστημα είναι μια web εφαρμογή πακεταρισμένη ως εγγενής εφαρμογή Android και δημοσιευμένη στο Play Store, ώστε να εγκαθίσταται με πραγματικό εικονίδιο και καταχώριση, παραμένοντας ένας κώδικας που ο ιδιοκτήτης μπορεί να ανοίξει και σε υπολογιστή. Οι διορθώσεις βγαίνουν ζωντανά τη στιγμή που ανεβαίνουν, χωρίς ουρά ελέγχου του store στη μέση της σεζόν.</p>
+
+        <dl class="spec">
+          <div class="row"><dt>Συσκευές</dt><dd>Μόνο Android, μέσω Play Store. Περιηγητής σε υπολογιστή για τον ιδιοκτήτη.</dd></div>
+          <div class="row"><dt>Σύνδεση</dt><dd>Απαραίτητη. Μια φόρμα σε εξέλιξη κρατιέται με ασφάλεια αν πέσει το σήμα και στέλνεται μόλις επανέλθει, ώστε να μη χαθεί τίποτα στη μέση μιας παραλαβής.</dd></div>
+          <div class="row"><dt>Γλώσσες</dt><dd>Ελληνικά και αγγλικά, με επιλογή ανά χρήστη. Το μισθωτήριο τυπώνεται πάντα και στις δύο.</dd></div>
+          <div class="row"><dt>Ειδοποιήσεις</dt><dd>Οι εκπρόσωποι παίρνουν πρωινή λίστα και βραδινή υπενθύμιση. Ο ιδιοκτήτης παίρνει τις εκκρεμότητες μόλις προκύψουν.</dd></div>
+          <div class="row"><dt>Διπλώματα</dt><dd>Αποθηκεύονται ιδιωτικά, ποτέ σε δημόσια διεύθυνση, και <strong>διαγράφονται αυτόματα</strong> μόλις περάσει το διάστημα διατήρησης που ορίζει ο ιδιοκτήτης — 24 μήνες από προεπιλογή. Κάθε διαγραφή καταγράφεται.</dd></div>
+          <div class="row"><dt>Συμμόρφωση</dt><dd>Χειρισμός σύμφωνος με τον GDPR, με πραγματική πολιτική απορρήτου, όρους χρήσης και συγκατάθεση cookies. Προσβασιμότητα κατά WCAG 2.1 AA.</dd></div>
+        </dl>
+
+        <div class="note">
+          <h4>Πού βρίσκεται πραγματικά η ασφάλεια</h4>
+          <p>Ο ρεαλιστικός κίνδυνος δεν είναι κάποιος εξωτερικός επιτιθέμενος — είναι ένας συνδεδεμένος εκπρόσωπος με περίεργο περιηγητή. Γι' αυτό ο διαχωρισμός μεταξύ εκπροσώπων επιβάλλεται μέσα στη βάση δεδομένων σε κάθε ερώτημα, όχι από το ποια κουμπιά επιλέγει να σχεδιάσει η εφαρμογή. Εκπρόσωπος που πειράξει ένα αίτημα με το χέρι εξακολουθεί να μην παίρνει τίποτα πίσω.</p>
+        </div>
+      </section>
+
+      <section id="plan">
+        <p class="eyebrow">08 — Σειρά υλοποίησης</p>
+        <h2>Πρώτα τα θεμέλια, γιατί όλα τα ορατά πατούν πάνω τους</h2>
+        <p>Η σειρά είναι σκόπιμη: η διαθεσιμότητα και η τιμολόγηση χτίζονται και δοκιμάζονται πριν από οποιαδήποτε οθόνη, γιατί ένα λάθος σε οποιοδήποτε από τα δύο δηλητηριάζει όλα τα επόμενα. Αν το χρονοδιάγραμμα σφίξει, αυτό που υποχωρεί βρίσκεται στο κάτω μέρος της λίστας, ποτέ στην κορυφή.</p>
+
+        <ol class="phases">
+          <li><span class="ph">ΦΑΣΗ 0</span><span class="what"><b>Θεμέλια</b> — έργο, φιλοξενία, λογαριασμοί, και οι δύο γλώσσες, σύνδεση χρηστών</span><span class="when">~3 ημέρες</span></li>
+          <li><span class="ph">ΦΑΣΗ 1</span><span class="what"><b>Δεδομένα &amp; μηχανές</b> — διαθεσιμότητα, τιμολόγηση, ο διαχωρισμός των εκπροσώπων, εισαγωγή στόλου</span><span class="when">~1 εβδομάδα</span></li>
+          <li><span class="ph">ΦΑΣΗ 2</span><span class="what"><b>Πυρήνας κρατήσεων</b> — οθόνη διαθεσιμότητας, νέα κράτηση, δελτίο κινήσεων, πίνακας στόλου</span><span class="when">~1 εβδομάδα</span></li>
+          <li><span class="ph">ΦΑΣΗ 3</span><span class="what"><b>Παραλαβή &amp; επιστροφή</b> — κάμερα, προϋποθέσεις, καύσιμο, ζημιές, εκκρεμότητες, μετρητά</span><span class="when">~1 εβδομάδα</span></li>
+          <li><span class="ph">ΦΑΣΗ 4</span><span class="what"><b>Μισθωτήριο &amp; ανάγνωση διπλώματος</b> — δίγλωσσο PDF, υπογραφή στην οθόνη, αυτόματη ανάγνωση</span><span class="when">~1 εβδομάδα</span></li>
+          <li class="milestone"><span class="ph">ΔΟΚΙΜΗ</span><span class="what"><b>Πιλοτική σε ένα ξενοδοχείο</b>, παράλληλα με το χαρτί για δεκαπέντε ημέρες — το χαρτί είναι το δίχτυ ασφαλείας και η σύγκριση είναι η δοκιμή</span><span class="when">αρχές Οκτ 2026</span></li>
+          <li><span class="ph">ΦΑΣΗ 5</span><span class="what"><b>Βελτίωση</b> — πρώτα ό,τι έδειξαν στην πράξη οι εκπρόσωποι, μετά αναφορές, ειδοποιήσεις, καταχώριση στο Play Store, έλεγχοι προσβασιμότητας και ταχύτητας, εκπαίδευση</span><span class="when">Οκτ – Φεβ</span></li>
+          <li class="milestone"><span class="ph">ΕΝΑΡΞΗ</span><span class="what"><b>Σε πλήρη λειτουργία</b>, με δύο μήνες πραγματικής χρήσης πριν ανοίξει η σεζόν</span><span class="when">1 Μαρ 2027</span></li>
+        </ol>
+
+        <div class="note warn">
+          <h4>Μια ειλικρινής κουβέντα για τον Οκτώβριο</h4>
+          <p>«Όσο πιο κοντά στην τελική έκδοση γίνεται» μέσα σε πέντε εβδομάδες είναι εφικτό για τον λειτουργικό πυρήνα και σφιχτό για όλα μαζί. Η παραπάνω σειρά προστατεύει ό,τι πρέπει οπωσδήποτε να είναι σωστό — τη διαθεσιμότητα, τον διαχωρισμό των εκπροσώπων, και τις δύο ροές μέσα στις οποίες ζουν οι εκπρόσωποι όλη μέρα. Η αυτόματη ανάγνωση διπλώματος υποχωρεί σε πληκτρολόγηση, και οι αναφορές μπορούν να περιμένουν μέχρι να υπάρχουν πραγματικά δεδομένα. Κανένα από τα δύο δεν χαλάει την πιλοτική.</p>
+        </div>
+      </section>
+
+      <section id="scope">
+        <p class="eyebrow">09 — Εκτός έκδοσης</p>
+        <h2>Σκόπιμα εκτός</h2>
+        <p>Συμφωνήθηκαν ως εκτός αντικειμένου. Τα δεδομένα σχεδιάζονται ώστε να μπορεί να προστεθεί αργότερα δημόσιο κανάλι κρατήσεων χωρίς ξαναγράψιμο, αλλά δεν αφιερώνεται καμία προσπάθεια τώρα.</p>
+        <ul class="chips">
+          <li class="chip out">Online κρατήσεις από πελάτες</li>
+          <li class="chip out">Τιμολόγηση · αποδείξεις · myDATA</li>
+          <li class="chip out">WhatsApp &amp; SMS σε πελάτες</li>
+          <li class="chip out">Χιλιόμετρα &amp; προγραμματισμός σέρβις</li>
+          <li class="chip out">Προμήθειες</li>
+          <li class="chip out">Εγγυήσεις</li>
+          <li class="chip out">Κρατήσεις εκτός σύνδεσης</li>
+          <li class="chip out">Ειδοποιήσεις λήξης ασφάλειας &amp; ΚΤΕΟ</li>
+        </ul>
+      </section>
+
+      <section id="need">
+        <p class="eyebrow">10 — Τι χρειαζόμαστε</p>
+        <h2>Οκτώ πράγματα από την εταιρεία</h2>
+        <p>Τα 1 έως 4 βρίσκονται στην κρίσιμη διαδρομή — η δουλειά στις τιμές και τη διαθεσιμότητα δεν ολοκληρώνεται πάνω σε επινοημένα δεδομένα. Το 5 χρειάζεται το αργότερο μέχρι τα μέσα Σεπτεμβρίου.</p>
+        <ol class="needs">
+          <li>Τα ονόματα των οκτώ κατηγοριών, και ποια από τα είκοσι μοντέλα ανήκουν σε καθεμία</li>
+          <li>Χαρακτηριστικά μοντέλων, μαζί με χωρητικότητα ρεζερβουάρ σε λίτρα</li>
+          <li>Η λίστα στόλου — εκατό πινακίδες με μοντέλο, έτος και χρώμα, σε υπολογιστικό φύλλο</li>
+          <li>Τιμοκατάλογοι — τουλάχιστον μία τιμολογιακή περίοδος, ιδανικά και οι τέσσερις</li>
+          <li>Σάρωση του σημερινού έντυπου μισθωτηρίου και των όρων του, και στις δύο γλώσσες</li>
+          <li>Η λίστα ξενοδοχείων, και ποιος εκπρόσωπος καλύπτει το καθένα</li>
+          <li>Νομικά στοιχεία εταιρείας για το συμβόλαιο: επωνυμία, ΑΦΜ, διεύθυνση, τηλέφωνο, ασφαλιστική</li>
+          <li>Όνομα domain, και λογαριασμός προγραμματιστή Google Play</li>
+        </ol>
+      </section>
+
+      <footer>
+        <span>International Rentals · προδιαγραφή λειτουργίας · v1.0</span>
+        <span>© 2026 <a href="https://akosds.com">Akos Digital Services</a></span>
+      </footer>
+
+    </main>
+  </div>
+</div>
