@@ -1,0 +1,68 @@
+# docs/05-BUILD-PLAN.md, risks table: "A rep discovers an aggregate the design
+# didn't anticipate → the isolation test suite runs in CI on every change."
+# That is what this file is for. The suite is the commercial promise of the
+# product under test, so it runs on every push and every pull request, not
+# nightly and not on a tag.
+#
+# It needs NO SECRETS. `npm test` starts its own Postgres 18 in-process
+# (embedded-postgres) and recreates the Supabase pieces the migrations assume,
+# so there is no Docker, no network and no database to provision; and the build
+# reads its environment lazily at request time, so it compiles with none set.
+# A workflow that cannot leak a credential is one fewer place to rotate one.
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+# A second push supersedes the first: nothing is learned from finishing a run
+# against a commit that has already been replaced.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: test · typecheck · build · audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # `npm ci` rather than `npm install`: the lockfile is the input, and a
+      # transitive version drifting under CI would make a green run a claim
+      # about a dependency tree nobody has.
+      - run: npm ci
+
+      # Ordered by how fast each one says something useful. Every step runs
+      # even if an earlier one failed, because "the types are wrong AND two
+      # isolation tests broke" is a more useful report than either alone.
+      - name: Typecheck
+        id: typecheck
+        run: npm run typecheck
+
+      - name: Tests
+        if: '!cancelled()'
+        run: npm test
+
+      - name: Build
+        if: '!cancelled()'
+        run: npm run build
+
+      # docs/03-SECURITY.md: "Scan dependencies for known vulnerabilities and
+      # patch before launch — not just at project start." The threshold is
+      # `low` because the tree is small enough that it has always been clean,
+      # and the moment to argue about an advisory is when it appears.
+      - name: Audit
+        if: '!cancelled()'
+        run: npm audit --audit-level=low
