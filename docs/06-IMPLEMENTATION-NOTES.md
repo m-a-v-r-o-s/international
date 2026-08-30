@@ -1,4 +1,4 @@
-# Implementation notes — Phases 0 to 4
+# Implementation notes — Phases 0 to 5
 
 What was built, the decisions the planning documents left open, and what is
 still outstanding. `docs/01-DECISIONS.md` remains the authority; nothing here
@@ -30,6 +30,253 @@ verification of extensions with a same-category swap. 273 tests.
 Claude vision OCR, the photo per damage mark, the bilingual contract PDF,
 on-screen signature capture with the emailed copy, and A10's contract half.
 373 tests.
+
+**Phase 5, the run-up to the October pilot** — A8 users and hotels, the licence
+retention purge, A10's remaining half and the pick-up/drop-off times R3 never
+collected, CI, A9 the audit-log viewer, push notifications with R8's
+notification half, and the pre-pilot pass: a WCAG 2.1 AA audit and the load
+test at 200 movements and a full fleet. 510 tests.
+
+## Decisions taken while building — Phase 5
+
+**Creating a rep is a new category of service-role use, and it is the only
+door.** Everywhere else the key does something the server does on its own
+behalf — rate limiting, the security log, device binding, PIN storage, the
+retention job. `createRepAccount()` acts because the boss asked it to, which is
+the pattern `src/lib/supabase/admin.ts` warns against. It is nevertheless the
+only available surface: an insert into `auth.users` is 42501 for
+`authenticated` **and** for `service_role` (probed, not assumed), and PostgREST
+does not expose the `auth` schema, so there is no policy, grant or SECURITY
+DEFINER function that could stand in for the GoTrue Admin API. Three things
+keep it from being a hole. The authorisation is still Postgres's — the caller's
+own session has to get an answer out of `admin_list_users()`, which asserts
+`app.is_admin()`, before the Admin API is touched. What the key can mint is
+inert: `app.handle_new_user()` forces role `'rep'`, and a rep with no
+`hotel_reps` row can read nothing but their own profile, so promotion still
+needs `admin_set_user_role()` and its IR113 self-check. And every account event
+is logged with the address hashed and never the password.
+
+**A temporary password rather than an invite link, and the loser is named.**
+§21 says a rep signs in with email and password on first use. Supabase offers
+both shapes, and `inviteUserByEmail()` needs email delivery — client item 8,
+the same missing domain and SMTP account that has kept `src/lib/email/mailer.ts`
+from ever sending anything. Supabase's built-in sender exists but is rate
+limited to a couple of messages an hour and documented as being for testing. An
+invite that does not arrive is a rep who cannot sign in, at a hotel desk,
+during the fortnight the whole October date exists for. So: a password
+generated server-side from `crypto.randomInt` over an alphabet with no 0/O and
+no 1/l/I because it gets read aloud, shown once, recoverable never, with a
+re-issue action for when it is lost, and `email_confirm` set so the account
+works immediately rather than waiting on a mail that cannot be sent. The cost,
+stated in the file rather than left implicit: the boss knows the initial
+password until the rep changes it. He is the owner, he already has admin rights
+over every row, and the audit log records the actor — but it is real, and
+rep-side password change belongs with WebAuthn on the hardening list. When the
+domain arrives, the invite becomes a choice rather than the only door.
+
+**A8 is the isolation boundary, so its headline test is withdrawal and not
+grant.** `hotel_reps` is what `app.my_hotel_ids()` reads and that is the whole
+of the §8 cover-shift rule, so every row that screen writes re-shapes who can
+see whose bookings. A permission that cannot be taken away is not a permission,
+so the test that matters proves visibility appears when a hotel is assigned and
+disappears when it is removed, in both directions. Moving a rep's home hotel is
+one RPC doing both halves in one transaction: there is no instant in which they
+are stationed at both hotels or at neither, and `admin_set_cover(false)` cannot
+be the click that unstations somebody.
+
+**Deactivating an account did not deactivate it, and that is the most serious
+thing this phase found.** `admin_set_user_active()` sets `profiles.active =
+false` and the app boundary honours it, but `bookings_select` and
+`bookings_update` read `created_by = auth.uid() or hotel_id = any
+(app.my_hotel_ids())` and neither branch asked whether the caller was still
+staff. A JWT issued before the deactivation stays valid until it expires and
+Supabase cannot be told otherwise, so for the life of that token a dismissed
+rep with the anon key and their own access token could go at PostgREST
+directly and read their own bookings *and every booking at the hotel they used
+to cover* — another rep's guests — along with those bookings' drivers,
+`licence_number` included, their handovers, damage marks, contracts,
+exceptions, and the licence images in the private bucket, every one of which is
+gated on `app.can_read_booking()`. And they could **UPDATE a live booking**:
+verified, not theorised, the statement returned `rows=1`. A dismissed rep
+changing a guest's dates, room or status is the worst item on that list and is
+precisely the caller `docs/03-SECURITY.md` names. INSERT was already safe,
+because `app.bookings_before_write()` reaches `quote()`, which asserts staff.
+
+The fix introduces no new mechanism: `app.is_staff()` already means "signed in,
+and still active", `app.is_admin()` already checks `active` itself, and putting
+the predicate inside `app.can_read_booking()` closes every child table at once
+— which is the payoff for the rule having been written in one place. No
+GoTrue-side ban was added alongside it: it would block a fresh sign-in but not
+an already-issued token, and a second switch that could drift out of step with
+`profiles.active` would make "is this person still staff" a question with two
+answers.
+
+**The purge's predicate is positive, and never a negation.** It runs as the
+service role and bypasses RLS entirely, so the predicate is the only thing
+between a correct sweep and deleting a contract. An object is due only if a
+booking row **exists**, its `end_date` is older than the window, and the object
+sits under `<booking>/licences/`. Nothing is deleted because the sweep failed
+to find a reason to keep it. An object whose booking has vanished is an
+**orphan**: counted, reported on A10, never swept — a negation over a join is
+the shape that deletes the world the day the join breaks. `end_date` is the
+date the rental was contracted to end; it is a `date` and not an instant, it
+never moves backwards (IR110), and an extension moves it forward, which
+correctly pushes the purge later.
+
+**The deletion moved out of SQL, and that is a correction to what this document
+previously said.** The sweep was written down here as `delete from
+storage.objects where …`. That is the right predicate and the wrong verb: on
+Supabase that table is the metadata in front of the bucket's backing store, so
+deleting a row removes the app's knowledge of the file and leaves the file
+itself in the bucket. A purge that records destroying a scanned driving licence
+while the object survives is worse than no purge — it is a GDPR obligation
+marked done. The database hands over the list and `src/lib/retention/purge.ts`
+deletes through the Storage API, which owns both halves. Two independent layers
+decide what may go, sharing no code: the SQL returns only objects whose second
+path segment is `licences`, read through the same `app.object_file_kind()` the
+bucket policies use, and every path is then re-parsed in TypeScript with
+anything that is not `<booking>/licences/<file>`, or that names a different
+booking from the one the query reported, dropped rather than deleted. Malformed
+names are skipped rather than fatal — a bare `::uuid` cast in the join would
+raise 22P02 on one bad row and abandon the whole unattended run.
+
+**A10's window half turned out not to be a settings screen.** `pickup_at` and
+`dropoff_at` have existed since Phase 1 and are read in six places — R1's Today
+screen sorts by them, A1's movements sheet sorts and prints them, the contract
+prints them — and **R3 never collected either**, so every booking ever made
+carried null and the boss's morning screen sorted a column of blanks.
+`docs/04-SCREENS.md` R3 step 1 asked for both, with the windows as their
+defaults. Building the setting without the field it feeds would have been a
+knob attached to nothing. Postgres does the date-plus-time conversion, from a
+literal naming `Europe/Athens`, rather than a `Date` in whatever zone the
+container runs in — which would get the March and October changeovers wrong in
+a country that observes both.
+
+**`window_override` was the client's opinion.** It sits in the rep's own INSERT
+and UPDATE grant, so a rep could book an 03:00 pick-up marked ordinary, or
+stamp an override on a routine one; §5 says the override is *recorded*, and a
+recorded fact the caller supplies is claimed, not recorded. Same family as
+`contracts.signed_at` in 0017. The database derives it now, for the admin too.
+It lives in its own BEFORE trigger rather than inside
+`app.bookings_before_write()`: that function is 200 lines of load-bearing
+transition rules and has already been re-pasted whole once, and pasting it
+again to add two lines is how a silent divergence starts. Postgres fires
+row-level BEFORE triggers in name order, so `bookings_guard` still has the last
+word on every field it protects.
+
+**A9 joins the actor's name and nothing else, ever.** `app.audit_redact()`
+strips `pin_hash`, `licence_number`, the two licence image paths, `pdf_path`,
+`signature_path` and `photo_path` on the way in, because the log records who
+did what and not a second index of where the personal data sits. There are
+tests asserting each of those is absent, searched across the whole serialised
+entry rather than the field it would sit in. An audit screen that quietly
+re-assembled what the redaction removed would be the last place anybody thought
+to look for a leak. The screen shows the *difference* between `before` and
+`after` rather than two forty-column rows, values are truncated at 160
+characters because one edit to `app_settings.company` would otherwise print the
+entire bilingual contract terms twice, and paging is limit+1 rather than a
+count over a table that only ever grows.
+
+**Exception notifications are swept, not pushed from where they are raised.**
+Three code paths raise one today — the pickup flow, the return flow and
+`admin_override_eligibility()` — and hanging a send off each means the fourth
+path added next year notifies nobody. `exceptions.notified_at` is the stamp; it
+is in no client grant, so a rep cannot mark the boss's inbox as read, and it is
+written only after the send so a failure leaves them pending. They are stamped
+even when nobody is subscribed, or the first person to enable push would be
+greeted by every exception in the history of the business.
+
+**A rep's notification lists movements and never counts them.** §7 allows a rep
+exactly one aggregate and Phase 3 already declined to put a count of today's
+pickups on R1, on the grounds that a count of rentals starting today is a
+figure company revenue can be worked back from. "You have 4 pickups today"
+would put back precisely what that decision left out. The summary prints times,
+plates and guests, and when there are more than fit it ends in an ellipsis
+rather than "and 3 more" — which would be the same number by another route.
+`rep_day_movements()` returns rows, and a test asserts the columns it is
+*declared* to return, so a future widening that added a total fails in CI
+rather than on a phone.
+
+**The service worker is registered from a bundled component, never an inline
+script.** `src/proxy.ts` sets `script-src` to nonce + `strict-dynamic` with no
+`unsafe-eval` in production, so an inline registration would need the nonce
+threaded to it by hand and would work in `next dev` while failing silently on
+Railway. `worker-src 'self' blob:` already permitted the worker itself.
+`/sw.js` also joins the proxy's matcher exclusions, for a reason of its own: a
+browser re-fetches a service worker on its own schedule, including while a
+rep's device is PIN-locked, and the proxy would answer that with a redirect to
+`/unlock` — and a worker that fails to update runs the version it has for ever.
+The worker does not cache and does not intercept fetches: §23 says online only,
+so a cache would be an offline mode nobody asked for, and the first thing it
+would do wrong is show a rep a stale availability screen.
+
+**Every word in a notification is translated by the sender.** The worker is
+outside `next-intl`'s reach entirely — no React, no provider, no request locale
+— so it would have been the one place a hard-coded English string could hide.
+The sender reads the same two catalogues, picks the one matching that person's
+`profiles.lang`, and puts finished text in the payload. It goes through
+next-intl's own `createTranslator` rather than a `{placeholder}` replace,
+because "3 new exceptions" is a plural and Greek's plural rules are not
+English's; a private formatter would have printed the raw ICU source the first
+time somebody wrote a correct message.
+
+## The pre-pilot pass
+
+**The load test measured, and prints what it measured.** Availability over the
+whole fleet is 6 ms for a fortnight and 7 ms for the 365-day maximum the engine
+permits; the movements sheet is 39 ms for 200 rows plus 12 ms for the four id
+lookups it hangs off them; cash in hand is 4 ms. Budgets are set at 1–5 seconds
+because they exist to catch a collapse — a missing index, an accidental cross
+join — not to police milliseconds on a laptop.
+
+One thing the exercise established that the plan had not: **200 movements on
+one day is not reachable with a hundred-car fleet.** A day is inclusive and the
+exclusion constraint gives one car at most one hold on a date, so a car
+returning on the 15th and a car collected on the 15th are necessarily different
+cars. The fixture loads twice the real fleet to produce the row count the build
+plan asks the sheet to be tested at, which makes every budget conservative.
+
+**The WCAG audit found two real defects.** Every input and every quiet button
+drew its border in `--color-line`, which is 1.39:1 against the field's own
+white and 1.29:1 against the page — nowhere near §1.4.11's 3:1 for the visual
+information that identifies a control, and a field here is white on a
+near-white page, so that border is the only thing saying where the control is.
+`--color-control` now draws every control edge; `--color-line` stays for card
+edges and dividers, which carry no information and which 1.4.11 does not cover.
+And the damage diagram's view switcher declared `role="tablist"` without a
+roving tabindex or arrow keys — a role that promises a screen-reader user
+"tab, 2 of 5" and then does not move when they press Right, while putting four
+needless stops in the tab order. Both are fixed.
+
+The contrast checks are now a test that computes ratios from the tokens *and*
+parses the ratio each token claims in its own comment, so a stale comment fails
+CI. That found a third thing: four of the seven annotations were wrong, every
+one of them understating the real ratio. The structural checks came back clean
+— no image without alt, no positive tabindex, no removed focus ring, no
+unlabelled control, no skipped heading level, `lang` on `<html>`, a skip link,
+and `prefers-reduced-motion` honoured.
+
+## Getting the pilot signed in
+
+Not a decision, but the thing that will otherwise cost an afternoon in October.
+There is no Supabase project yet, so nothing in this repo has ever authenticated
+against a real GoTrue. When one exists:
+
+1. Paste the project URL, the anon key, the service-role key, a real
+   `SESSION_SECRET` and `DATABASE_URL` into `.env.local`.
+2. `npm run db:reset -- --seed` applies every migration plus the placeholder
+   fleet and price tables.
+3. **The first admin has to be made by hand**, in the dashboard, with "Auto
+   Confirm User" ticked — there is no SMTP, so a confirmation mail would never
+   arrive — and then `update public.profiles set role = 'admin' where id = …`.
+   `app.handle_new_user()` starts everybody at `'rep'`, and A8 refuses to act
+   for a caller who is not already an admin, so somebody has to be one first.
+   Every rep after that is created on A8.
+4. **The admin's one-time code needs Supabase's Magic Link email template to
+   include `{{ .Token }}`.** The app verifies a six-digit token
+   (`verifyOtp({ type: 'email' })`) and the default template sends only a link,
+   so out of the box the boss would receive something the login screen cannot
+   accept. Worth fixing before the pilot rather than during it.
 
 ## Decisions taken while building — Phase 4
 
@@ -451,33 +698,67 @@ the expected state, not a defect — see "What is placeholder, and what is not".
 have something to run against. Every value in it is invented. It must not reach
 production and none of its numbers should ever be quoted to the client.
 
+Item 6 is the one that changed shape this phase. The hotel list and rep
+assignments are still outstanding, but they are no longer blocking: A8 is the
+screen the boss enters them on himself, which was the point of building it
+first.
+
 ## Not done, and where it belongs
 
-- **Screens.** R1–R7 and A1–A6 are built, and A10's contract half. Still to
-  come, all Phase 5 per the build plan: A7 reports and CSV export, A8 users and
-  hotels, A9 the audit-log viewer, A10's remaining half (the licence retention
-  window and the default pick-up / drop-off windows), and R8's notification
-  preferences (its language and PIN halves exist).
+- **A7 reports and CSV export.** The only screen in the inventory still
+  unbuilt. `docs/05-BUILD-PLAN.md` defers it until genuine data has
+  accumulated, and the October pilot is what produces that data — building
+  revenue-by-rep against a placeholder fleet would be building a chart of
+  invented numbers. It stays after the pilot deliberately.
+- **Core Web Vitals on a real mid-range Android on 4G.** Asked for by the build
+  plan and NOT done: it needs a deployed URL and a physical device, and there
+  is neither a domain nor a Supabase project (client item 8). A lab figure off
+  a laptop would mean nothing and is not offered in its place. The data layer
+  IS measured, at full volume, in `tests/db/load.test.ts`.
 - **The signed-URL HTTP layer.** The authorisation decision behind a signed URL
   is tested against the real policies (`tests/db/storage-isolation.test.ts`);
   that a minted URL expires on time, and that the Supabase storage service
   consults those policies at all, is Supabase's own behaviour and is not
-  simulated. Confirm it once against a real project before the October pilot.
+  simulated. Confirm it once against a real project before the pilot.
+- **The purge against real Storage.** Same shape as the item above and for the
+  same reason. The predicate, the two-layer path check, the window either side
+  of the cut-off and the marking are all tested against real Postgres; that
+  `storage.remove()` actually destroys the object is Supabase's behaviour.
+  Confirm it once, on a file that does not matter, before the retention window
+  first comes due — which given a 24-month default is not urgent, and which is
+  exactly why it would otherwise be discovered late.
+- **A push actually arriving on a phone.** `web-push` signs and posts to
+  Google's and Mozilla's services; with no VAPID keys configured nothing has
+  ever been sent, the same honest state as the mailer. The sender, the targets,
+  the sweep, the preferences and the wording are tested; the round trip to a
+  real device is not, and wants doing on the pilot phones in October.
 - **Actually sending an email.** `src/lib/email/mailer.ts` is complete and
-  unexercised: there is no domain and no SMTP account (client item 8), so
-  nothing has ever been sent. The four `SMTP_*` variables are the only missing
-  part.
+  unexercised: there is no domain and no SMTP account (client item 8). The four
+  `SMTP_*` variables are the only missing part.
 - **The real contract terms and company details.** Client items 5 and 7. Until
   they arrive every agreement is a stamped DRAFT and the signing step refuses.
-- **WebAuthn / fingerprint unlock.** §21 offers "PIN or fingerprint". The PIN
-  is built; the platform authenticator is a Phase 5 addition that changes no
-  data model.
-- **Retention purge job** for licence images. Phase 5, per the build plan. The
-  `images_purged_at` column and the settings value are in place, and the bucket
-  layout is what the sweep reads: `delete from storage.objects where bucket_id
-  = 'booking-files' and (storage.foldername(name))[2] = 'licences'`, joined to
-  the bookings whose rental ended more than `licence_retention_months` ago. A
-  test already exercises exactly that query as the service role.
-- **CI.** The isolation suite is meant to run on every change
-  (`docs/05-BUILD-PLAN.md`, risks table). `npm test` is ready for it; the
-  workflow itself is not written.
+- **The TWA wrapper, the Play listing and `manifest.webmanifest`.** All three
+  are blocked on client item 8 — a domain and a Play developer account — and
+  none should be started without the domain, because the TWA's asset-links
+  verification is bound to it. `src/proxy.ts` already excludes the manifest
+  path from its matcher, so adding one is a file and not a change.
+- **WebAuthn / fingerprint unlock**, and **rep-side password change**. §21
+  offers "PIN or fingerprint"; the PIN is built. The password change belongs
+  beside it: A8 issues a temporary password the boss knows, and the rep should
+  be able to replace it. Neither changes a data model.
+- **A true token revocation on deactivation.** `profiles.active` is now
+  authoritative in Postgres as well as in the app
+  (`supabase/migrations/20260830150000_deactivation.sql`), so a deactivated
+  account can do nothing with a live JWT. Revoking the token itself through the
+  Supabase admin API would additionally stop it being presented at all; it is
+  strictly an improvement, not a gap, and it must not become a second source of
+  truth for whether somebody is staff.
+- **`handovers.by_profile` and a direct `cash_handovers` insert.** Carried over
+  from Phase 3's list, unchanged and still worth an hour: a rep can set
+  `by_profile` to another profile on a booking they can already reach, and can
+  insert a `cash_handovers` row with any amount. Neither moves a figure —
+  `my_cash_in_hand()` counts bookings, and `admin_confirm_cash_handover()`
+  makes every receipt a claim the boss confirms — but both are writes that say
+  something untrue about who did what.
+- **Staff training and the written runbook, in Greek.** Phase 5 in the build
+  plan, and the one item on it that is not code.
