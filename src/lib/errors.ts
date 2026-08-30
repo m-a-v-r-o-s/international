@@ -21,6 +21,7 @@ export type ErrorKey =
   // Raised by the app rather than by Postgres: a file the upload path refused
   // before it ever reached the bucket, and the caps around the OCR call.
   | 'fileType' | 'fileTooLarge' | 'rateLimited' | 'ocrFailed'
+  | 'companyMissing' | 'contractFailed' | 'signatureMissing'
 
 /** The Postgres exclusion constraint on `bookings` — the double-booking guarantee. */
 const EXCLUSION_VIOLATION = '23P01'

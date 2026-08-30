@@ -275,7 +275,9 @@
       "fuel": "Fuel",
       "damage": "Damage",
       "payment": "Payment",
-      "confirm": "Confirm"
+      "confirm": "Confirm",
+      "agreement": "Agreement",
+      "copy": "Copy"
     },
     "driversIntro": "Type each driver's licence details. Additional drivers are free of charge.",
     "mainDriver": "Main driver",
@@ -330,7 +332,12 @@
     "ocrRateLimited": "The photos were saved. Automatic reading has been used a lot in the last few minutes — type the licence in below.",
     "ocrUnreadable": "The photos were saved, but nothing could be read from them. Type the licence in below.",
     "ocrUnreviewed": "These fields were read from the photo and nobody has checked them yet. Correct anything that is wrong, then save.",
-    "ocrConfidence": "Read confidence: {percent}%"
+    "ocrConfidence": "Read confidence: {percent}%",
+    "toAgreement": "Continue to the agreement",
+    "toCopy": "Continue to the copy",
+    "contractOnFile": "Agreement",
+    "contractSigned": "Signed",
+    "contractUnsigned": "Not signed"
   },
   "returnFlow": {
     "title": "Return",
@@ -609,7 +616,10 @@
     "fileType": "That file is not a photo the app can read. Take the photo again, or choose a JPEG or PNG.",
     "fileTooLarge": "That photo is too large. Take it again at a smaller size.",
     "rateLimited": "Too many attempts just now. Wait a moment, then try again.",
-    "ocrFailed": "The licence could not be read from the photo. Type the driver in, then add the photos."
+    "ocrFailed": "The licence could not be read from the photo. Type the driver in, then add the photos.",
+    "companyMissing": "The company details and the agreement terms have not been entered yet, so the agreement cannot be signed. Ask the manager to fill them in under Settings.",
+    "contractFailed": "The agreement could not be produced. Nothing was saved — try again.",
+    "signatureMissing": "No signature was captured. Sign in the box, or take a photo of a signed paper copy."
   },
   "eligibility": {
     "title": "Eligibility",
@@ -761,5 +771,42 @@
       "terms_el": "Terms — Greek",
       "terms_en": "Terms — English"
     }
+  },
+  "contractStep": {
+    "agreementTitle": "Rental agreement",
+    "agreementIntro": "Show the guest the agreement, then have them sign it. Both languages are on the same document.",
+    "preview": "Open the agreement",
+    "previewHint": "Opens the bilingual agreement in a new tab. Nothing is saved until it is signed.",
+    "blockedTitle": "The agreement is not ready to be signed.",
+    "blockedBody": "The company details and the terms have not been entered in the app yet. You can still open the preview to check it, but it is marked DRAFT and must not be signed. The manager fills these in under Settings.",
+    "blockedSkip": "Carry on with the pickup without the agreement.",
+    "signerName": "Who is signing",
+    "signerNameHint": "The name of the person signing, as it should appear on the agreement.",
+    "drawLabel": "Signature",
+    "drawHint": "Hand the phone to the guest and have them sign with a finger.",
+    "clearSignature": "Clear and start again",
+    "signatureCaptured": "Signature captured.",
+    "photoLabel": "Or a photo of a signed paper copy",
+    "photoHint": "If the guest cannot sign on the screen, print or write the agreement, have them sign it, and photograph the signature here. It is stored and printed exactly the same way.",
+    "signAction": "Sign the agreement",
+    "signedTitle": "Signed",
+    "signedBy": "Signed by {name} on {when}.",
+    "openSigned": "Open the signed agreement",
+    "signAgain": "Sign again",
+    "signAgainHint": "A new signature is stored as a new version. The one already signed is kept.",
+    "copyTitle": "Send the guest a copy",
+    "copyIntro": "Optional. Ask the guest if they want a copy by email.",
+    "emailLabel": "Guest email",
+    "emailHint": "Only used to send this agreement.",
+    "sendCopy": "Send the copy",
+    "skipCopy": "The guest does not want a copy",
+    "skipHint": "Skipping records nothing and changes nothing.",
+    "copySent": "A copy was sent to {email}.",
+    "copySentNow": "The copy was sent.",
+    "copyRecorded": "The address {email} is on file, but no copy has been sent.",
+    "copyRecordedOnly": "The address was saved. Email sending is not set up on this installation yet, so no copy has gone out.",
+    "copyFailed": "The address was saved, but the copy could not be sent. Try again later.",
+    "mailNotConfigured": "Email sending is not set up on this installation yet. An address entered here is saved with the booking so the copy can be sent once it is.",
+    "notSignedYet": "Sign the agreement first."
   }
 }

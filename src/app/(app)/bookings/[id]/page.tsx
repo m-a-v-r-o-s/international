@@ -7,6 +7,8 @@ import { supabaseServer } from '@/lib/supabase/server'
 import { EditBookingForm } from './EditBookingForm'
 import { ExtendBookingForm } from './ExtendBookingForm'
 import { CancelForm } from './CancelForm'
+import { signBookingFile } from '@/lib/storage/booking-files'
+import { athensDateTime } from '@/lib/contract/data'
 import type { BookingRow } from '@/lib/supabase/database.types'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -33,6 +35,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
   const { id } = await params
   const t = await getTranslations('bookingDetail')
   const tt = await getTranslations('today')
+  const tcs = await getTranslations('contractStep')
   const supabase = await supabaseServer()
 
   const { data: booking } = await supabase.from('bookings')
@@ -47,11 +50,22 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
     | 'cust_first' | 'cust_last' | 'cust_phone' | 'cust_dob'
     | 'total_cents' | 'days' | 'collected_cents' | 'pay_method' | 'paid' | 'created_by' | 'created_at'>
 
-  const [{ data: car }, { data: hotelsResult }, { data: extras }] = await Promise.all([
-    supabase.from('cars').select('id, plate, model_id').eq('id', row.car_id).maybeSingle(),
-    supabase.rpc('staff_hotels'),
-    supabase.from('booking_extras').select('id, seat, qty').eq('booking_id', row.id),
-  ])
+  const [{ data: car }, { data: hotelsResult }, { data: extras }, { data: contracts }] =
+    await Promise.all([
+      supabase.from('cars').select('id, plate, model_id').eq('id', row.car_id).maybeSingle(),
+      supabase.rpc('staff_hotels'),
+      supabase.from('booking_extras').select('id, seat, qty').eq('booking_id', row.id),
+      // docs/04-SCREENS.md R6: "tap through to the full record and the signed
+      // contract PDF". The latest version, behind a signed URL — there is no
+      // public link to a signed agreement any more than to a licence image.
+      supabase.from('contracts')
+        .select('id, pdf_path, signed_at, signer_name, version')
+        .eq('booking_id', row.id).order('version', { ascending: false }).limit(1),
+    ])
+  const contract = contracts?.[0] ?? null
+  const contractUrl = await signBookingFile(supabase, contract?.pdf_path, {
+    actorId: staff.id, ttlSeconds: 300,
+  })
   const hotels = hotelsResult ?? []
   const hotelName = hotels.find((h) => h.id === row.hotel_id)?.name ?? null
 
@@ -122,6 +136,23 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
           </div>
         ) : null}
       </section>
+
+      {contract ? (
+        <section className="ir-card p-4">
+          <h2 className="mb-1 text-[1.0625rem] font-semibold">{tcs('agreementTitle')}</h2>
+          <p className="mb-3 text-[0.9375rem] text-ink-soft">
+            {tcs('signedBy', {
+              name: contract.signer_name,
+              when: athensDateTime(contract.signed_at),
+            })}
+          </p>
+          {contractUrl ? (
+            <a href={contractUrl} target="_blank" rel="noreferrer" className="ir-btn-quiet">
+              {tcs('openSigned')}
+            </a>
+          ) : null}
+        </section>
+      ) : null}
 
       {beforePickup ? (
         <Link href={`/bookings/${row.id}/pickup`} className="ir-btn-primary">{tt('startPickup')}</Link>

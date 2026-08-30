@@ -4,7 +4,10 @@ import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { requireUnlocked } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
-import { signBookingFiles } from '@/lib/storage/booking-files'
+import { signBookingFiles, signBookingFile } from '@/lib/storage/booking-files'
+import { loadContractSource } from '@/lib/contract/load'
+import { mailConfigured } from '@/lib/email/mailer'
+import { athensDateTime } from '@/lib/contract/data'
 import { loadHandoverContext, checkDriverEligibility } from '@/lib/handover/load'
 import { DamageDiagram } from '../DamageDiagram'
 import { FuelSlider } from '../FuelSlider'
@@ -12,6 +15,8 @@ import { ConfirmTransition } from '../ConfirmTransition'
 import { StepNav, type StepState } from '../StepNav'
 import { DriverForm } from './DriverForm'
 import { LicenceCapture, type StoredLicenceImages } from './LicenceCapture'
+import { SignaturePad } from './SignaturePad'
+import { ContractCopyForm } from './ContractCopyForm'
 import { PaymentForm } from './PaymentForm'
 import { saveFuelOut, completePickup } from './actions'
 
@@ -20,7 +25,12 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t('title') }
 }
 
-const STEPS = ['drivers', 'eligibility', 'fuel', 'damage', 'payment', 'confirm'] as const
+// docs/04-SCREENS.md R4, in its own order: licence, eligibility, fuel, damage,
+// agreement, copy, payment. `confirm` is the booked → out transition at the
+// end of it.
+const STEPS = [
+  'drivers', 'eligibility', 'fuel', 'damage', 'agreement', 'copy', 'payment', 'confirm',
+] as const
 type Step = (typeof STEPS)[number]
 
 /**
@@ -36,6 +46,13 @@ type Step = (typeof STEPS)[number]
  * Step 1 is a camera in front of a form, never instead of one
  * (docs/01-DECISIONS.md §10): a rep who photographs nothing fills the same
  * fields by hand and the pickup proceeds identically.
+ *
+ * The agreement and the copy are steps, not gates. Nothing in the database
+ * requires a signed contract to reach `out` — the only hard block on that
+ * transition is eligibility (§11) — and inventing a second one here would be
+ * a rule the client never agreed to, on top of being unworkable while the
+ * terms are still outstanding. The confirm step says whether an agreement is
+ * on file so the rep can see what they are about to do.
  */
 export default async function PickupPage({
   params, searchParams,
@@ -49,6 +66,7 @@ export default async function PickupPage({
   const t = await getTranslations('pickup')
   const th = await getTranslations('handover')
   const tb = await getTranslations('bookingDetail')
+  const tcs = await getTranslations('contractStep')
   const supabase = await supabaseServer()
 
   const ctx = await loadHandoverContext(supabase, id, staff.id)
@@ -86,6 +104,14 @@ export default async function PickupPage({
   })
   const indexOfDriver = new Map(drivers.map((d, i) => [d.id, i]))
 
+  // The agreement's own state: whether the company details and terms exist at
+  // all, and whether the guest has already signed.
+  const contractSource = await loadContractSource(supabase, booking.id)
+  const signed = contractSource?.contract ?? null
+  const signedUrl = await signBookingFile(supabase, signed?.pdf_path, {
+    actorId: staff.id, ttlSeconds: 300,
+  })
+
   const overridden = booking.eligibility_override_at !== null
   const hasDrivers = drivers.length > 0
   const allEligible = hasDrivers && eligibility.every((e) => e.ok)
@@ -97,6 +123,8 @@ export default async function PickupPage({
     eligibility: true,
     fuel: gateOpen,
     damage: gateOpen && pickup !== null,
+    agreement: gateOpen && pickup !== null,
+    copy: gateOpen && pickup !== null,
     payment: gateOpen && pickup !== null,
     confirm: gateOpen && pickup !== null,
   }
@@ -105,6 +133,8 @@ export default async function PickupPage({
     eligibility: gateOpen,
     fuel: pickup?.fuel_eighths !== null && pickup !== null,
     damage: pickup !== null,
+    agreement: signed !== null,
+    copy: signed?.emailed_to !== null && signed !== null,
     payment: booking.pay_method !== null || booking.collected_cents > 0,
     confirm: false,
   }
@@ -268,7 +298,94 @@ export default async function PickupPage({
           <h2 className="text-[1.25rem] font-semibold">{t('step.damage')}</h2>
           <p className="text-ink-soft">{t('damageIntro')}</p>
           <DamageDiagram handoverId={pickup.id} marks={marks} tone="existing" />
-          <Link href={nextHref('damage')} className="ir-btn-primary">{t('toPayment')}</Link>
+          <Link href={nextHref('damage')} className="ir-btn-primary">{t('toAgreement')}</Link>
+        </section>
+      ) : null}
+
+      {step === 'agreement' ? (
+        <section className="flex flex-col gap-4">
+          <h2 className="text-[1.25rem] font-semibold">{tcs('agreementTitle')}</h2>
+          <p className="text-ink-soft">{tcs('agreementIntro')}</p>
+
+          <div className="ir-card flex flex-col gap-2 p-4">
+            <a
+              href={`/bookings/${booking.id}/contract`}
+              target="_blank"
+              rel="noreferrer"
+              className="ir-btn-quiet"
+            >
+              {tcs('preview')}
+            </a>
+            <p className="ir-hint">{tcs('previewHint')}</p>
+          </div>
+
+          {signed ? (
+            <div className="ir-card flex flex-col gap-2 p-4">
+              <h3 className="text-[1.0625rem] font-semibold text-ok">{tcs('signedTitle')}</h3>
+              <p>
+                {tcs('signedBy', {
+                  name: signed.signer_name,
+                  when: athensDateTime(signed.signed_at),
+                })}
+              </p>
+              {signedUrl ? (
+                <a href={signedUrl} target="_blank" rel="noreferrer" className="ir-btn-quiet">
+                  {tcs('openSigned')}
+                </a>
+              ) : null}
+            </div>
+          ) : null}
+
+          {contractSource && !contractSource.readiness.ready ? (
+            <div className="ir-notice border-warn bg-warn-tint text-warn" role="status">
+              <p className="font-semibold">{tcs('blockedTitle')}</p>
+              <p className="mt-1">{tcs('blockedBody')}</p>
+            </div>
+          ) : (
+            <div className="ir-card p-4">
+              <h3 className="mb-3 text-[1.0625rem] font-semibold">
+                {signed ? tcs('signAgain') : tcs('agreementTitle')}
+              </h3>
+              {signed ? <p className="mb-3 text-[0.875rem] text-ink-soft">{tcs('signAgainHint')}</p> : null}
+              <SignaturePad
+                bookingId={booking.id}
+                defaultSignerName={`${booking.cust_first ?? ''} ${booking.cust_last ?? ''}`.trim()}
+              />
+            </div>
+          )}
+
+          <Link href={nextHref('agreement')} className="ir-btn-primary">{t('toCopy')}</Link>
+          {contractSource && !contractSource.readiness.ready ? (
+            <p className="ir-hint">{tcs('blockedSkip')}</p>
+          ) : null}
+        </section>
+      ) : null}
+
+      {step === 'copy' ? (
+        <section className="flex flex-col gap-4">
+          <h2 className="text-[1.25rem] font-semibold">{tcs('copyTitle')}</h2>
+          <p className="text-ink-soft">{tcs('copyIntro')}</p>
+
+          {signed ? (
+            <div className="ir-card p-4">
+              <ContractCopyForm
+                bookingId={booking.id}
+                contractId={signed.id}
+                defaultEmail={contractSource?.custEmail ?? ''}
+                alreadySentTo={signed.emailed_to}
+                alreadySentAt={signed.emailed_at}
+                skipHref={nextHref('copy')}
+                mailConfigured={mailConfigured()}
+              />
+            </div>
+          ) : (
+            <>
+              <p className="ir-notice border-warn bg-warn-tint text-warn" role="status">
+                {tcs('notSignedYet')}
+              </p>
+              <Link href={nextHref('copy')} className="ir-btn-primary">{t('toPayment')}</Link>
+            </>
+          )}
         </section>
       ) : null}
 
@@ -306,6 +423,12 @@ export default async function PickupPage({
             <div>
               <dt className="text-ink-soft">{t('step.damage')}</dt>
               <dd className="font-medium">{t('marksRecorded', { n: marks.length })}</dd>
+            </div>
+            <div>
+              <dt className="text-ink-soft">{t('contractOnFile')}</dt>
+              <dd className="font-medium">
+                {signed ? t('contractSigned') : t('contractUnsigned')}
+              </dd>
             </div>
             <div>
               <dt className="text-ink-soft">{t('collectedSummary')}</dt>
