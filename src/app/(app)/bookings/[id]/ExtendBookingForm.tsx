@@ -41,9 +41,10 @@ export function ExtendBookingForm({
         action={(fd) => { checkAction(fd); setChecked({ end: newEnd }) }}
         className="flex flex-col gap-3"
       >
+        {/* The rental's own start date and car are read from the booking row
+            server-side — the client has no business asserting either, and both
+            decide which cars may be swapped into. */}
         <input type="hidden" name="booking_id" value={bookingId} />
-        <input type="hidden" name="car_id" value={carId} />
-        <input type="hidden" name="start_date" value={currentEnd} />
 
         <div>
           <label className="ir-label" htmlFor="new_end_date">{t('newReturnDate')}</label>
