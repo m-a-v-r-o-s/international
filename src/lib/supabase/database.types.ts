@@ -304,6 +304,25 @@ export type Database = {
       }
       admin_confirm_cash_handover: { Args: { p_id: string }; Returns: undefined }
 
+      // ── A8 · users and hotels ────────────────────────────────────────────
+      // `email` and `last_sign_in_at` come out of auth.users, which no client
+      // role can select from; the function asserts app.is_admin() itself.
+      admin_list_users: {
+        Args: Record<string, never>
+        Returns: {
+          id: string; email: string | null; role: UserRole; full_name: string
+          phone: string | null; lang: string; active: boolean
+          created_at: string; last_sign_in_at: string | null
+        }[]
+      }
+      admin_set_home_hotel: {
+        Args: { p_profile_id: string; p_hotel_id: string | null }; Returns: undefined
+      }
+      admin_set_cover: {
+        Args: { p_profile_id: string; p_hotel_id: string; p_covers: boolean }
+        Returns: undefined
+      }
+
       // ── Server only (service_role) ───────────────────────────────────────
       rate_limit_hit: {
         Args: { p_bucket: string; p_limit: number; p_window_seconds: number }

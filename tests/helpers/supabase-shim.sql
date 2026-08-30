@@ -22,7 +22,11 @@ create table auth.users (
   email               text unique,
   encrypted_password  text,
   raw_user_meta_data  jsonb not null default '{}'::jsonb,
-  created_at          timestamptz not null default now()
+  created_at          timestamptz not null default now(),
+  -- Supabase stamps this on every successful sign-in. A8 shows it, because it
+  -- is what tells the boss whether the password he handed a rep actually
+  -- worked (public.admin_list_users()).
+  last_sign_in_at     timestamptz
 );
 
 -- Supabase's own definitions, verbatim in behaviour: the claims arrive as a GUC

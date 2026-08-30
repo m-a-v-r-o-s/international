@@ -6,6 +6,10 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
 const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Next 16 writes an AGENTS.md and a CLAUDE.md at the repo root on `next dev`.
+  // This project's instructions live in HANDOFF.md and docs/ by design, and a
+  // generated file claiming to be either would be a second, wrong source.
+  agentRules: false,
   // The PDF renderer is a Node-only library with its own font and layout
   // engines. Bundling it would be slower and, worse, would risk a stray import
   // of it reaching a client chunk — where `font-src 'self'` and a

@@ -22,6 +22,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <li><Link href="/admin/pricing" className="ir-btn-quiet !w-auto">{t('nav.pricing')}</Link></li>
           <li><Link href="/admin/bookings" className="ir-btn-quiet !w-auto">{t('nav.bookings')}</Link></li>
           <li><Link href="/admin/exceptions" className="ir-btn-quiet !w-auto">{t('nav.exceptions')}</Link></li>
+          <li><Link href="/admin/users" className="ir-btn-quiet !w-auto">{t('nav.users')}</Link></li>
+          <li><Link href="/admin/hotels" className="ir-btn-quiet !w-auto">{t('nav.hotels')}</Link></li>
           <li><Link href="/admin/settings" className="ir-btn-quiet !w-auto">{t('nav.settings')}</Link></li>
         </ul>
       </nav>

@@ -11,26 +11,44 @@
  */
 const KNOWN_CODES = new Set([
   'IR001', 'IR100', 'IR101', 'IR102', 'IR103', 'IR104', 'IR105', 'IR106',
-  'IR107', 'IR108', 'IR109', 'IR110', 'IR111', 'IR112', 'IR113', 'IR114', 'IR120', 'IR121',
+  'IR107', 'IR108', 'IR109', 'IR110', 'IR111', 'IR112', 'IR113', 'IR114', 'IR115',
+  'IR120', 'IR121',
 ])
 
 export type ErrorKey =
   | 'IR001' | 'IR100' | 'IR101' | 'IR102' | 'IR103' | 'IR104' | 'IR105' | 'IR106'
-  | 'IR107' | 'IR108' | 'IR109' | 'IR110' | 'IR111' | 'IR112' | 'IR113' | 'IR114' | 'IR120' | 'IR121'
-  | 'forbidden' | 'conflict' | 'unknown'
+  | 'IR107' | 'IR108' | 'IR109' | 'IR110' | 'IR111' | 'IR112' | 'IR113' | 'IR114' | 'IR115'
+  | 'IR120' | 'IR121'
+  | 'forbidden' | 'conflict' | 'unknown' | 'inUse' | 'duplicate'
   // Raised by the app rather than by Postgres: a file the upload path refused
   // before it ever reached the bucket, and the caps around the OCR call.
   | 'fileType' | 'fileTooLarge' | 'rateLimited' | 'ocrFailed'
   | 'companyMissing' | 'contractFailed' | 'signatureMissing'
+  // A8: the GoTrue Admin API's own refusals, which never reach Postgres.
+  | 'emailInUse' | 'accountFailed'
 
 /** The Postgres exclusion constraint on `bookings` — the double-booking guarantee. */
 const EXCLUSION_VIOLATION = '23P01'
+
+/**
+ * The other two integrity violations a screen can legitimately provoke.
+ *
+ * `23503` is a foreign key still pointing at the row: deleting a hotel that
+ * has bookings on it raises it, and "this hotel is in use" is a far better
+ * answer than "something went wrong" — the boss's next move is to deactivate
+ * it instead. `23505` is a unique index; the only one a screen can reach is
+ * hotel_reps_one_primary_per_rep, which says a rep is stationed at one hotel.
+ */
+const FOREIGN_KEY_VIOLATION = '23503'
+const UNIQUE_VIOLATION = '23505'
 
 export function errorKey(error: { code?: string | null; message?: string } | null): ErrorKey {
   if (!error) return 'unknown'
   const code = error.code ?? ''
 
   if (code === EXCLUSION_VIOLATION) return 'conflict'
+  if (code === FOREIGN_KEY_VIOLATION) return 'inUse'
+  if (code === UNIQUE_VIOLATION) return 'duplicate'
   if (code === '42501') return 'forbidden'
   if (KNOWN_CODES.has(code)) return code as ErrorKey
 
