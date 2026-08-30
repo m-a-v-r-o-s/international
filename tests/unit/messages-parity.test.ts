@@ -16,9 +16,35 @@ function paths(tree: Tree, prefix = ''): string[] {
   })
 }
 
-/** ICU placeholders — {name}, and the argument of a plural/select block. */
+/**
+ * The ICU ARGUMENTS a message takes — `{name}`, and the argument a
+ * plural/select block switches on.
+ *
+ * Brace depth is what separates an argument from a sub-message: `{n, plural,
+ * =0 {None} ...}` opens `n` at depth 1 and `None` at depth 2, and only the
+ * first is something a caller has to supply. A plain regex reads the second as
+ * an argument too, and then reports every plural whose zero case happens to be
+ * one Latin word in one language and not the other — which is a difference in
+ * wording, not in interface.
+ */
 function placeholders(message: string): string[] {
-  return [...message.matchAll(/\{\s*([A-Za-z0-9_]+)/g)].map((m) => m[1]!).sort()
+  const found: string[] = []
+  let depth = 0
+
+  for (let i = 0; i < message.length; i++) {
+    const char = message[i]
+    if (char === '}') { depth--; continue }
+    if (char !== '{') continue
+
+    depth++
+    if (depth !== 1) continue
+
+    const rest = message.slice(i + 1)
+    const name = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*[,}]/.exec(rest)
+    if (name) found.push(name[1]!)
+  }
+
+  return found.sort()
 }
 
 function flat(tree: Tree, prefix = ''): Map<string, string> {

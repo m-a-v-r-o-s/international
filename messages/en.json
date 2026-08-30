@@ -192,7 +192,21 @@
   },
   "today": {
     "startPickup": "Start pickup",
-    "startReturn": "Start return"
+    "startReturn": "Start return",
+    "title": "Today",
+    "date": "{date}",
+    "pickups": "Pickups",
+    "returns": "Returns",
+    "noPickups": "No pickups today.",
+    "noReturns": "No returns today.",
+    "room": "Room {room}",
+    "cashInHand": "Cash in hand today",
+    "handOver": "Hand over",
+    "handedOver": "€{amount} handed over. The manager confirms it at his end.",
+    "goToAvailability": "Check availability",
+    "goToMyBookings": "My bookings",
+    "goToMovements": "Movements sheet",
+    "goToExceptions": "Exceptions"
   },
   "damage": {
     "viewLabel": "View",
@@ -573,7 +587,8 @@
     "IR112": "That record no longer exists.",
     "IR113": "You cannot change your own account this way.",
     "IR120": "A driver on this booking does not meet the rules. The manager can override it.",
-    "IR121": "Add the driver and their licence before starting the pickup."
+    "IR121": "Add the driver and their licence before starting the pickup.",
+    "IR114": "There is no cash to hand over right now."
   },
   "eligibility": {
     "title": "Eligibility",

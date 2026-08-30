@@ -251,6 +251,10 @@ export type Database = {
         Returns: { ok: boolean; failures: string[] }[]
       }
       my_cash_in_hand: { Args: Record<string, never>; Returns: number }
+      my_hand_over_cash: {
+        Args: Record<string, never>
+        Returns: { handover_id: string; amount_cents: number }[]
+      }
       staff_hotels: {
         Args: Record<string, never>
         Returns: { id: string; name: string; area: string | null }[]

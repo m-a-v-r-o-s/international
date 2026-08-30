@@ -11,12 +11,12 @@
  */
 const KNOWN_CODES = new Set([
   'IR001', 'IR100', 'IR101', 'IR102', 'IR103', 'IR104', 'IR105', 'IR106',
-  'IR107', 'IR108', 'IR109', 'IR110', 'IR111', 'IR112', 'IR113', 'IR120', 'IR121',
+  'IR107', 'IR108', 'IR109', 'IR110', 'IR111', 'IR112', 'IR113', 'IR114', 'IR120', 'IR121',
 ])
 
 export type ErrorKey =
   | 'IR001' | 'IR100' | 'IR101' | 'IR102' | 'IR103' | 'IR104' | 'IR105' | 'IR106'
-  | 'IR107' | 'IR108' | 'IR109' | 'IR110' | 'IR111' | 'IR112' | 'IR113' | 'IR120' | 'IR121'
+  | 'IR107' | 'IR108' | 'IR109' | 'IR110' | 'IR111' | 'IR112' | 'IR113' | 'IR114' | 'IR120' | 'IR121'
   | 'forbidden' | 'conflict' | 'unknown'
 
 /** The Postgres exclusion constraint on `bookings` — the double-booking guarantee. */
