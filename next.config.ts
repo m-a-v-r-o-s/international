@@ -6,6 +6,12 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
 const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // The PDF renderer is a Node-only library with its own font and layout
+  // engines. Bundling it would be slower and, worse, would risk a stray import
+  // of it reaching a client chunk — where `font-src 'self'` and a
+  // nonce/strict-dynamic `script-src` with no unsafe-eval (src/proxy.ts) would
+  // break it in production while `next dev` looked fine.
+  serverExternalPackages: ['@react-pdf/renderer'],
   // Security headers that never vary per request live here; the ones that do
   // (the CSP nonce) are set in middleware.
   async headers() {
