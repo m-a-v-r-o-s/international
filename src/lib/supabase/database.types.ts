@@ -251,6 +251,11 @@ export type Database = {
         Returns: { ok: boolean; failures: string[] }[]
       }
       my_cash_in_hand: { Args: Record<string, never>; Returns: number }
+      staff_hotels: {
+        Args: Record<string, never>
+        Returns: { id: string; name: string; area: string | null }[]
+      }
+      rental_days: { Args: { p_start: string; p_end: string }; Returns: number }
 
       // ── Admin only ───────────────────────────────────────────────────────
       admin_create_block: {

@@ -26,7 +26,12 @@ export default async function HomePage() {
 
       {staff.role === 'admin' ? (
         <Link href="/admin/cars" className="ir-btn-primary">{t('goToFleet')}</Link>
-      ) : null}
+      ) : (
+        <div className="flex flex-col gap-3">
+          <Link href="/availability" className="ir-btn-primary">{t('goToAvailability')}</Link>
+          <Link href="/bookings" className="ir-btn-quiet">{t('goToMyBookings')}</Link>
+        </div>
+      )}
     </div>
   )
 }

@@ -67,7 +67,9 @@
     "welcome": "Signed in. The day's screens arrive with the booking work.",
     "adminNote": "Manager account — the movements sheet, fleet board and reports come next.",
     "repNote": "Rep account — availability, bookings and the pickup flow come next.",
-    "goToFleet": "Manage the fleet"
+    "goToFleet": "Manage the fleet",
+    "goToAvailability": "Check availability",
+    "goToMyBookings": "My bookings"
   },
   "settings": {
     "title": "Settings",
@@ -77,6 +79,116 @@
     "changePin": "Change PIN",
     "saved": "Saved.",
     "account": "Account"
+  },
+  "availability": {
+    "title": "Availability",
+    "filtersLabel": "Search availability",
+    "from": "From",
+    "to": "To",
+    "invalidRange": "The end date is before the start date.",
+    "category": "Category",
+    "anyCategory": "Any category",
+    "any": "Any",
+    "transmissionLabel": "Transmission",
+    "transmission": {
+      "manual": "Manual",
+      "automatic": "Automatic"
+    },
+    "minSeats": "Minimum seats",
+    "aircon": "Air conditioning",
+    "seatsCount": "{n} seats",
+    "noneMatch": "No cars match. Try widening the dates or filters.",
+    "bookThisCar": "Book this car",
+    "occupied": "Occupied",
+    "occupiedLabel": "Occupied for part of this range"
+  },
+  "newBooking": {
+    "title": "New booking",
+    "datesTitle": "Dates",
+    "pickupDate": "Pickup date",
+    "returnDate": "Return date",
+    "carTitle": "Car",
+    "chooseCar": "Car",
+    "chooseCarPlaceholder": "Choose a free car",
+    "changeCar": "Change",
+    "hotelTitle": "Hotel",
+    "hotel": "Hotel",
+    "chooseHotel": "Choose a hotel",
+    "room": "Room number",
+    "guestTitle": "Guest",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "phone": "Phone",
+    "dob": "Date of birth",
+    "extrasTitle": "Extras",
+    "extrasHint": "Free of charge. Lets the rep know what to have ready at pickup.",
+    "seat": {
+      "infant": "Infant seat (up to 1 year)",
+      "child": "Child seat (1–4 years)",
+      "booster": "Booster seat"
+    },
+    "priceTitle": "Price",
+    "priceNeedsCarAndDates": "Choose a car and valid dates to see the price.",
+    "priceBreakdown": "{days, plural, one {# day} other {# days}}",
+    "confirm": "Confirm booking"
+  },
+  "bookingDetail": {
+    "title": "Booking",
+    "guest": "Guest",
+    "phone": "Phone",
+    "car": "Car",
+    "hotelRoom": "Hotel & room",
+    "dates": "Dates",
+    "days": "Days",
+    "price": "Price",
+    "payment": "Payment",
+    "paid": "Paid",
+    "unpaid": "Unpaid",
+    "extras": "Extras",
+    "seat": {
+      "infant": "Infant seat",
+      "child": "Child seat",
+      "booster": "Booster seat"
+    },
+    "editTitle": "Edit",
+    "saved": "Saved.",
+    "cancelTitle": "Cancel this booking",
+    "cancelAction": "Cancel booking",
+    "cancelConfirm": "Cancel this booking? The guest will need a new booking if they still want the car.",
+    "extendTitle": "Extend",
+    "extendHint": "The only change allowed once a rental is out. If the car is needed elsewhere on the new dates, a same-category swap is offered.",
+    "newReturnDate": "New return date",
+    "checkAvailability": "Check availability",
+    "extendCarFree": "This car is free through the new date.",
+    "extendCarTaken": "This car is already booked on part of the new range.",
+    "noAlternatives": "No other car in this category is free for the whole range.",
+    "chooseAlternative": "Choose a car",
+    "keepSameCar": "Keep this car (not available — checked above)",
+    "confirmExtend": "Confirm extension",
+    "status": {
+      "booked": "Booked",
+      "out": "Out",
+      "returned": "Returned",
+      "cancelled": "Cancelled",
+      "no_show": "No-show",
+      "blocked": "Blocked"
+    }
+  },
+  "myBookings": {
+    "title": "My bookings",
+    "searchLabel": "Search",
+    "searchPlaceholder": "Guest name, plate, ref or date",
+    "search": "Search",
+    "empty": "No bookings yet.",
+    "noResults": "Nothing matches that search.",
+    "status": {
+      "booked": "Booked",
+      "out": "Out",
+      "returned": "Returned",
+      "cancelled": "Cancelled",
+      "no_show": "No-show",
+      "blocked": "Blocked"
+    }
   },
   "admin": {
     "navLabel": "Admin sections",
