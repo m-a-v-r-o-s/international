@@ -1,0 +1,168 @@
+{
+  "app": {
+    "name": "International Rentals",
+    "short": "IR Ops",
+    "description": "Operations app for International Rentals staff."
+  },
+  "common": {
+    "loading": "Working…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "continue": "Continue",
+    "signOut": "Sign out",
+    "signedInAs": "Signed in as {name}",
+    "language": "Language",
+    "greek": "Ελληνικά",
+    "english": "English",
+    "required": "Required",
+    "tryAgain": "Try again",
+    "skipToContent": "Skip to content"
+  },
+  "roles": {
+    "admin": "Manager",
+    "rep": "Rep"
+  },
+  "login": {
+    "title": "Sign in",
+    "intro": "This app is for International Rentals staff.",
+    "staffTab": "Rep",
+    "managerTab": "Manager",
+    "staffIntro": "Sign in with your email and password. You will set a PIN afterwards so you can reopen the app quickly.",
+    "managerIntro": "We will email you a six-digit code. It is valid for a few minutes.",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "sendCode": "Email me a code",
+    "code": "Six-digit code",
+    "codeSent": "If that address belongs to a manager account, a code is on its way. Enter it below.",
+    "verify": "Sign in",
+    "useAnotherEmail": "Use a different email",
+    "failed": "Those details did not work. Check them and try again.",
+    "rateLimited": "Too many attempts. Wait a few minutes and try again.",
+    "inactive": "This account is no longer active. Ask the manager to reactivate it.",
+    "invalidEmail": "Enter a valid email address.",
+    "invalidCode": "Enter the six digits from the email.",
+    "passwordTooShort": "Enter your password."
+  },
+  "unlock": {
+    "title": "Enter your PIN",
+    "intro": "Unlock the app to carry on.",
+    "pin": "PIN",
+    "unlock": "Unlock",
+    "wrong": "That PIN did not match.",
+    "rateLimited": "Too many attempts. Wait a few minutes and try again.",
+    "signOutInstead": "Sign out instead",
+    "setTitle": "Choose a PIN",
+    "setIntro": "You will use this to reopen the app on this phone. Choose four to eight digits you will remember, and do not reuse a bank PIN.",
+    "newPin": "New PIN",
+    "confirmPin": "Confirm PIN",
+    "setAction": "Save PIN",
+    "mismatch": "The two PINs are not the same.",
+    "tooShort": "Use between four and eight digits.",
+    "digitsOnly": "Digits only."
+  },
+  "home": {
+    "title": "Today",
+    "welcome": "Signed in. The day's screens arrive with the booking work.",
+    "adminNote": "Manager account — the movements sheet, fleet board and reports come next.",
+    "repNote": "Rep account — availability, bookings and the pickup flow come next."
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageHelp": "Applies everywhere in the app, on this and any other device.",
+    "security": "Security",
+    "changePin": "Change PIN",
+    "saved": "Saved.",
+    "account": "Account"
+  },
+  "errors": {
+    "unknown": "Something went wrong. Nothing was saved.",
+    "forbidden": "You do not have access to that.",
+    "signInAgain": "Your session has ended. Sign in again.",
+    "deviceChanged": "This account was opened on another phone. Sign in again to use it here.",
+    "network": "No connection. This app needs to be online.",
+    "conflict": "That car is already taken for those dates.",
+    "IR001": "You do not have access to that.",
+    "IR100": "No price list covers that pickup date. Ask the manager to set the pricing period.",
+    "IR101": "Two price lists cover that pickup date. Ask the manager to fix the pricing periods.",
+    "IR102": "No price is set for that category and length of rental.",
+    "IR103": "No rate is set for days beyond the first week.",
+    "IR104": "Check the dates.",
+    "IR105": "That date range is too long.",
+    "IR106": "That category no longer exists.",
+    "IR107": "That car has been archived.",
+    "IR108": "This booking is closed. Ask the manager.",
+    "IR109": "That change is not allowed at this stage of the booking.",
+    "IR110": "A rental that is out cannot be shortened. Process the return instead.",
+    "IR111": "A swap car has to be in the same category.",
+    "IR112": "That record no longer exists.",
+    "IR120": "A driver on this booking does not meet the rules. The manager can override it.",
+    "IR121": "Add the driver and their licence before starting the pickup."
+  },
+  "eligibility": {
+    "title": "Eligibility",
+    "age": "Too young for this category.",
+    "licence_held": "Licence held for less than the required time.",
+    "licence_expired": "Licence expires before the car is due back.",
+    "dob_missing": "Date of birth is missing.",
+    "licence_issue_date_missing": "Licence issue date is missing.",
+    "licence_expiry_missing": "Licence expiry date is missing."
+  },
+  "notFound": {
+    "title": "That page is not here",
+    "body": "The link may be out of date, or the record may have been removed.",
+    "home": "Back to the app"
+  },
+  "cookies": {
+    "title": "Cookies",
+    "body": "This app uses cookies that keep you signed in, remember your language and protect forms from abuse. There is no advertising or analytics cookie.",
+    "accept": "Got it",
+    "more": "Privacy policy"
+  },
+  "legal": {
+    "privacyTitle": "Privacy policy",
+    "termsTitle": "Terms of use",
+    "lastUpdated": "Last updated {date}",
+    "draftNotice": "Draft. The company's registered details and the rental terms are still to be supplied and will be inserted before launch.",
+    "privacy": {
+      "introTitle": "Who this covers",
+      "intro": "This is an internal application used by International Rentals staff to run vehicle rentals. It holds data about staff who use it and about guests who rent a vehicle.",
+      "staffTitle": "Staff data",
+      "staff": "For each member of staff we store a name, an email address, a phone number, a language preference, the hotel or hotels they cover, and a hashed PIN used to reopen the app. Sign-in attempts and administrative actions are logged so that account misuse can be investigated.",
+      "guestTitle": "Guest data",
+      "guest": "For each rental we store the guest's name, phone number, date of birth, hotel and room number, an optional email address used only to send a copy of the agreement, and each driver's licence details together with photographs of the licence.",
+      "lawfulTitle": "Why we hold it",
+      "lawful": "Rental and driver data is held to perform the rental contract and to meet the legal requirement to check that a driver is licensed and eligible to drive the vehicle. Staff data is held to operate the system and to keep it secure.",
+      "retentionTitle": "How long we keep it",
+      "retention": "Photographs of driving licences are deleted automatically after a period set by the company, twenty-four months after the rental ends by default. The booking record, the signed agreement and the typed licence number are kept for longer, as accounting and insurance obligations require. Every deletion is logged.",
+      "securityTitle": "How it is protected",
+      "security": "Licence photographs are held in private storage and can only be reached through short-lived links issued to a member of staff who is entitled to that booking. All access is over HTTPS. Staff can only see the bookings they created or those belonging to a hotel they cover.",
+      "rightsTitle": "Your rights",
+      "rights": "You can ask for a copy of the personal data held about you, ask for it to be corrected, or ask for it to be deleted where there is no legal obligation to keep it. Contact the company using the details on the rental agreement.",
+      "contactTitle": "Contact",
+      "contact": "Company registered details and a data contact address are to be confirmed and will appear here before launch."
+    },
+    "terms": {
+      "scopeTitle": "Scope",
+      "scope": "This application is provided to named members of International Rentals staff for the purpose of managing vehicle rentals. It is not a public service and no public booking is possible through it.",
+      "accountsTitle": "Accounts",
+      "accounts": "Accounts are created by the manager. Sign-in details and the device PIN are personal and must not be shared. A rep account is bound to a single device; signing in elsewhere ends the previous binding.",
+      "useTitle": "Acceptable use",
+      "use": "Staff may access only the bookings they are entitled to see, and may not attempt to reach data belonging to another rep or hotel. Prices are set by the company and may not be altered, discounted or negotiated.",
+      "dataTitle": "Guest data",
+      "data": "Guest and licence data may be used only to complete the rental in hand. It must not be copied, photographed, shared or kept outside this application.",
+      "availabilityTitle": "Availability",
+      "availability": "The application requires an internet connection. The company does not guarantee uninterrupted availability, and paper fallback procedures remain in force during the pilot.",
+      "changesTitle": "Changes",
+      "changes": "These terms will be finalised alongside the rental agreement terms before launch."
+    }
+  },
+  "footer": {
+    "credit": "© {year} Akos Digital Services",
+    "creditName": "Akos Digital Services",
+    "privacy": "Privacy",
+    "terms": "Terms"
+  }
+}
