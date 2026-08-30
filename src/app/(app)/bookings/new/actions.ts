@@ -54,6 +54,23 @@ export type CreateBookingState = { error?: ErrorKey; fieldErrors?: Record<string
 
 const phoneSchema = z.string().trim().min(4).max(32)
 const nameSchema = z.string().trim().min(1).max(80)
+const timeSchema = z.string().trim().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional()
+
+/**
+ * A calendar date plus a wall-clock time at the hotel desk, as an instant.
+ *
+ * Postgres does the conversion, not JavaScript: the literal names the zone, so
+ * `timestamptz` resolves it with the same tz database that app.today() and
+ * app.outside_default_windows() use. Doing it here with a Date would bake in
+ * whatever zone the Railway container happens to run in, and would get the
+ * March and October changeovers wrong in a country that observes both.
+ *
+ * A missing time is null rather than a guess — the columns have always been
+ * nullable, and every booking made before R3 collected times has null in them.
+ */
+function athensInstant(date: string, time: string | undefined): string | null {
+  return time ? `${date} ${time}:00 Europe/Athens` : null
+}
 
 /**
  * R3 confirm → Booked. Only the fields a rep may ever send
@@ -76,6 +93,8 @@ export async function createBooking(
     cust_last: nameSchema,
     cust_phone: phoneSchema,
     cust_dob: dateSchema,
+    pickup_time: timeSchema,
+    dropoff_time: timeSchema,
     seats: z.array(z.enum(['infant', 'child', 'booster'])).optional().default([]),
   }).safeParse({
     car_id: formData.get('car_id'),
@@ -87,6 +106,8 @@ export async function createBooking(
     cust_last: formData.get('cust_last'),
     cust_phone: formData.get('cust_phone'),
     cust_dob: formData.get('cust_dob'),
+    pickup_time: formData.get('pickup_time'),
+    dropoff_time: formData.get('dropoff_time'),
     seats: formData.getAll('seat'),
   })
 
@@ -104,6 +125,8 @@ export async function createBooking(
     cust_last: parsed.data.cust_last,
     cust_phone: parsed.data.cust_phone,
     cust_dob: parsed.data.cust_dob,
+    pickup_at: athensInstant(parsed.data.start_date, parsed.data.pickup_time),
+    dropoff_at: athensInstant(parsed.data.end_date, parsed.data.dropoff_time),
   }).select('id').single()
 
   if (error) return { error: errorKey(error) }

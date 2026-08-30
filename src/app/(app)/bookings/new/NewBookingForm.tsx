@@ -10,8 +10,12 @@ import type { CarWithSpecs } from '@/lib/availability/types'
 type Hotel = { id: string; name: string; area: string | null }
 const SEAT_TYPES = ['infant', 'child', 'booster'] as const
 
+export type BookingWindows = {
+  pickupFrom: string; pickupTo: string; dropoffFrom: string; dropoffTo: string
+}
+
 export function NewBookingForm({
-  cars, hotels, defaultHotelId, preselectedCar, defaultFrom, defaultTo,
+  cars, hotels, defaultHotelId, preselectedCar, defaultFrom, defaultTo, windows,
 }: {
   cars: CarWithSpecs[]
   hotels: Hotel[]
@@ -19,6 +23,7 @@ export function NewBookingForm({
   preselectedCar: CarWithSpecs | null
   defaultFrom?: string
   defaultTo?: string
+  windows: BookingWindows
 }) {
   const t = useTranslations('newBooking')
   const tc = useTranslations('common')
@@ -76,6 +81,38 @@ export function NewBookingForm({
               id="end_date" name="end_date" type="date" className="ir-field" required
               value={end} onChange={(e) => setEnd(e.target.value)}
             />
+          </div>
+        </div>
+        {/*
+          * docs/04-SCREENS.md R3 step 1: "pickup time (default 08:30-11:30),
+          * drop-off time (default 18:00-21:00)". The window is a HINT and the
+          * input is a plain time field, because §5 says the windows are
+          * defaults and are overridable — a <select> of allowed slots would
+          * make them a rule, which they are not. Whether the chosen time falls
+          * outside is not decided here either: the database derives
+          * `window_override` from these two values and the admin's settings,
+          * so a rep cannot record a 03:00 pick-up as an ordinary one.
+          */}
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <div>
+            <label className="ir-label" htmlFor="pickup_time">{t('pickupTime')}</label>
+            <input
+              id="pickup_time" name="pickup_time" type="time" className="ir-field"
+              defaultValue={windows.pickupFrom} aria-describedby="pickup_time_hint"
+            />
+            <p className="ir-hint" id="pickup_time_hint">
+              {t('windowHint', { from: windows.pickupFrom, to: windows.pickupTo })}
+            </p>
+          </div>
+          <div>
+            <label className="ir-label" htmlFor="dropoff_time">{t('dropoffTime')}</label>
+            <input
+              id="dropoff_time" name="dropoff_time" type="time" className="ir-field"
+              defaultValue={windows.dropoffFrom} aria-describedby="dropoff_time_hint"
+            />
+            <p className="ir-hint" id="dropoff_time_hint">
+              {t('windowHint', { from: windows.dropoffFrom, to: windows.dropoffTo })}
+            </p>
           </div>
         </div>
         {!validDates && start && end ? (

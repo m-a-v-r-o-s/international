@@ -32,7 +32,7 @@ export default async function NewBookingPage({
   const from = /^\d{4}-\d{2}-\d{2}$/.test(params.from ?? '') ? params.from! : undefined
   const to = /^\d{4}-\d{2}-\d{2}$/.test(params.to ?? '') ? params.to! : undefined
 
-  const [cars, hotelsResult, homeResult] = await Promise.all([
+  const [cars, hotelsResult, homeResult, windowsResult] = await Promise.all([
     loadCarsWithSpecs(supabase),
     supabase.rpc('staff_hotels'),
     // "Defaults to the rep's own hotel; changeable when covering elsewhere"
@@ -41,9 +41,23 @@ export default async function NewBookingPage({
     // guessing. Before A8 nothing wrote is_primary meaningfully, so the
     // default fell back to "the only hotel there is"; now it is the rule.
     supabase.from('hotel_reps').select('hotel_id').eq('is_primary', true).maybeSingle(),
+    supabase.rpc('booking_windows'),
   ])
   const hotels = hotelsResult.data ?? []
   const homeHotelId = (homeResult.data as { hotel_id: string } | null)?.hotel_id
+
+  // The admin's operating windows (docs/01-DECISIONS.md §5, set on A10). They
+  // pre-fill the time fields and print as the hint beside them; the database
+  // is what decides whether a chosen time counts as an override.
+  const w = ((windowsResult.data ?? []) as {
+    pickup_from: string; pickup_to: string; dropoff_from: string; dropoff_to: string
+  }[])[0]
+  const windows = {
+    pickupFrom: w?.pickup_from ?? '08:30',
+    pickupTo: w?.pickup_to ?? '11:30',
+    dropoffFrom: w?.dropoff_from ?? '18:00',
+    dropoffTo: w?.dropoff_to ?? '21:00',
+  }
 
   let preselectedCar = null
   if (params.car && from && to) {
@@ -72,6 +86,7 @@ export default async function NewBookingPage({
         preselectedCar={preselectedCar}
         defaultFrom={from}
         defaultTo={to}
+        windows={windows}
       />
     </div>
   )

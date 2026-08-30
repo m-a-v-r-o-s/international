@@ -323,6 +323,23 @@ export type Database = {
         Returns: undefined
       }
 
+      // ── A10 · retention and the operating windows ────────────────────────
+      admin_licence_retention_status: {
+        Args: Record<string, never>
+        Returns: {
+          retention_months: number; cutoff: string; due_count: number
+          orphan_count: number; oldest_due: string | null
+          purged_drivers: number; last_purge_at: string | null
+        }[]
+      }
+      booking_windows: {
+        Args: Record<string, never>
+        Returns: {
+          pickup_from: string; pickup_to: string
+          dropoff_from: string; dropoff_to: string
+        }[]
+      }
+
       // ── Server only (service_role) ───────────────────────────────────────
       rate_limit_hit: {
         Args: { p_bucket: string; p_limit: number; p_window_seconds: number }
@@ -344,6 +361,15 @@ export type Database = {
       }
       set_pin_hash: { Args: { p_profile_id: string; p_hash: string }; Returns: undefined }
       role_for_email: { Args: { p_email: string }; Returns: UserRole | null }
+
+      // The retention job's own API. Neither deletes anything: the first
+      // reports what is due and the second records that the Storage API
+      // removed it (src/lib/retention/purge.ts).
+      licence_images_due_for_purge: {
+        Args: { p_limit?: number }
+        Returns: { object_name: string; booking_id: string; ended_on: string }[]
+      }
+      mark_licences_purged: { Args: { p_booking_ids: string[] }; Returns: number }
     }
     Enums: {
       user_role: UserRole

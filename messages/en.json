@@ -125,7 +125,10 @@
     "priceTitle": "Price",
     "priceNeedsCarAndDates": "Choose a car and valid dates to see the price.",
     "priceBreakdown": "{days, plural, one {# day} other {# days}}",
-    "confirm": "Confirm booking"
+    "confirm": "Confirm booking",
+    "pickupTime": "Pick-up time",
+    "dropoffTime": "Drop-off time",
+    "windowHint": "Usually {from}–{to}"
   },
   "bookingDetail": {
     "title": "Booking",
@@ -845,7 +848,28 @@
       "insurer": "Insurance provider",
       "terms_el": "Terms — Greek",
       "terms_en": "Terms — English"
-    }
+    },
+    "windowsTitle": "Pick-up and drop-off windows",
+    "windowsHint": "The hours a new booking is pre-filled with. They are defaults, not rules — a rep can set any time, and a time outside these hours is recorded on the booking as an override.",
+    "pickupWindow": "Pick-ups",
+    "dropoffWindow": "Drop-offs",
+    "windowFrom": "From",
+    "windowTo": "To",
+    "retentionTitle": "Licence photo retention",
+    "retentionIntro": "Photographs of driving licences are deleted automatically once a rental has been finished for this long. The booking, the signed agreement, the signature and the typed licence number are kept.",
+    "retentionMonths": "Months to keep",
+    "retentionMonthsHint": "Between 1 and 120. The default is 24.",
+    "retentionCutoff": "Deleting rentals ended on or before",
+    "retentionDue": "Photos due for deletion",
+    "retentionPurgedTotal": "Drivers already purged",
+    "retentionLastPurge": "Last purge",
+    "retentionNeverPurged": "Never run",
+    "retentionOrphans": "{n, plural, one {# licence photo belongs to a booking that no longer exists} other {# licence photos belong to bookings that no longer exist}}. The purge does not touch them — it only deletes photos it can trace to a finished rental. Report this.",
+    "purgeNow": "Delete them now",
+    "purgeConfirm": "{n, plural, one {Permanently delete # licence photo} other {Permanently delete # licence photos}}. This cannot be undone.",
+    "purgeNothingDue": "Nothing is due for deletion. The scheduled job runs on its own; this button is only for running it early.",
+    "purgeDone": "Deleted {images, plural, one {# licence photo} other {# licence photos}} across {bookings, plural, one {# booking} other {# bookings}}.",
+    "purgeRefused": "{n, plural, one {# file was skipped because its name did not look like a licence photo} other {# files were skipped because their names did not look like licence photos}}. Report this."
   },
   "contractStep": {
     "agreementTitle": "Rental agreement",

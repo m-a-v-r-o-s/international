@@ -15,6 +15,7 @@
     "test:db": "vitest run tests/db",
     "test:watch": "vitest",
     "db:reset": "tsx scripts/db-apply.ts",
+    "purge:licences": "tsx scripts/purge-licences.ts",
     "postinstall": "node scripts/fix-embedded-pg-libs.mjs"
   },
   "dependencies": {
