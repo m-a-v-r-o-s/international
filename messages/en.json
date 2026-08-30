@@ -335,7 +335,8 @@
       "cars": "Fleet",
       "categories": "Categories",
       "pricing": "Pricing",
-      "bookings": "Bookings"
+      "bookings": "Bookings",
+      "exceptions": "Exceptions"
     },
     "movements": {
       "title": "Movements sheet",
@@ -505,6 +506,48 @@
       "previewDays": "Days",
       "previewButton": "Calculate",
       "previewResult": "{days, plural, one {# day} other {# days}} — €{total}"
+    },
+    "exceptions": {
+      "title": "Exceptions",
+      "subtitle": "Everything non-standard in the business lands here. The rep records the evidence; you decide the amount and close it.",
+      "filterState": "Show",
+      "stateOpen": "Open",
+      "stateResolved": "Closed",
+      "stateAll": "All",
+      "filterType": "Kind",
+      "anyType": "Any kind",
+      "apply": "Apply",
+      "open": "Open",
+      "resolved": "Closed",
+      "resolvedOn": "Closed on {date}",
+      "empty": "Nothing here.",
+      "emptyOpen": "Nothing open. Everything raised has been dealt with.",
+      "type": {
+        "fuel_short": "Fuel shortfall",
+        "new_damage": "New damage",
+        "late_return": "Late return",
+        "no_show": "No-show",
+        "eligibility_override": "Eligibility override",
+        "other": "Other"
+      },
+      "booking": "Booking",
+      "raisedBy": "Raised by",
+      "raisedBySystem": "The system",
+      "raisedAt": "Raised",
+      "detail": "Recorded",
+      "backToQueue": "Back to the queue",
+      "fuelEvidence": "Fuel readings",
+      "shortBy": "Short by",
+      "fuelJudgement": "Nothing has been charged for this. The app records the shortfall and leaves the amount to you.",
+      "resolveTitle": "Settle this",
+      "resolveHint": "Set what it costs and say what was decided. This is the only place either is set, and the change is logged.",
+      "chargeLabel": "Charge (€)",
+      "chargeHint": "Leave blank for nothing to charge. Blank and €0.00 are recorded differently.",
+      "resolutionLabel": "What was decided",
+      "resolutionHint": "Kept on the record. Reps never see it.",
+      "closeAction": "Close this item",
+      "updateAction": "Update this item",
+      "saved": "Saved."
     }
   },
   "errors": {
