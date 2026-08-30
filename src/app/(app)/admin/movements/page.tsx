@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { requireAdmin } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
+import { todayAthens } from '@/lib/dates'
 import { PrintButton } from './PrintButton'
 import type { BookingRow } from '@/lib/supabase/database.types'
 
@@ -174,8 +175,4 @@ export default async function MovementsPage({
       </section>
     </div>
   )
-}
-
-function todayAthens(): string {
-  return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Athens' })
 }

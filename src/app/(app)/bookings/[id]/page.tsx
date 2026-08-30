@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { requireUnlocked } from '@/lib/auth/session'
@@ -31,6 +32,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
   const staff = await requireUnlocked()
   const { id } = await params
   const t = await getTranslations('bookingDetail')
+  const tt = await getTranslations('today')
   const supabase = await supabaseServer()
 
   const { data: booking } = await supabase.from('bookings')
@@ -120,6 +122,10 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
           </div>
         ) : null}
       </section>
+
+      {beforePickup ? (
+        <Link href={`/bookings/${row.id}/pickup`} className="ir-btn-primary">{tt('startPickup')}</Link>
+      ) : null}
 
       {editable ? (
         <section className="ir-card p-4">

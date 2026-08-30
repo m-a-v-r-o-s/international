@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { requireAdmin } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
+import { todayAthens } from '@/lib/dates'
 import type { BookingRow, CarModelRow, CarRow, CategoryRow } from '@/lib/supabase/database.types'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -152,8 +153,4 @@ export default async function FleetBoardPage({
       )}
     </div>
   )
-}
-
-function todayAthens(): string {
-  return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Athens' })
 }
