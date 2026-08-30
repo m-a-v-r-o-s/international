@@ -129,7 +129,7 @@ export default async function HomePage() {
     <div className="flex min-h-full flex-col gap-6">
       <div>
         <h1 className="text-[1.75rem] font-bold tracking-tight">{t('title')}</h1>
-        <p className="text-ink-soft">{t('date', { date: today })}</p>
+        <p className="text-ink-soft tabular-nums">{today}</p>
       </div>
 
       <section aria-labelledby="pickups-heading" className="flex flex-col gap-3">

@@ -64,12 +64,7 @@
   },
   "home": {
     "title": "Today",
-    "welcome": "Signed in. The day's screens arrive with the booking work.",
-    "adminNote": "Manager account — the movements sheet, fleet board and reports come next.",
-    "repNote": "Rep account — availability, bookings and the pickup flow come next.",
-    "goToFleet": "Manage the fleet",
-    "goToAvailability": "Check availability",
-    "goToMyBookings": "My bookings"
+    "adminNote": "Manager account — the movements sheet, fleet board, bookings and the exceptions queue are all live."
   },
   "settings": {
     "title": "Settings",
@@ -194,7 +189,6 @@
     "startPickup": "Start pickup",
     "startReturn": "Start return",
     "title": "Today",
-    "date": "{date}",
     "pickups": "Pickups",
     "returns": "Returns",
     "noPickups": "No pickups today.",

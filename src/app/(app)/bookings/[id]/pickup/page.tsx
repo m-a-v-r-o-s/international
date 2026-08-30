@@ -272,7 +272,7 @@ export default async function PickupPage({
               <dd className="font-medium">{t('marksRecorded', { n: marks.length })}</dd>
             </div>
             <div>
-              <dt className="text-ink-soft">{t('collected')}</dt>
+              <dt className="text-ink-soft">{t('collectedSummary')}</dt>
               <dd className="font-medium">
                 €{(booking.collected_cents / 100).toFixed(2)} · {booking.paid ? tb('paid') : tb('unpaid')}
               </dd>

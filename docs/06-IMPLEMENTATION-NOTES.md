@@ -1,4 +1,4 @@
-# Implementation notes — Phases 0 and 1
+# Implementation notes — Phases 0 to 3
 
 What was built, the decisions the planning documents left open, and what is
 still outstanding. `docs/01-DECISIONS.md` remains the authority; nothing here
@@ -19,7 +19,109 @@ logging, `availability()`, `quote()`, `check_eligibility()`, `my_cash_in_hand()`
 the admin-only RPCs, the fleet CSV import path, placeholder seed data, and 121
 tests.
 
-## Decisions taken while building
+**Phase 2** — the rep booking core (R2, R3, R6, R7) and the admin screens
+A1–A5.
+
+**Phase 3** — the pickup flow (R4), the return flow (R5), the exceptions queue
+(A6), R1's Today screen with cash in hand and hand-over, and end-to-end
+verification of extensions with a same-category swap. 273 tests.
+
+## Decisions taken while building — Phase 3
+
+**The pickup and return flows keep no wizard state in the browser.**
+`docs/04-SCREENS.md` asks for R4 to be "resumable if the app is closed". Each
+step writes its own rows — drivers, the handover, its damage marks, the payment
+fields — and which step you land on is read back off those rows on every
+request. A phone that locks mid-pickup with a guest waiting reopens where it
+was, on any device, and there is no half-finished draft to reconcile.
+
+**The eligibility gate is a screen over a database rule, and adds no rule of
+its own.** `app.assert_drivers_eligible()` sits on `booked → out`, so the
+confirm action sends the transition and reports what Postgres said. The gate
+screen shows the same `check_eligibility()` answer in advance so the rep learns
+which rule failed before they have taken a licence out of a guest's hand — but
+it is a display, not the control. "Request admin override" is honest about
+being a message rather than a button: `admin_override_eligibility()` is
+admin-only and is reached from A5, and there is no admin override UI in this
+phase.
+
+**Exception `detail` is numbers and codes, never a sentence.** It is written
+once by whichever flow raised it and read later by a manager who may be working
+in either language, so an English sentence stored there would be a hard-coded
+user-facing string with a long fuse. `fuel_short` stores `8/8 → 6/8 (−2/8 ≈ 9.5
+L)`; `new_damage` stores `2: left/scratch, front/dent`. A6's item page renders
+the underlying readings and marks with translated labels and shows the stored
+line beside them as the compact evidence.
+
+**Both R5 flags are raised at confirm, before the status update.** Raising them
+as the rep works would fill the boss's inbox with contradictions every time
+someone re-read a fuel gauge. Ordering them before the transition means the
+evidence survives a failed transition; an existence check per type, rather than
+the transition itself, is what makes them happen only once.
+
+**A rep may not price a fuel shortfall or new damage, and the screens say so
+rather than leaving it to training.** §14 is a rule about what a rep does in
+front of a guest, so it is written on the damage step and again on the confirm
+step, not only enforced by the absent column grant.
+
+**One new aggregate reached a rep screen, and it is the permitted one.** R1
+carries today's own cash in hand and nothing else that sums, counts or
+averages. There is deliberately no count of the day's pickups: a count of
+rentals starting today is a figure company revenue can be worked back from,
+which is the test HANDOFF.md asks to apply before any number goes on a rep
+screen.
+
+**The car diagram is keyboard-first, not keyboard-retrofitted.** Marks are real
+buttons in tab order with their own labels; every mark also appears in an
+ordered list in words; and a mark can be ADDED from the form alone by choosing
+one of nine named zones, so placing damage never requires pointing at a pixel.
+The SVG is `aria-hidden`. `src/lib/damage/zones.ts` holds the single
+zone ↔ coordinate mapping, so the pins and their text alternative cannot drift
+apart, and a unit test round-trips it.
+
+**`my_hand_over_cash()` — a gap closed, not built around.** `my_cash_in_hand()`
+counts cash `where b.cash_handover_id is null`, so handing over needs two
+writes that agree: a `cash_handovers` row and that row's id stamped on the
+bookings it covers. A rep could do the first and not the second —
+`cash_handover_id` is absent from their UPDATE grant and the guard reverted it
+for a non-admin — so a "Hand over" button on the existing schema would have
+recorded a receipt and left the rep's figure unchanged for ever. Verified
+against the running schema before anything was written.
+`supabase/migrations/20260830110000_cash_handover.sql` fixes it the same way
+`staff_hotels()` did: a SECURITY DEFINER function that takes **no arguments**
+and reads both the amount and the booking set from the same predicate
+`my_cash_in_hand()` reports on, so the button and the figure above it cannot
+disagree. The guard trigger gains exactly one carve-out — a non-admin may move
+`cash_handover_id` from null to a `cash_handovers` row that is their own, once.
+Clearing it, re-pointing it or claiming another rep's is reverted, and the
+column grant still refuses any direct client write, so the RPC remains the only
+door. New error code: `IR114`, nothing to hand over.
+
+**Open question for the client, unchanged and now visible on a screen:** if a
+rep forgets to hand over, yesterday's cash disappears from R1's strip, because
+§7 says "today's". That may be the intended pressure or it may be a gap. Still
+flagged, still not decided.
+
+**R7's swap candidates were wrong, and are fixed.** The data-layer guard was
+correct; the screen disagreed with it. `checkExtension()` loaded availability
+from the current end date and offered any same-category car free over the added
+days — but a swap moves the whole rental onto the new plate, so the exclusion
+constraint judges the entire range. A car busy inside the original rental dates
+was being offered and then refused with `23P01` at the moment the rep
+confirmed. Availability is now loaded over the whole rental, and the choice
+moved into two pure functions in `src/lib/availability/types.ts` so the rule is
+unit-testable without a database. The rental's start date and car are now read
+from the booking row rather than taken from the form.
+
+**A rep can still insert a `cash_handovers` row directly**, with their own
+`rep_id` and any amount, because the grant and policy from Phase 1 allow it.
+That row affects no figure — only `my_hand_over_cash()` stamps bookings — and
+`admin_confirm_cash_handover()` means every receipt is a claim the boss
+confirms rather than a fact. Left as it is; worth revisiting in Phase 5
+hardening alongside `handovers.by_profile`, which a rep can likewise set to
+another profile on a booking they can already reach.
+
+## Decisions taken while building — Phases 0 and 1
 
 **i18n without locale routing.** `next-intl` resolves the language from a cookie
 seeded from `profiles.lang`, not from a `/el` or `/en` URL prefix. This is an
@@ -123,12 +225,29 @@ production and none of its numbers should ever be quoted to the client.
 
 ## Not done, and where it belongs
 
-- **Screens.** Phase 2 onward, per the build plan. Only a signed-in landing
-  page and a settings page exist, so Phase 0's finish line can be checked.
-- **Storage bucket and signed URLs for licence images.** Phase 3, with the
-  pickup flow. The database half of that isolation test is written and passes
-  (a rep cannot read another booking's driver row); the signed-URL half needs
-  the bucket to exist.
+- **Screens.** R1–R7 and A1–A6 are built. Still to come, all Phase 5 per the
+  build plan: A7 reports and CSV export, A8 users and hotels, A9 the audit-log
+  viewer, A10 settings, and R8's notification preferences (its language and PIN
+  halves exist).
+- **Storage bucket and signed URLs for licence images.** Phase 4, with the
+  contract work. Phase 3 captures the typed licence fields only, and
+  `front_image_path` / `back_image_path` stay null. The database half of that
+  isolation test is written and passes (a rep cannot read another booking's
+  driver row); the signed-URL half needs the bucket to exist.
+- **A photo per damage mark** (`damage_marks.photo_path`, `docs/01-DECISIONS.md`
+  §12). This is the one piece of R4 step 4 that Phase 3 does not deliver, and
+  the reason is the bucket above: there is nowhere for the file to go. A file
+  input that collected a photo and discarded it would be worse than no input at
+  all, so the control is not rendered. Everything else about a mark — view,
+  position, type, note — is captured, so adding the photo is a field on an
+  existing form plus an upload path, not a rework. When it lands, the
+  accessible capture control is a plain `<input type="file" accept="image/*"
+  capture>`: a bare file input is itself the non-camera path a keyboard or
+  screen-reader user needs, and nothing more elaborate is required.
+- **Licence OCR, the bilingual contract PDF, the on-screen signature and the
+  emailed copy** — R4 steps 1, 5 and 6. Phase 4, per `docs/05-BUILD-PLAN.md`;
+  not pulled forward. Manual driver entry is a first-class path either way
+  (§10), so nothing built this phase is a placeholder waiting on them.
 - **WebAuthn / fingerprint unlock.** §21 offers "PIN or fingerprint". The PIN
   is built; the platform authenticator is a Phase 5 addition that changes no
   data model.
