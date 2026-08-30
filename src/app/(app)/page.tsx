@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { requireUnlocked } from '@/lib/auth/session'
 
@@ -22,6 +23,10 @@ export default async function HomePage() {
           {staff.role === 'admin' ? t('adminNote') : t('repNote')}
         </p>
       </div>
+
+      {staff.role === 'admin' ? (
+        <Link href="/admin/cars" className="ir-btn-primary">{t('goToFleet')}</Link>
+      ) : null}
     </div>
   )
 }

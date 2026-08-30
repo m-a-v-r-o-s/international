@@ -1,0 +1,26 @@
+import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
+import { requireAdmin } from '@/lib/auth/session'
+
+/**
+ * Everything under /admin requires the admin role. requireAdmin() re-checks
+ * this on every request; RLS re-checks it again underneath. A rep who guesses
+ * one of these URLs gets redirected before a single query runs.
+ */
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  await requireAdmin()
+  const t = await getTranslations('admin')
+
+  return (
+    <div className="flex flex-col gap-5">
+      <nav aria-label={t('navLabel')} className="-mx-5 overflow-x-auto px-5">
+        <ul className="flex gap-1 whitespace-nowrap">
+          <li><Link href="/admin/cars" className="ir-btn-quiet !w-auto">{t('nav.cars')}</Link></li>
+          <li><Link href="/admin/categories" className="ir-btn-quiet !w-auto">{t('nav.categories')}</Link></li>
+          <li><Link href="/admin/pricing" className="ir-btn-quiet !w-auto">{t('nav.pricing')}</Link></li>
+        </ul>
+      </nav>
+      {children}
+    </div>
+  )
+}

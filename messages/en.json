@@ -66,7 +66,8 @@
     "title": "Today",
     "welcome": "Signed in. The day's screens arrive with the booking work.",
     "adminNote": "Manager account — the movements sheet, fleet board and reports come next.",
-    "repNote": "Rep account — availability, bookings and the pickup flow come next."
+    "repNote": "Rep account — availability, bookings and the pickup flow come next.",
+    "goToFleet": "Manage the fleet"
   },
   "settings": {
     "title": "Settings",
@@ -76,6 +77,85 @@
     "changePin": "Change PIN",
     "saved": "Saved.",
     "account": "Account"
+  },
+  "admin": {
+    "navLabel": "Admin sections",
+    "nav": {
+      "cars": "Fleet",
+      "categories": "Categories",
+      "pricing": "Pricing"
+    },
+    "cars": {
+      "title": "Car management",
+      "count": "{n, plural, one {# car} other {# cars}}",
+      "add": "Add a car",
+      "plate": "Plate",
+      "model": "Model",
+      "selectModel": "Choose a model",
+      "year": "Year",
+      "colour": "Colour",
+      "unknownModel": "Model removed",
+      "noModels": "No models exist yet. Add at least one category and model before adding cars.",
+      "goToCategories": "Go to categories & models",
+      "archived": "{n, plural, one {# archived car} other {# archived cars}}",
+      "backToFleet": "Back to the fleet",
+      "details": "Details",
+      "notesTitle": "Notes",
+      "notes": "Internal notes",
+      "notesHint": "Visible to the manager only. Never shown to a rep.",
+      "dangerZone": "Archive & delete",
+      "archive": "Archive this car",
+      "unarchive": "Restore this car",
+      "archivedBadge": "Archived",
+      "delete": "Delete permanently",
+      "deleteConfirm": "Delete this car permanently? This cannot be undone. Prefer Archive unless this was a data-entry mistake."
+    },
+    "categories": {
+      "title": "Categories & models",
+      "add": "Add a category",
+      "edit": "Edit category",
+      "empty": "No categories yet. Add the 8 categories the client uses (A–H).",
+      "code": "Code",
+      "sortOrder": "Sort order",
+      "nameEl": "Name (Greek)",
+      "nameEn": "Name (English)",
+      "minAge": "Minimum driver age",
+      "minAgeHint": "Editable per category — never hard-coded.",
+      "minLicenceYears": "Minimum years licensed",
+      "ageAndLicence": "{age}+ · licence ≥{years}y"
+    },
+    "models": {
+      "add": "Add a model",
+      "selectCategory": "Choose a category",
+      "make": "Make",
+      "model": "Model",
+      "category": "Category",
+      "transmission": "Transmission",
+      "manual": "Manual",
+      "automatic": "Automatic",
+      "fuelType": "Fuel",
+      "petrol": "Petrol",
+      "diesel": "Diesel",
+      "hybrid": "Hybrid",
+      "electric": "Electric",
+      "seats": "Seats",
+      "seatsShort": "seats",
+      "doors": "Doors",
+      "aircon": "Air conditioning",
+      "tankLitres": "Tank size (litres)",
+      "tankLitresHint": "Needed for the fuel policy at pickup and return."
+    },
+    "blocks": {
+      "title": "Blocked dates",
+      "screenHint": "Service, repair or a write-off. A rep sees this exactly like another rep's booking — no reason, ever.",
+      "empty": "No blocks in the last or next year.",
+      "add": "Block a date range",
+      "start": "Start date",
+      "end": "End date",
+      "reason": "Reason",
+      "reasonHint": "Manager-only. Never shown to a rep.",
+      "remove": "Remove this block"
+    }
   },
   "errors": {
     "unknown": "Something went wrong. Nothing was saved.",
@@ -98,6 +178,7 @@
     "IR110": "A rental that is out cannot be shortened. Process the return instead.",
     "IR111": "A swap car has to be in the same category.",
     "IR112": "That record no longer exists.",
+    "IR113": "You cannot change your own account this way.",
     "IR120": "A driver on this booking does not meet the rules. The manager can override it.",
     "IR121": "Add the driver and their licence before starting the pickup."
   },
