@@ -127,6 +127,10 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
         <Link href={`/bookings/${row.id}/pickup`} className="ir-btn-primary">{tt('startPickup')}</Link>
       ) : null}
 
+      {isOut ? (
+        <Link href={`/bookings/${row.id}/return`} className="ir-btn-primary">{tt('startReturn')}</Link>
+      ) : null}
+
       {editable ? (
         <section className="ir-card p-4">
           <h2 className="mb-3 text-[1.0625rem] font-semibold">{t('editTitle')}</h2>

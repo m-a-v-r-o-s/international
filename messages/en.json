@@ -191,7 +191,8 @@
     }
   },
   "today": {
-    "startPickup": "Start pickup"
+    "startPickup": "Start pickup",
+    "startReturn": "Start return"
   },
   "damage": {
     "viewLabel": "View",
@@ -300,6 +301,31 @@
     "confirmPrompt": "Hand the car over now?",
     "alreadyOut": "This car has already been handed over.",
     "notPickable": "This booking is not open for pickup."
+  },
+  "returnFlow": {
+    "title": "Return",
+    "stepsLabel": "Return steps",
+    "stepDone": "done",
+    "step": {
+      "fuel": "Fuel",
+      "damage": "Damage",
+      "confirm": "Confirm"
+    },
+    "fuelOutWas": "Fuel at pickup: {level}",
+    "sameToSame": "The car goes out and comes back at the same level. Read the gauge as it is now.",
+    "toDamage": "Continue to damage",
+    "toConfirm": "Continue to confirm",
+    "damageIntro": "Damage already on the car at pickup is shown greyed out and cannot be changed here. Add anything new.",
+    "damageNotPriced": "Record what you can see and nothing more. New damage goes to the manager, who decides what it costs. Do not price it, do not argue it and do not take money for it.",
+    "newDamage": "New damage",
+    "marksCount": "{n, plural, =0 {None} one {# mark} other {# marks}}",
+    "willFlagFuel": "The manager will be sent the {n}/8 shortfall to settle.",
+    "willFlagDamage": "The manager will be sent {n, plural, one {# new mark} other {# new marks}} to settle.",
+    "confirmHint": "Confirming closes the rental. The remaining days go back into availability straight away, and the price does not change — an early return earns no refund.",
+    "confirmAction": "Complete the return",
+    "confirmPrompt": "Complete the return now?",
+    "alreadyReturned": "This rental has already been returned.",
+    "notReturnable": "This booking is not out, so there is nothing to return."
   },
   "admin": {
     "navLabel": "Admin sections",
