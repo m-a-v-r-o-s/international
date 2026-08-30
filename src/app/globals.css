@@ -6,29 +6,45 @@
    Tuned for the room this app is actually used in: a hotel desk in Crete, in
    August, on a phone held in one hand while a guest waits. That means high
    contrast over subtlety, large targets over density, and motion that explains
-   a state change and then gets out of the way. Every foreground/background
-   pair below clears WCAG 2.1 AA at its intended size.
+   a state change and then gets out of the way.
+
+   Every foreground/background pair below clears WCAG 2.1 AA at its intended
+   size, and tests/unit/contrast.test.ts COMPUTES that from these values rather
+   than trusting the comments — a stale ratio in a comment is worse than none.
+   The ratios written here are what that test measures.
    ───────────────────────────────────────────────────────────────────────── */
 @theme {
   --color-canvas: #f4f6f8;
   --color-surface: #ffffff;
+
+  /* Decoration: card edges and list dividers. Deliberately quiet, and NOT
+     used to draw the boundary of anything interactive — see --color-control. */
   --color-line: #d5dbe2;
   --color-line-strong: #b3bdc8;
 
-  --color-ink: #0b1420;        /* 17.6:1 on surface */
-  --color-ink-soft: #45566a;   /*  7.6:1 on surface */
-  --color-ink-faint: #66778a;  /*  4.8:1 on surface — never below 16px */
+  /* The edge of a control, which WCAG 2.1 §1.4.11 requires to reach 3:1
+     against what sits either side of it. --color-line does not (1.39:1 on
+     surface, 1.29:1 on canvas) and was being used for input and button borders
+     until the contrast audit measured it. This clears 3:1 on BOTH grounds,
+     because a field is white on a near-white page and its border is the only
+     thing that says where it is.
+     3.28:1 on surface · 3.03:1 on canvas */
+  --color-control: #858f9c;
 
-  --color-brand: #10456a;      /*  8.9:1 on surface */
-  --color-brand-strong: #0a3252;
+  --color-ink: #0b1420;        /* 18.5:1 on surface */
+  --color-ink-soft: #45566a;   /*  7.5:1 on surface */
+  --color-ink-faint: #66778a;  /*  4.6:1 on surface — placeholders only */
+
+  --color-brand: #10456a;      /* 10.1:1 on surface */
+  --color-brand-strong: #0a3252;  /* 13.2:1 on surface */
   --color-brand-tint: #e8f0f7;
   --color-brand-ink: #ffffff;
 
-  --color-danger: #a11f16;     /*  7.1:1 on surface */
+  --color-danger: #a11f16;     /*  7.7:1 on surface */
   --color-danger-tint: #fdeceb;
-  --color-warn: #7a4b00;       /*  7.0:1 on surface */
+  --color-warn: #7a4b00;       /*  7.4:1 on surface */
   --color-warn-tint: #fdf2e0;
-  --color-ok: #0b6b45;         /*  5.6:1 on surface */
+  --color-ok: #0b6b45;         /*  6.6:1 on surface */
   --color-ok-tint: #e7f5ee;
 
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
@@ -83,7 +99,7 @@ body {
 
   /* 44px minimum on anything tappable — a thumb, in a hurry, in sunlight. */
   .ir-field {
-    @apply block w-full min-h-12 rounded-field border border-line bg-surface
+    @apply block w-full min-h-12 rounded-field border border-control bg-surface
            px-3.5 py-2.5 text-[1.0625rem] text-ink placeholder:text-ink-faint;
   }
   .ir-field[aria-invalid="true"] {
@@ -110,7 +126,7 @@ body {
     @apply bg-brand text-brand-ink hover:bg-brand-strong disabled:hover:bg-brand;
   }
   .ir-btn-quiet {
-    @apply border border-line bg-surface text-ink hover:bg-brand-tint;
+    @apply border border-control bg-surface text-ink hover:bg-brand-tint;
   }
 
   .ir-card {

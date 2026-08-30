@@ -45,7 +45,7 @@ export function StepNav({ steps, label, doneLabel }: { steps: StepState[]; label
                   {inner}
                 </span>
               ) : step.reachable ? (
-                <Link href={step.href} className={`${base} border-line bg-surface text-ink hover:bg-brand-tint`}>
+                <Link href={step.href} className={`${base} border-control bg-surface text-ink hover:bg-brand-tint`}>
                   {inner}
                 </Link>
               ) : (

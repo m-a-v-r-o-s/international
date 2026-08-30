@@ -86,7 +86,7 @@ export function ModelForm({
         <label className="flex min-h-12 items-center gap-2.5 text-[1.0625rem] text-ink">
           <input
             type="checkbox" name="aircon" defaultChecked={model?.aircon ?? true}
-            className="size-5 rounded border-line-strong"
+            className="size-5 rounded border-control"
           />
           {t('aircon')}
         </label>

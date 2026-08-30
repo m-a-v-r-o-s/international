@@ -1,6 +1,8 @@
 'use client'
 
-import { useActionState, useState, type MouseEvent } from 'react'
+import {
+  useActionState, useRef, useState, type KeyboardEvent, type MouseEvent,
+} from 'react'
 import { useTranslations } from 'next-intl'
 import { SubmitButton } from '@/components/SubmitButton'
 import { CarDiagram, DAMAGE_VIEWS, type DamageView } from './CarDiagram'
@@ -85,12 +87,51 @@ export function DamageDiagram({
   const inView = (list: DiagramMark[]) => list.filter((m) => m.view === view)
   const newTone = tone === 'new'
 
+  /**
+   * Arrow keys move between the views and take focus with them; Home and End
+   * jump to the ends. Wrapping at both ends is what the ARIA authoring
+   * practices describe for a horizontal tablist, and it is also what a thumb
+   * expects from a row of five.
+   */
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
+
+  function onTabKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const last = DAMAGE_VIEWS.length - 1
+    const current = DAMAGE_VIEWS.indexOf(view)
+
+    const next =
+      event.key === 'ArrowRight' || event.key === 'ArrowDown' ? (current === last ? 0 : current + 1)
+      : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? (current === 0 ? last : current - 1)
+      : event.key === 'Home' ? 0
+      : event.key === 'End' ? last
+      : -1
+
+    if (next < 0) return
+    event.preventDefault()
+    setView(DAMAGE_VIEWS[next]!)
+    setPoint(null)
+    tabRefs.current[next]?.focus()
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <div>
         <p className="ir-label" id="damage-view-label">{t('viewLabel')}</p>
-        <div role="tablist" aria-labelledby="damage-view-label" className="-mx-1 flex flex-wrap gap-1 px-1">
-          {DAMAGE_VIEWS.map((v) => {
+        {/*
+          * A real tablist, which means a roving tabindex and arrow keys.
+          * `role="tab"` PROMISES that: a screen reader announces "tab, 2 of
+          * 5" and the person then presses Right expecting to move. Five
+          * separately tabbable buttons wearing the role would make that
+          * promise and break it — and would also put four extra stops between
+          * the rep and the diagram on every pass through the form.
+          */}
+        <div
+          role="tablist"
+          aria-labelledby="damage-view-label"
+          className="-mx-1 flex flex-wrap gap-1 px-1"
+          onKeyDown={onTabKeyDown}
+        >
+          {DAMAGE_VIEWS.map((v, index) => {
             const count = marks.filter((m) => m.view === v).length + carriedForward.filter((m) => m.view === v).length
             const selected = v === view
             return (
@@ -99,11 +140,13 @@ export function DamageDiagram({
                 type="button"
                 role="tab"
                 id={`damage-tab-${v}`}
+                ref={(node) => { tabRefs.current[index] = node }}
                 aria-selected={selected}
                 aria-controls="damage-surface"
+                tabIndex={selected ? 0 : -1}
                 onClick={() => { setView(v); setPoint(null) }}
                 className={`min-h-11 rounded-field border px-3 text-[0.9375rem] font-medium transition-colors duration-150 ease-ui ${
-                  selected ? 'border-brand bg-brand text-brand-ink' : 'border-line bg-surface text-ink hover:bg-brand-tint'
+                  selected ? 'border-brand bg-brand text-brand-ink' : 'border-control bg-surface text-ink hover:bg-brand-tint'
                 }`}
               >
                 {t(`view.${v}`)}

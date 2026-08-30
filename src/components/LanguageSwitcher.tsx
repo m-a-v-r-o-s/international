@@ -29,7 +29,7 @@ export async function LanguageSwitcher() {
             className={`min-h-[2.75rem] rounded-md border px-4 text-[0.9375rem] font-medium ${
               locale === current
                 ? 'border-brand bg-brand text-brand-ink'
-                : 'border-line bg-surface text-ink hover:bg-brand-tint'
+                : 'border-control bg-surface text-ink hover:bg-brand-tint'
             }`}
           >
             {locale === 'el' ? t('greek') : t('english')}

@@ -193,7 +193,7 @@ export function NewBookingForm({
                     return next
                   })
                 }}
-                className="size-5 rounded border-line-strong"
+                className="size-5 rounded border-control"
               />
               {t(`seat.${seat}`)}
             </label>

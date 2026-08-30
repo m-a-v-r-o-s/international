@@ -62,7 +62,7 @@ export function FilterForm({
           <input
             type="checkbox" name="aircon" value="1"
             defaultChecked={searchParams.aircon === '1'}
-            className="size-5 rounded border-line-strong"
+            className="size-5 rounded border-control"
           />
           {t('aircon')}
         </label>
