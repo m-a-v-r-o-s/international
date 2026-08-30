@@ -379,7 +379,8 @@
       "exceptions": "Εξαιρέσεις",
       "settings": "Ρυθμίσεις",
       "users": "Προσωπικό",
-      "hotels": "Ξενοδοχεία"
+      "hotels": "Ξενοδοχεία",
+      "audit": "Αρχείο ενεργειών"
     },
     "movements": {
       "title": "Φύλλο κινήσεων",
@@ -659,6 +660,55 @@
       "homeTag": "τοποθετημένος",
       "coverTag": "κάλυψη",
       "goToStaff": "Διαχείριση προσωπικού"
+    },
+    "audit": {
+      "title": "Αρχείο ενεργειών",
+      "intro": "Κάθε αλλαγή που έγινε ποτέ, με το ποιος την έκανε και τι ίσχυε πριν. Μόνο για ανάγνωση και μόνιμο.",
+      "filtersLabel": "Φίλτρα αρχείου",
+      "filterActor": "Ποιος",
+      "anyActor": "Οποιοσδήποτε",
+      "filterEntity": "Τι",
+      "anyEntity": "Οτιδήποτε",
+      "filterFrom": "Από",
+      "filterTo": "Έως",
+      "apply": "Εφαρμογή",
+      "empty": "Δεν υπάρχουν εγγραφές με αυτά τα φίλτρα.",
+      "actor": "Από",
+      "unknownActor": "Διαγραμμένος λογαριασμός",
+      "systemActor": "Το σύστημα",
+      "changes": "{n, plural, one {# πεδίο άλλαξε} other {# πεδία άλλαξαν}}",
+      "field": "Πεδίο",
+      "before": "Πριν",
+      "after": "Μετά",
+      "none": "κενό",
+      "pagination": "Περισσότερες εγγραφές",
+      "newer": "Νεότερα",
+      "older": "Παλαιότερα",
+      "page": "Σελίδα {n}",
+      "action": {
+        "insert": "δημιουργήθηκε",
+        "update": "άλλαξε",
+        "delete": "διαγράφηκε"
+      },
+      "entity": {
+        "bookings": "Κράτηση",
+        "cars": "Αυτοκίνητο",
+        "car_models": "Μοντέλο",
+        "categories": "Κατηγορία",
+        "pricing_periods": "Περίοδος τιμολόγησης",
+        "price_rows": "Τιμή",
+        "price_extra_day": "Χρέωση επιπλέον ημέρας",
+        "profiles": "Μέλος προσωπικού",
+        "hotels": "Ξενοδοχείο",
+        "hotel_reps": "Ανάθεση ξενοδοχείου",
+        "booking_drivers": "Οδηγός",
+        "exceptions": "Εκκρεμότητα",
+        "handovers": "Παράδοση",
+        "cash_handovers": "Παράδοση μετρητών",
+        "app_settings": "Ρυθμίσεις",
+        "contracts": "Σύμβαση",
+        "damage_marks": "Σημείο ζημιάς"
+      }
     }
   },
   "errors": {

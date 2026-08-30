@@ -332,6 +332,22 @@ export type Database = {
           purged_drivers: number; last_purge_at: string | null
         }[]
       }
+      // A9 · the audit log. Joins the actor's name and nothing else — never
+      // anything app.audit_redact() removed on the way in.
+      admin_audit_log: {
+        Args: {
+          p_actor?: string | null; p_entity?: string | null
+          p_from?: string | null; p_to?: string | null
+          p_limit?: number; p_offset?: number
+        }
+        Returns: {
+          id: number; at: string; actor_id: string | null; actor_name: string | null
+          entity: string; entity_id: string | null
+          action: 'insert' | 'update' | 'delete'
+          before: Json | null; after: Json | null
+        }[]
+      }
+      admin_audit_entities: { Args: Record<string, never>; Returns: { entity: string }[] }
       booking_windows: {
         Args: Record<string, never>
         Returns: {

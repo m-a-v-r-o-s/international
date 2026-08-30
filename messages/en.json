@@ -379,7 +379,8 @@
       "exceptions": "Exceptions",
       "settings": "Settings",
       "users": "Staff",
-      "hotels": "Hotels"
+      "hotels": "Hotels",
+      "audit": "Audit log"
     },
     "movements": {
       "title": "Movements sheet",
@@ -659,6 +660,55 @@
       "homeTag": "stationed",
       "coverTag": "cover",
       "goToStaff": "Manage staff"
+    },
+    "audit": {
+      "title": "Audit log",
+      "intro": "Every change ever made, with who made it and what it was before. Read-only and permanent.",
+      "filtersLabel": "Filter the log",
+      "filterActor": "Who",
+      "anyActor": "Anyone",
+      "filterEntity": "What",
+      "anyEntity": "Anything",
+      "filterFrom": "From",
+      "filterTo": "To",
+      "apply": "Apply",
+      "empty": "Nothing matches those filters.",
+      "actor": "By",
+      "unknownActor": "A deleted account",
+      "systemActor": "The system",
+      "changes": "{n, plural, one {# field changed} other {# fields changed}}",
+      "field": "Field",
+      "before": "Before",
+      "after": "After",
+      "none": "empty",
+      "pagination": "More entries",
+      "newer": "Newer",
+      "older": "Older",
+      "page": "Page {n}",
+      "action": {
+        "insert": "created",
+        "update": "changed",
+        "delete": "deleted"
+      },
+      "entity": {
+        "bookings": "Booking",
+        "cars": "Car",
+        "car_models": "Model",
+        "categories": "Category",
+        "pricing_periods": "Pricing period",
+        "price_rows": "Price",
+        "price_extra_day": "Extra-day rate",
+        "profiles": "Staff member",
+        "hotels": "Hotel",
+        "hotel_reps": "Hotel assignment",
+        "booking_drivers": "Driver",
+        "exceptions": "Exception",
+        "handovers": "Handover",
+        "cash_handovers": "Cash handover",
+        "app_settings": "Settings",
+        "contracts": "Agreement",
+        "damage_marks": "Damage mark"
+      }
     }
   },
   "errors": {
