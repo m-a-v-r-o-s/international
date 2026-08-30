@@ -160,9 +160,9 @@
     }
   },
   "footer": {
-    "credit": "© {year} Akos Digital Services",
-    "creditName": "Akos Digital Services",
+    "credit": "© {year} <link>Akos Digital Services</link>",
     "privacy": "Απόρρητο",
-    "terms": "Όροι"
+    "terms": "Όροι",
+    "navLabel": "Νομικά"
   }
 }

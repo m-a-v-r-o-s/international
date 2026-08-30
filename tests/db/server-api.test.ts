@@ -24,6 +24,22 @@ describe('the server-only API', () => {
         `select public.rep_device_matches($1, 'aaaaaaaaaaaaaaaaaaaa')`, [f.repA]))).toBe('42501')
       expect(await errcode(() => db.sql(
         `select public.set_pin_hash($1, 'pretend-hash')`, [f.repA]))).toBe('42501')
+      expect(await errcode(() => db.sql(
+        `select public.role_for_email('boss@example.com')`))).toBe('42501')
+    })
+  })
+
+  test('role_for_email tells the server which sign-in path to use', async () => {
+    await db.as({ kind: 'service' }, async () => {
+      expect((await db.one<{ r: string | null }>(
+        `select public.role_for_email('boss@example.com') as r`)).r).toBe('admin')
+      expect((await db.one<{ r: string | null }>(
+        `select public.role_for_email('  REP-A@Example.com ') as r`)).r).toBe('rep')
+      // Unknown and deactivated addresses are indistinguishable from each other.
+      expect((await db.one<{ r: string | null }>(
+        `select public.role_for_email('nobody@example.com') as r`)).r).toBeNull()
+      expect((await db.one<{ r: string | null }>(
+        `select public.role_for_email('gone@example.com') as r`)).r).toBeNull()
     })
   })
 

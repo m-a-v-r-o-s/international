@@ -86,6 +86,26 @@ begin
 end;
 $$;
 
+-- ── Which sign-in path does this address use? ───────────────────────────────
+-- The admin signs in with a one-time code and reps with a password
+-- (docs/01-DECISIONS.md §21), so the server has to know which before it sends
+-- anything. It must never TELL the client, though: the login screen answers
+-- identically whether or not an address exists, so there is no way to test an
+-- email against the staff list. Returns null for an unknown or inactive
+-- address, which the caller treats exactly like a rep.
+create or replace function public.role_for_email(p_email text)
+returns public.user_role
+language sql
+security definer
+set search_path = ''
+as $$
+  select p.role
+  from auth.users u
+  join public.profiles p on p.id = u.id
+  where lower(u.email) = lower(trim(p_email))
+    and p.active
+$$;
+
 -- Argon2 hashing happens in the Node process, never in SQL. This only stores
 -- the result, and only for the rep it belongs to.
 create or replace function public.set_pin_hash(p_profile_id uuid, p_hash text)
@@ -105,7 +125,8 @@ begin
     'public.log_security_event(text,uuid,text,text,jsonb)',
     'public.bind_rep_device(uuid,text,text)',
     'public.rep_device_matches(uuid,text)',
-    'public.set_pin_hash(uuid,text)'
+    'public.set_pin_hash(uuid,text)',
+    'public.role_for_email(text)'
   ] loop
     execute format('revoke all on function %s from public, anon, authenticated', fn);
     execute format('grant execute on function %s to service_role', fn);
