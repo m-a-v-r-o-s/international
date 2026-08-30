@@ -268,6 +268,35 @@ describe('a signed agreement is evidence — the bucket treats it as immutable',
   })
 })
 
+describe('retention does not depend on the pointer column', () => {
+  test('the sweep reads the BUCKET, so a cleared front_image_path hides nothing', async () => {
+    const bookingId = await bookAsRep(db, f.repA, {
+      carId: f.car1, hotelId: f.hotelA, start: '2026-07-06', end: '2026-07-08',
+    })
+    const driver = await db.asUser(f.repA, () => db.one<{ id: string }>(
+      `insert into public.booking_drivers
+         (booking_id, is_main, first_name, last_name, dob, licence_number, licence_country,
+          licence_issued_on, licence_expires_on, front_image_path)
+       values ($1, true, 'A', 'B', '1985-01-01', 'X', 'GR', '2010-01-01', '2032-01-01', $2)
+       returning id`,
+      [bookingId, `${bookingId}/licences/x-front.jpg`]))
+    await put(f.repA, at(bookingId, 'licences', 'x-front.jpg'))
+
+    // `booking_drivers` is granted to `authenticated` at table level, so a rep
+    // CAN clear their own driver's image pointer. That must not be a way to
+    // make a scanned licence outlive the retention window
+    // (docs/01-DECISIONS.md §25) — which is exactly why the purge is driven by
+    // the bucket layout and not by this column.
+    await db.asUser(f.repA, () => db.sql(
+      `update public.booking_drivers set front_image_path = null where id = $1`, [driver.id]))
+
+    const purgeable = await db.as({ kind: 'service' }, () => db.sql<{ name: string }>(
+      `select name from storage.objects
+        where bucket_id = $1 and (storage.foldername(name))[2] = 'licences'`, [BUCKET]))
+    expect(purgeable.map((o) => o.name)).toEqual([at(bookingId, 'licences', 'x-front.jpg')])
+  })
+})
+
 describe('a cancelled booking does not orphan its files into visibility', () => {
   test('the creating rep keeps their own; nobody else gains anything', async () => {
     const bookingId = await bookAsRep(db, f.repA, {

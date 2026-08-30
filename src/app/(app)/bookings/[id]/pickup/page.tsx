@@ -4,12 +4,14 @@ import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { requireUnlocked } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
+import { signBookingFiles } from '@/lib/storage/booking-files'
 import { loadHandoverContext, checkDriverEligibility } from '@/lib/handover/load'
 import { DamageDiagram } from '../DamageDiagram'
 import { FuelSlider } from '../FuelSlider'
 import { ConfirmTransition } from '../ConfirmTransition'
 import { StepNav, type StepState } from '../StepNav'
 import { DriverForm } from './DriverForm'
+import { LicenceCapture, type StoredLicenceImages } from './LicenceCapture'
 import { PaymentForm } from './PaymentForm'
 import { saveFuelOut, completePickup } from './actions'
 
@@ -22,19 +24,18 @@ const STEPS = ['drivers', 'eligibility', 'fuel', 'damage', 'payment', 'confirm']
 type Step = (typeof STEPS)[number]
 
 /**
- * R4 · Pickup flow (docs/04-SCREENS.md), minus what Phase 4 owns.
+ * R4 · Pickup flow (docs/04-SCREENS.md).
  *
- * Built this phase: driver entry, the eligibility gate, fuel out, the damage
- * diagram, payment, and the booked → out transition. NOT built here, by
- * design: licence OCR (step 1's camera), the bilingual agreement PDF and the
- * on-screen signature (steps 5–6). Those are Phase 4 in
- * docs/05-BUILD-PLAN.md and are not pulled forward; manual driver entry is a
- * first-class path either way (docs/01-DECISIONS.md §10), so nothing here is a
- * placeholder waiting on them.
+ * Licence capture and OCR, the eligibility gate, fuel out, the damage diagram,
+ * payment, and the booked → out transition.
  *
  * The flow is sequential and resumable because every step writes its own rows
  * and the step you land on is read back off those rows — there is no wizard
  * state in the browser to lose when the phone locks with a guest waiting.
+ *
+ * Step 1 is a camera in front of a form, never instead of one
+ * (docs/01-DECISIONS.md §10): a rep who photographs nothing fills the same
+ * fields by hand and the pickup proceeds identically.
  */
 export default async function PickupPage({
   params, searchParams,
@@ -69,6 +70,21 @@ export default async function PickupPage({
   const eligibility = booking.category_id
     ? await checkDriverEligibility(supabase, booking.category_id, drivers, booking.start_date, booking.end_date)
     : []
+
+  // The stored licence photos, behind short-lived signed URLs issued to this
+  // rep and logged against them (docs/03-SECURITY.md §8). Two per driver, and
+  // no public URL for any of them.
+  const licenceUrls = await signBookingFiles(
+    supabase,
+    drivers.flatMap((d) => [d.front_image_path, d.back_image_path]),
+    { actorId: staff.id })
+  const storedFor = (index: number, driver: (typeof drivers)[number]): StoredLicenceImages => ({
+    frontUrl: licenceUrls[index * 2] ?? null,
+    backUrl: licenceUrls[index * 2 + 1] ?? null,
+    hasFront: driver.front_image_path !== null,
+    hasBack: driver.back_image_path !== null,
+  })
+  const indexOfDriver = new Map(drivers.map((d, i) => [d.id, i]))
 
   const overridden = booking.eligibility_override_at !== null
   const hasDrivers = drivers.length > 0
@@ -131,30 +147,50 @@ export default async function PickupPage({
           <h2 className="text-[1.25rem] font-semibold">{t('step.drivers')}</h2>
           <p className="text-ink-soft">{t('driversIntro')}</p>
 
-          <div className="ir-card p-4">
-            <h3 className="mb-3 text-[1.0625rem] font-semibold">{t('mainDriver')}</h3>
-            <DriverForm
-              bookingId={booking.id}
-              isMain
-              driver={drivers.find((d) => d.is_main)}
-              defaults={{
-                first_name: booking.cust_first,
-                last_name: booking.cust_last,
-                dob: booking.cust_dob,
-              }}
-            />
-          </div>
+          {(() => {
+            const main = drivers.find((d) => d.is_main)
+            return (
+              <div className="ir-card flex flex-col gap-4 p-4">
+                <h3 className="text-[1.0625rem] font-semibold">{t('mainDriver')}</h3>
+                <LicenceCapture
+                  bookingId={booking.id}
+                  driverId={main?.id}
+                  isMain
+                  stored={main ? storedFor(indexOfDriver.get(main.id) ?? 0, main) : undefined}
+                />
+                <DriverForm
+                  bookingId={booking.id}
+                  isMain
+                  driver={main}
+                  defaults={{
+                    first_name: booking.cust_first,
+                    last_name: booking.cust_last,
+                    dob: booking.cust_dob,
+                  }}
+                />
+              </div>
+            )
+          })()}
 
           {drivers.filter((d) => !d.is_main).map((driver) => (
-            <div key={driver.id} className="ir-card p-4">
-              <h3 className="mb-3 text-[1.0625rem] font-semibold">{t('additionalDriver')}</h3>
+            <div key={driver.id} className="ir-card flex flex-col gap-4 p-4">
+              <h3 className="text-[1.0625rem] font-semibold">{t('additionalDriver')}</h3>
+              <LicenceCapture
+                bookingId={booking.id}
+                driverId={driver.id}
+                isMain={false}
+                stored={storedFor(indexOfDriver.get(driver.id) ?? 0, driver)}
+              />
               <DriverForm bookingId={booking.id} isMain={false} driver={driver} />
             </div>
           ))}
 
-          <div className="ir-card p-4">
-            <h3 className="mb-1 text-[1.0625rem] font-semibold">{t('addAdditionalDriver')}</h3>
-            <p className="mb-3 text-[0.875rem] text-ink-soft">{t('additionalFree')}</p>
+          <div className="ir-card flex flex-col gap-4 p-4">
+            <div>
+              <h3 className="text-[1.0625rem] font-semibold">{t('addAdditionalDriver')}</h3>
+              <p className="text-[0.875rem] text-ink-soft">{t('additionalFree')}</p>
+            </div>
+            <LicenceCapture bookingId={booking.id} isMain={false} />
             <DriverForm bookingId={booking.id} isMain={false} />
           </div>
 

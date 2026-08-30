@@ -9,16 +9,21 @@ import type { BookingDriverRow } from '@/lib/supabase/database.types'
 
 export type DriverFields = Pick<BookingDriverRow,
   'id' | 'is_main' | 'first_name' | 'last_name' | 'dob'
-  | 'licence_number' | 'licence_country' | 'licence_issued_on' | 'licence_expires_on'>
+  | 'licence_number' | 'licence_country' | 'licence_issued_on' | 'licence_expires_on'
+  | 'ocr_confidence' | 'ocr_reviewed'>
 
 /**
  * R4 step 1 — one driver, typed in.
  *
  * §10 puts licence OCR on top of this form, never in front of it: "manual
  * entry is a first-class fallback, not an error path", and a worn, non-Latin
- * or non-EU licence must never block a pickup. OCR arrives in Phase 4 and
- * pre-fills exactly these fields, which stay editable — so this form is the
- * thing that is being built once, not twice.
+ * or non-EU licence must never block a pickup. LicenceCapture pre-fills
+ * exactly these fields and they stay editable — one form, filled by hand or by
+ * camera, never two.
+ *
+ * When `ocr_reviewed` is false the values came off a photograph and nobody has
+ * looked at them yet, and the form says so. Pressing Save is what marks them
+ * reviewed, and what stops a later read overwriting them.
  *
  * The main driver's name and date of birth are pre-filled from what the
  * booking already captured (docs/01-DECISIONS.md §9), because retyping a name
@@ -48,6 +53,17 @@ export function DriverForm({
 
         {state?.error ? (
           <p className="ir-notice border-danger bg-danger-tint text-danger" role="alert">{te(state.error)}</p>
+        ) : null}
+
+        {driver && driver.ocr_reviewed === false ? (
+          <p className="ir-notice border-warn bg-warn-tint text-warn" role="status">
+            {t('ocrUnreviewed')}
+            {driver.ocr_confidence !== null ? (
+              <span className="mt-1 block font-medium">
+                {t('ocrConfidence', { percent: Math.round(Number(driver.ocr_confidence) * 100) })}
+              </span>
+            ) : null}
+          </p>
         ) : null}
 
         <div className="grid grid-cols-2 gap-3">
@@ -92,8 +108,6 @@ export function DriverForm({
             label={t('licenceExpires')} defaultValue={driver?.licence_expires_on ?? undefined} required
           />
         </div>
-
-        <p className="ir-hint">{t('licencePhotoPending')}</p>
 
         <SubmitButton label={driver ? tc('save') : t('addDriver')} variant="quiet" />
         {state?.saved ? <p className="text-[0.875rem] text-ok" role="status">{tc('save')} ✓</p> : null}

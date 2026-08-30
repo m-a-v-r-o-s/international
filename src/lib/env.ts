@@ -20,6 +20,18 @@ const serverSchema = z.object({
   sessionSecret: z.string().min(32),
 })
 
+/**
+ * Licence OCR (docs/01-DECISIONS.md §10). Read separately from serverEnv()
+ * because it is the one server secret the app is expected to run WITHOUT:
+ * OCR is a convenience on top of manual entry, never a gate in front of it, so
+ * a deployment with no key must still be able to take a pickup. Returns null
+ * rather than throwing, and src/lib/ocr/licence.ts treats null as "OCR is off".
+ */
+export function anthropicApiKey(): string | null {
+  const parsed = z.string().min(20).safeParse(process.env.ANTHROPIC_API_KEY)
+  return parsed.success ? parsed.data : null
+}
+
 let publicCache: z.infer<typeof publicSchema> | null = null
 let serverCache: z.infer<typeof serverSchema> | null = null
 

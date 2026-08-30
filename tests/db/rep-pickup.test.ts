@@ -70,12 +70,86 @@ describe('R4 step 1 · drivers, typed in by hand', () => {
 
     expect(row.is_main).toBe(true)
     expect(row.licence_number).toBe('GR1234567')
-    // Phase 3 captures the typed licence fields only. The images need the
-    // private Storage bucket, which is Phase 4 work and is not wired yet
-    // (docs/06-IMPLEMENTATION-NOTES.md, "Not done").
+    // Typed in by hand, so there are no images and nothing was read. §10 makes
+    // this the first-class path: the camera in front of this form is a
+    // convenience, and a driver recorded this way is complete.
     expect(row.front_image_path).toBeNull()
     expect(row.back_image_path).toBeNull()
+  })
+
+  test('the licence images live under the booking, one file per side per driver', async () => {
+    const bookingId = await bookAsRep(db, f.repA, {
+      carId: f.car1, hotelId: f.hotelA, start: '2026-07-06', end: '2026-07-08',
+    })
+    const driver = await addDriver(f.repA, bookingId)
+
+    // Exactly what captureLicence() writes: the driver's own id is the
+    // basename, so a re-take replaces the shot it corrects and the retention
+    // sweep addresses one file per side.
+    const front = `${bookingId}/licences/${driver.id}-front.jpg`
+    const back = `${bookingId}/licences/${driver.id}-back.jpg`
+    for (const name of [front, back]) {
+      await db.asUser(f.repA, () => db.sql(
+        `insert into storage.objects (bucket_id, name) values ('booking-files', $1)`, [name]))
+    }
+    await db.asUser(f.repA, () => db.sql(
+      `update public.booking_drivers
+          set front_image_path = $2, back_image_path = $3, ocr_confidence = 0.91, ocr_reviewed = false
+        where id = $1`, [driver.id, front, back]))
+
+    const row = await db.one<{
+      front_image_path: string; back_image_path: string
+      ocr_confidence: string; ocr_reviewed: boolean
+    }>(`select front_image_path, back_image_path, ocr_confidence, ocr_reviewed
+        from public.booking_drivers where id = $1`, [driver.id])
+
+    expect(row.front_image_path).toBe(front)
+    expect(Number(row.ocr_confidence)).toBeCloseTo(0.91, 2)
+    // A machine filled the row in and no human has pressed Save yet.
     expect(row.ocr_reviewed).toBe(false)
+
+    const seenByA = await db.asUser(f.repA, () => db.sql(
+      `select name from storage.objects where bucket_id = 'booking-files' order by name`))
+    expect(seenByA).toHaveLength(2)
+  })
+
+  test('another rep reaches neither the driver row nor either licence image', async () => {
+    const bookingId = await bookAsRep(db, f.repB, {
+      carId: f.car3, hotelId: f.hotelB, start: '2026-07-06', end: '2026-07-08',
+    })
+    const driver = await addDriver(f.repB, bookingId)
+    const front = `${bookingId}/licences/${driver.id}-front.jpg`
+    await db.asUser(f.repB, () => db.sql(
+      `insert into storage.objects (bucket_id, name) values ('booking-files', $1)`, [front]))
+
+    // The row: refused by booking_drivers_rw.
+    expect(await db.asUser(f.repA, () => db.sql(
+      `select id from public.booking_drivers where id = $1`, [driver.id]))).toHaveLength(0)
+
+    // The image, which is what a signed URL would be minted from: refused by
+    // booking_files_select. Neither leak depends on the other being closed.
+    expect(await db.asUser(f.repA, () => db.sql(
+      `select name from storage.objects where name = $1`, [front]))).toHaveLength(0)
+  })
+
+  test('the audit log never carries a licence number or an image path', async () => {
+    const bookingId = await bookAsRep(db, f.repA, {
+      carId: f.car1, hotelId: f.hotelA, start: '2026-07-06', end: '2026-07-08',
+    })
+    const driver = await addDriver(f.repA, bookingId, { number: 'GR-SECRET-9' })
+    await db.asUser(f.repA, () => db.sql(
+      `update public.booking_drivers set front_image_path = $2 where id = $1`,
+      [driver.id, `${bookingId}/licences/${driver.id}-front.jpg`]))
+
+    const entries = await db.sql<{ after: Record<string, unknown> }>(
+      `select after from public.audit_log where entity = 'booking_drivers' and entity_id = $1`,
+      [driver.id])
+    expect(entries.length).toBeGreaterThan(0)
+    for (const entry of entries) {
+      expect(Object.keys(entry.after)).not.toContain('licence_number')
+      expect(Object.keys(entry.after)).not.toContain('front_image_path')
+      expect(JSON.stringify(entry.after)).not.toContain('GR-SECRET-9')
+    }
   })
 
   test('an additional driver is free — recording one does not change the total', async () => {

@@ -290,7 +290,6 @@
     "licenceCountryHint": "Two or three letters, e.g. GR or GBR.",
     "licenceIssued": "Issued on",
     "licenceExpires": "Expires on",
-    "licencePhotoPending": "Photographs of the licence are not captured yet — they arrive with the agreement. The details typed above are what the check uses, and they are enough to hand the car over.",
     "noDrivers": "No driver has been recorded yet. Add the main driver first.",
     "eligible": "Meets the rules.",
     "blockedTitle": "This pickup cannot go ahead.",
@@ -313,7 +312,25 @@
     "confirmAction": "Hand the car over",
     "confirmPrompt": "Hand the car over now?",
     "alreadyOut": "This car has already been handed over.",
-    "notPickable": "This booking is not open for pickup."
+    "notPickable": "This booking is not open for pickup.",
+    "licenceCaptureTitle": "Licence photos",
+    "licenceCaptureIntro": "Photograph the licence and the app will fill in what it can read. Check every field afterwards — it is often wrong on a worn card.",
+    "licenceFront": "Front of the licence",
+    "licenceBack": "Back of the licence",
+    "licenceBackHint": "Optional, but it carries the categories and the dates on most cards.",
+    "licenceOptional": "You can skip this and type the licence in below. The pickup does not depend on it.",
+    "readLicence": "Read the licence",
+    "storedFront": "Front of the licence, on file",
+    "storedBack": "Back of the licence, on file",
+    "licenceOnFile": "{side} — the photo is on file.",
+    "ocrHigh": "Read with high confidence ({percent}%). Check the fields below against the card.",
+    "ocrMedium": "Read with moderate confidence ({percent}%). Check every field below against the card.",
+    "ocrLow": "Read with low confidence ({percent}%). Read every field below off the card yourself before saving.",
+    "ocrOff": "The photos were saved. Automatic reading is switched off on this installation — type the licence in below.",
+    "ocrRateLimited": "The photos were saved. Automatic reading has been used a lot in the last few minutes — type the licence in below.",
+    "ocrUnreadable": "The photos were saved, but nothing could be read from them. Type the licence in below.",
+    "ocrUnreviewed": "These fields were read from the photo and nobody has checked them yet. Correct anything that is wrong, then save.",
+    "ocrConfidence": "Read confidence: {percent}%"
   },
   "returnFlow": {
     "title": "Return",
@@ -590,7 +607,8 @@
     "IR114": "There is no cash to hand over right now.",
     "fileType": "That file is not a photo the app can read. Take the photo again, or choose a JPEG or PNG.",
     "fileTooLarge": "That photo is too large. Take it again at a smaller size.",
-    "rateLimited": "Too many attempts just now. Wait a moment, then try again."
+    "rateLimited": "Too many attempts just now. Wait a moment, then try again.",
+    "ocrFailed": "The licence could not be read from the photo. Type the driver in, then add the photos."
   },
   "eligibility": {
     "title": "Eligibility",
