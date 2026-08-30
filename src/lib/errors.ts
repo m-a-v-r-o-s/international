@@ -18,6 +18,9 @@ export type ErrorKey =
   | 'IR001' | 'IR100' | 'IR101' | 'IR102' | 'IR103' | 'IR104' | 'IR105' | 'IR106'
   | 'IR107' | 'IR108' | 'IR109' | 'IR110' | 'IR111' | 'IR112' | 'IR113' | 'IR114' | 'IR120' | 'IR121'
   | 'forbidden' | 'conflict' | 'unknown'
+  // Raised by the app rather than by Postgres: a file the upload path refused
+  // before it ever reached the bucket, and the caps around the OCR call.
+  | 'fileType' | 'fileTooLarge' | 'rateLimited'
 
 /** The Postgres exclusion constraint on `bookings` — the double-booking guarantee. */
 const EXCLUSION_VIOLATION = '23P01'

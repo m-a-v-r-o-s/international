@@ -582,7 +582,10 @@
     "IR113": "You cannot change your own account this way.",
     "IR120": "A driver on this booking does not meet the rules. The manager can override it.",
     "IR121": "Add the driver and their licence before starting the pickup.",
-    "IR114": "There is no cash to hand over right now."
+    "IR114": "There is no cash to hand over right now.",
+    "fileType": "That file is not a photo the app can read. Take the photo again, or choose a JPEG or PNG.",
+    "fileTooLarge": "That photo is too large. Take it again at a smaller size.",
+    "rateLimited": "Too many attempts just now. Wait a moment, then try again."
   },
   "eligibility": {
     "title": "Eligibility",
