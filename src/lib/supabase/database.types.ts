@@ -34,6 +34,12 @@ export type ProfileRow = {
   lang: 'el' | 'en'
   pin_hash: string | null
   active: boolean
+  // Which of docs/01-DECISIONS.md §22's messages this person wants. The
+  // sender's public.push_targets() re-checks the role, so a rep with
+  // notify_exceptions set is still never a target for one.
+  notify_morning: boolean
+  notify_evening: boolean
+  notify_exceptions: boolean
   created_at: string
   updated_at: string
 }
@@ -180,12 +186,20 @@ export type ExceptionRow = {
   raised_by: string | null
   raised_at: string
   resolved_at: string | null
+  // Written by the notifier on the service role and by nothing else, so a rep
+  // cannot mark the boss's inbox as read.
+  notified_at: string | null
 }
 
 export type Database = {
   public: {
     Tables: {
-      profiles: Table<ProfileRow, never, Partial<Pick<ProfileRow, 'full_name' | 'phone' | 'lang'>>>
+      profiles: Table<
+        ProfileRow, never,
+        Partial<Pick<ProfileRow,
+          'full_name' | 'phone' | 'lang'
+          | 'notify_morning' | 'notify_evening' | 'notify_exceptions'>>
+      >
       hotels: Table<HotelRow>
       hotel_reps: Table<{ hotel_id: string; profile_id: string; is_primary: boolean }>
       categories: Table<CategoryRow>
@@ -228,7 +242,8 @@ export type Database = {
         pickup_window: string; dropoff_window: string; company: Json; updated_at: string
       }>
       push_subscriptions: Table<{
-        id: string; profile_id: string; endpoint: string; keys: Json; created_at: string
+        id: string; profile_id: string; endpoint: string
+        keys: { p256dh: string; auth: string }; created_at: string
       }>
     }
     Views: Record<string, never>
@@ -386,6 +401,34 @@ export type Database = {
         Returns: { object_name: string; booking_id: string; ended_on: string }[]
       }
       mark_licences_purged: { Args: { p_booking_ids: string[] }; Returns: number }
+
+      // The notifier's own API (docs/01-DECISIONS.md §22). Service role only:
+      // `push_own` restricts push_subscriptions to the row's owner, so no
+      // session can read the devices a notification is FOR.
+      push_targets: {
+        Args: { p_kind: string }
+        Returns: {
+          profile_id: string; lang: string; endpoint: string
+          keys: { p256dh: string; auth: string }
+        }[]
+      }
+      drop_push_subscription: { Args: { p_endpoint: string }; Returns: number }
+      pending_exception_notifications: {
+        Args: { p_limit?: number }
+        Returns: {
+          id: string; type: ExceptionType; raised_at: string
+          booking_ref: string; plate: string
+        }[]
+      }
+      mark_exceptions_notified: { Args: { p_ids: string[] }; Returns: number }
+      // Rows, never a count — see the migration header and §7.
+      rep_day_movements: {
+        Args: { p_profile_id: string; p_on: string }
+        Returns: {
+          kind: 'pickup' | 'return'; booking_id: string; at: string | null
+          plate: string; guest: string | null; room: string | null
+        }[]
+      }
     }
     Enums: {
       user_role: UserRole

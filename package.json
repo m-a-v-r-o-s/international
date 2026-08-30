@@ -16,6 +16,7 @@
     "test:watch": "vitest",
     "db:reset": "tsx scripts/db-apply.ts",
     "purge:licences": "tsx scripts/purge-licences.ts",
+    "notify": "tsx scripts/send-notifications.ts",
     "postinstall": "node scripts/fix-embedded-pg-libs.mjs"
   },
   "dependencies": {
@@ -30,6 +31,7 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "server-only": "^0.0.1",
+    "web-push": "^3.6.7",
     "zod": "^4.1.13"
   },
   "devDependencies": {
@@ -39,6 +41,7 @@
     "@types/pg": "^8.15.6",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
+    "@types/web-push": "^3.6.4",
     "embedded-postgres": "18.4.0-beta.17",
     "pg": "^8.16.3",
     "tailwindcss": "^4.1.16",

@@ -73,7 +73,22 @@
     "security": "Security",
     "changePin": "Change PIN",
     "saved": "Saved.",
-    "account": "Account"
+    "account": "Account",
+    "notifications": "Notifications",
+    "pushChecking": "Checking this device…",
+    "pushUnsupported": "This browser cannot receive notifications. Everything else in the app works normally.",
+    "pushUnconfigured": "Notifications are not set up on the server yet.",
+    "pushDenied": "You blocked notifications for this site. Allow them in your browser settings to turn them back on.",
+    "pushOn": "This device receives notifications.",
+    "pushOff": "This device does not receive notifications.",
+    "pushEnable": "Turn on for this device",
+    "pushDisable": "Turn off for this device",
+    "notifyMorning": "Morning summary",
+    "notifyMorningHint": "Your pickups for the day.",
+    "notifyEvening": "Evening reminder",
+    "notifyEveningHint": "The returns due back today.",
+    "notifyExceptions": "Exceptions",
+    "notifyExceptionsHint": "Damage flagged, a car not returned, an eligibility override."
   },
   "availability": {
     "title": "Availability",
@@ -957,5 +972,16 @@
     "copyFailed": "The address was saved, but the copy could not be sent. Try again later.",
     "mailNotConfigured": "Email sending is not set up on this installation yet. An address entered here is saved with the booking so the copy can be sent once it is.",
     "notSignedYet": "Sign the agreement first."
+  },
+  "push": {
+    "morning": {
+      "title": "Your pickups today"
+    },
+    "evening": {
+      "title": "Returns due back today"
+    },
+    "exceptions": {
+      "title": "{n, plural, one {# new exception} other {# new exceptions}}"
+    }
   }
 }
