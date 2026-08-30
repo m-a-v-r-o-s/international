@@ -245,7 +245,12 @@
     "none": "No damage marked.",
     "noneNew": "No new damage.",
     "removeMark": "Remove the mark: {what}",
-    "carriedMarkLabel": "Already there at pickup: {what}"
+    "carriedMarkLabel": "Already there at pickup: {what}",
+    "photoLabel": "Photo (optional)",
+    "photoHint": "Take a photo of this damage, or choose one from the phone. You can skip it.",
+    "photoFailed": "The mark was saved, but the photo was not attached.",
+    "photoAlt": "Photo of the damage: {what}",
+    "photoOnFile": "A photo is on file for this mark."
   },
   "handover": {
     "eighths": "{n}/8",

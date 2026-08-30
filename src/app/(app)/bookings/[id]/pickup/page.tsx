@@ -42,7 +42,7 @@ export default async function PickupPage({
   params: Promise<{ id: string }>
   searchParams: Promise<Record<string, string | undefined>>
 }) {
-  await requireUnlocked()
+  const staff = await requireUnlocked()
   const { id } = await params
   const query = await searchParams
   const t = await getTranslations('pickup')
@@ -50,7 +50,7 @@ export default async function PickupPage({
   const tb = await getTranslations('bookingDetail')
   const supabase = await supabaseServer()
 
-  const ctx = await loadHandoverContext(supabase, id)
+  const ctx = await loadHandoverContext(supabase, id, staff.id)
   if (!ctx) notFound()
 
   const { booking, car, model, drivers, pickup, marksByHandover } = ctx

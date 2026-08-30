@@ -5,6 +5,7 @@ import type {
   BookingDriverRow, BookingRow, Database, HandoverRow,
 } from '@/lib/supabase/database.types'
 import type { DiagramMark } from '@/app/(app)/bookings/[id]/DamageDiagram'
+import { signBookingFiles } from '@/lib/storage/booking-files'
 
 /**
  * Everything R4 and R5 need about one booking, in one place.
@@ -39,7 +40,16 @@ export type HandoverContext = {
 }
 
 export async function loadHandoverContext(
-  supabase: SupabaseClient<Database>, bookingId: string,
+  supabase: SupabaseClient<Database>,
+  bookingId: string,
+  /**
+   * Pass the signed-in staff id to get a short-lived URL for each damage
+   * photo. It is optional because signing costs a round trip per photo and a
+   * screen that only counts marks does not need one — and because a signed URL
+   * is issued to a PERSON, logged against them (docs/03-SECURITY.md), so there
+   * is no sensible default actor to fall back on.
+   */
+  actorId?: string,
 ): Promise<HandoverContext | null> {
   const { data } = await supabase.from('bookings')
     .select(BOOKING_COLUMNS).eq('id', bookingId).eq('kind', 'rental').maybeSingle()
@@ -65,13 +75,18 @@ export async function loadHandoverContext(
   const handoverIds = (handovers ?? []).map((h) => h.id)
   const { data: marks } = handoverIds.length > 0
     ? await supabase.from('damage_marks')
-        .select('id, handover_id, view, x, y, mark_type, note, pre_existing, created_at')
+        .select('id, handover_id, view, x, y, mark_type, note, photo_path, pre_existing, created_at')
         .in('handover_id', handoverIds)
         .order('created_at')
     : { data: [] }
 
+  const rows = marks ?? []
+  const photoUrls = actorId
+    ? await signBookingFiles(supabase, rows.map((m) => m.photo_path), { actorId })
+    : rows.map(() => null)
+
   const marksByHandover = new Map<string, DiagramMark[]>()
-  for (const mark of marks ?? []) {
+  rows.forEach((mark, index) => {
     const list = marksByHandover.get(mark.handover_id) ?? []
     // numeric(5,4) arrives as a string over PostgREST; coerce once, here.
     list.push({
@@ -81,9 +96,11 @@ export async function loadHandoverContext(
       y: Number(mark.y),
       mark_type: mark.mark_type,
       note: mark.note,
+      hasPhoto: mark.photo_path !== null,
+      photoUrl: photoUrls[index] ?? null,
     })
     marksByHandover.set(mark.handover_id, list)
-  }
+  })
 
   return {
     booking,

@@ -40,7 +40,7 @@ export default async function ReturnPage({
   params: Promise<{ id: string }>
   searchParams: Promise<Record<string, string | undefined>>
 }) {
-  await requireUnlocked()
+  const staff = await requireUnlocked()
   const { id } = await params
   const query = await searchParams
   const t = await getTranslations('returnFlow')
@@ -48,7 +48,7 @@ export default async function ReturnPage({
   const tb = await getTranslations('bookingDetail')
   const supabase = await supabaseServer()
 
-  const ctx = await loadHandoverContext(supabase, id)
+  const ctx = await loadHandoverContext(supabase, id, staff.id)
   if (!ctx) notFound()
 
   const { booking, car, model, pickup, ret, marksByHandover } = ctx

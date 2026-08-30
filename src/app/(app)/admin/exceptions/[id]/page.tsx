@@ -25,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
  * and English.
  */
 export default async function ExceptionDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireAdmin()
+  const staff = await requireAdmin()
   const { id } = await params
   const t = await getTranslations('admin.exceptions')
   const th = await getTranslations('handover')
@@ -37,7 +37,10 @@ export default async function ExceptionDetailPage({ params }: { params: Promise<
   const exception = detailRows?.[0]
   if (!exception) notFound()
 
-  const ctx = await loadHandoverContext(supabase, exception.booking_id)
+  // A6 is where new damage lands, and §12 puts a photo on the mark. The boss
+  // gets a short-lived signed URL for each one, logged against him like any
+  // other issuance — there is no public URL for these either.
+  const ctx = await loadHandoverContext(supabase, exception.booking_id, staff.id)
 
   const { data: raisedBy } = exception.raised_by
     ? await supabase.from('profiles').select('id, full_name').eq('id', exception.raised_by).maybeSingle()

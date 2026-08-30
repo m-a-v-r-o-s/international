@@ -16,6 +16,10 @@ export type DiagramMark = {
   y: number
   mark_type: MarkType
   note: string | null
+  /** Whether a photo is on file at all — true even when no URL was signed. */
+  hasPhoto?: boolean
+  /** A short-lived signed URL, issued server-side by loadHandoverContext(). */
+  photoUrl?: string | null
 }
 
 /**
@@ -30,6 +34,14 @@ export type DiagramMark = {
  *     named zones — so placing damage never requires pointing at a pixel.
  * The drawing itself is aria-hidden. It is a convenience for a rep with a
  * thumb, not the interface (WCAG 2.1 AA, HANDOFF.md's mobile-first rule).
+ *
+ * The optional photo per mark (docs/01-DECISIONS.md §12) is captured with a
+ * plain file input. That is not a compromise: a bare `<input type="file"
+ * accept="image/*" capture>` opens the camera on a rep's Android phone AND is
+ * itself the non-camera path a keyboard or screen-reader user needs, because
+ * it falls back to the system file picker with no work from us. Anything more
+ * elaborate — a custom camera surface, a canvas preview — would take that
+ * fallback away.
  *
  * At return, marks carried forward from the pickup handover come in through
  * `carriedForward` and are drawn muted and read-only; marks added here are
@@ -155,6 +167,12 @@ export function DamageDiagram({
             <p className="ir-notice border-danger bg-danger-tint text-danger" role="alert">{te(addState.error)}</p>
           ) : null}
 
+          {addState?.photoError ? (
+            <p className="ir-notice border-warn bg-warn-tint text-warn" role="alert">
+              {t('photoFailed')} {te(addState.photoError)}
+            </p>
+          ) : null}
+
           <input type="hidden" name="handover_id" value={handoverId} />
           {point ? <input type="hidden" name="x" value={point.x} /> : null}
           {point ? <input type="hidden" name="y" value={point.y} /> : null}
@@ -196,6 +214,20 @@ export function DamageDiagram({
             <p className="ir-hint">{t('noteHint')}</p>
           </div>
 
+          <div>
+            <label className="ir-label" htmlFor="mark_photo">{t('photoLabel')}</label>
+            <input
+              id="mark_photo"
+              name="photo"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              capture="environment"
+              className="ir-field file:mr-3 file:min-h-9 file:rounded-field file:border-0 file:bg-brand-tint file:px-3 file:font-medium file:text-ink"
+              aria-describedby="mark_photo_hint"
+            />
+            <p className="ir-hint" id="mark_photo_hint">{t('photoHint')}</p>
+          </div>
+
           <SubmitButton label={t('addAction')} variant="quiet" />
         </form>
       ) : null}
@@ -212,6 +244,7 @@ export function DamageDiagram({
                 <span className="text-[0.9375rem]">
                   {describe(mark)}
                   {mark.note ? <span className="block text-ink-soft">{mark.note}</span> : null}
+                  <MarkPhoto mark={mark} description={describe(mark)} />
                 </span>
               </li>
             ))}
@@ -243,6 +276,7 @@ export function DamageDiagram({
                   <span className="text-[0.9375rem]">
                     {describe(mark)}
                     {mark.note ? <span className="block text-ink-soft">{mark.note}</span> : null}
+                    <MarkPhoto mark={mark} description={describe(mark)} />
                   </span>
                 </span>
 
@@ -262,6 +296,42 @@ export function DamageDiagram({
         )}
       </section>
     </div>
+  )
+}
+
+/**
+ * The photo on a mark, if there is one.
+ *
+ * The `src` is a signed URL with a short TTL, minted server-side after the
+ * booking was re-checked (docs/03-SECURITY.md §8) — there is no public URL for
+ * any of this. If the URL could not be issued, or has gone stale on a page
+ * left open, the alt text still says a photo is on file rather than showing a
+ * broken image and implying there is none.
+ */
+function MarkPhoto({ mark, description }: { mark: DiagramMark; description: string }) {
+  const t = useTranslations('damage')
+  if (!mark.hasPhoto) return null
+
+  if (!mark.photoUrl) {
+    return <span className="mt-1 block text-[0.875rem] text-ink-soft">{t('photoOnFile')}</span>
+  }
+
+  return (
+    <a
+      href={mark.photoUrl}
+      target="_blank"
+      rel="noreferrer"
+      className="mt-2 block w-fit rounded-field border border-line p-1"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element -- a signed URL with
+          a short TTL is not something to route through the image optimiser's
+          cache. */}
+      <img
+        src={mark.photoUrl}
+        alt={t('photoAlt', { what: description })}
+        className="h-20 w-20 rounded-[calc(var(--radius-field)-2px)] object-cover"
+      />
+    </a>
   )
 }
 

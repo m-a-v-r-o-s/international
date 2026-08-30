@@ -6,8 +6,18 @@ import { requireUnlocked } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
 import { errorKey, type ErrorKey } from '@/lib/errors'
 import { ZONES, zoneToPoint, roundCoord, type Zone } from '@/lib/damage/zones'
+import { uploadBookingFile, BOOKING_FILES_BUCKET } from '@/lib/storage/booking-files'
+import { parseBookingFilePath } from '@/lib/storage/paths'
+import { MAX_UPLOAD_BYTES } from '@/lib/storage/booking-files'
 
-export type DamageState = { error?: ErrorKey; saved?: boolean } | undefined
+/**
+ * `photoError` is deliberately separate from `error`. A mark whose photo did
+ * not upload is still a recorded mark, and losing the mark because the picture
+ * was a 12 MB HEIC would be the worse failure — so the mark is kept and the
+ * screen says the photo did not attach.
+ */
+export type DamageState =
+  { error?: ErrorKey; photoError?: ErrorKey; saved?: boolean } | undefined
 
 const uuidSchema = z.string().uuid()
 const viewSchema = z.enum(['front', 'rear', 'left', 'right', 'top'])
@@ -29,6 +39,12 @@ const coordSchema = z.coerce.number().min(0).max(1)
  * A tapped mark arrives as an exact x/y; a mark placed from the zone select
  * arrives as a zone and is stored at that zone's centre. Both paths produce
  * the same row, which is what makes the diagram usable without a pointer.
+ *
+ * The optional photo (docs/01-DECISIONS.md §12) is uploaded AFTER the mark
+ * exists, because the mark's own id is the filename and because a mark without
+ * its picture is worth far more than a picture with no mark. The file is
+ * sniffed for a real image before it goes anywhere near the bucket, and the
+ * bucket's insert policy decides whether it may land under this booking at all.
  */
 export async function addDamageMark(_prev: DamageState, formData: FormData): Promise<DamageState> {
   await requireUnlocked()
@@ -71,7 +87,7 @@ export async function addDamageMark(_prev: DamageState, formData: FormData): Pro
   const x = roundCoord(parsed.data.x ?? fallback.x)
   const y = roundCoord(parsed.data.y ?? fallback.y)
 
-  const { error } = await supabase.from('damage_marks').insert({
+  const { data: mark, error } = await supabase.from('damage_marks').insert({
     handover_id: handover.id,
     car_id: booking.car_id,
     view: parsed.data.view,
@@ -80,11 +96,43 @@ export async function addDamageMark(_prev: DamageState, formData: FormData): Pro
     mark_type: parsed.data.mark_type,
     note: parsed.data.note,
     pre_existing: handover.kind === 'pickup',
-  })
-  if (error) return { error: errorKey(error) }
+  }).select('id').single()
+  if (error || !mark) return { error: errorKey(error) }
+
+  const photoError = await attachPhoto(
+    supabase, formData.get('photo'), handover.booking_id, mark.id)
 
   revalidatePath(`/bookings/${handover.booking_id}/${handover.kind}`)
-  return { saved: true }
+  return photoError ? { saved: true, photoError } : { saved: true }
+}
+
+/**
+ * The mark's photo, into the private bucket and onto the row.
+ *
+ * Returns the message key for a refusal rather than throwing: the caller has
+ * already saved the mark and is deciding what to tell the rep, not whether to
+ * roll back.
+ */
+async function attachPhoto(
+  supabase: Awaited<ReturnType<typeof supabaseServer>>,
+  file: FormDataEntryValue | null,
+  bookingId: string,
+  markId: string,
+): Promise<ErrorKey | undefined> {
+  if (!(file instanceof File) || file.size === 0) return undefined
+  if (file.size > MAX_UPLOAD_BYTES) return 'fileTooLarge'
+
+  const uploaded = await uploadBookingFile(supabase, {
+    bookingId,
+    kind: 'damage',
+    basename: markId,
+    bytes: new Uint8Array(await file.arrayBuffer()),
+  })
+  if (!uploaded.ok) return uploaded.reason
+
+  const { error } = await supabase.from('damage_marks')
+    .update({ photo_path: uploaded.path }).eq('id', markId)
+  return error ? errorKey(error) : undefined
 }
 
 /** Remove a mark the rep has just added and thought better of. */
@@ -102,12 +150,25 @@ export async function removeDamageMark(_prev: DamageState, formData: FormData): 
   const { data: handover } = await supabase.from('handovers')
     .select('id, booking_id, kind').eq('id', parsed.data.handover_id).maybeSingle()
 
+  // Read the photo path before the row goes, so the file does not outlive the
+  // mark it belonged to. RLS decides whether this row is visible at all.
+  const { data: existing } = await supabase.from('damage_marks')
+    .select('id, photo_path').eq('id', parsed.data.id)
+    .eq('handover_id', parsed.data.handover_id).maybeSingle()
+
   // Scoped to the handover as well as the id: RLS would refuse a mark on
   // another rep's handover anyway, but a delete that names only an id is a
   // delete waiting to be pointed at the wrong row.
   const { error } = await supabase.from('damage_marks')
     .delete().eq('id', parsed.data.id).eq('handover_id', parsed.data.handover_id)
   if (error) return { error: errorKey(error) }
+
+  // Best effort, and after the row: an orphaned object in a private bucket
+  // nobody can name is a tidiness problem, whereas a failed delete that
+  // blocked the rep would be an operational one.
+  if (parseBookingFilePath(existing?.photo_path)) {
+    await supabase.storage.from(BOOKING_FILES_BUCKET).remove([existing!.photo_path as string])
+  }
 
   if (handover) revalidatePath(`/bookings/${handover.booking_id}/${handover.kind}`)
   return { saved: true }

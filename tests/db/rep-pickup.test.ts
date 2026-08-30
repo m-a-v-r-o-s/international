@@ -20,6 +20,7 @@ beforeAll(async () => {
 afterAll(async () => { await db?.close() })
 
 beforeEach(async () => {
+  await db.sql(`delete from storage.objects`)
   await db.sql(`delete from public.bookings`)
 })
 
@@ -301,6 +302,59 @@ describe('R4 step 4 · the damage diagram', () => {
     const handover = await fuelOut(f.repA, bookingId, 8)
     expect(await errcode(() => mark(f.repA, handover.id, f.car1, { view: 'undercarriage' })))
       .toBe('23514')
+  })
+
+  test('a mark carries its photo, and the file sits under the booking it belongs to', async () => {
+    const bookingId = await bookAsRep(db, f.repA, {
+      carId: f.car1, hotelId: f.hotelA, start: '2026-07-06', end: '2026-07-08',
+    })
+    const handover = await fuelOut(f.repA, bookingId, 8)
+    const created = await mark(f.repA, handover.id, f.car1)
+
+    // The path src/lib/storage/paths.ts builds: the mark's own id is the
+    // filename, so a re-take replaces the photo it corrects rather than
+    // accumulating orphans (docs/01-DECISIONS.md §12).
+    const photoPath = `${bookingId}/damage/${created.id}.jpg`
+    await db.asUser(f.repA, () => db.sql(
+      `insert into storage.objects (bucket_id, name) values ('booking-files', $1)`, [photoPath]))
+    await db.asUser(f.repA, () => db.sql(
+      `update public.damage_marks set photo_path = $2 where id = $1`, [created.id, photoPath]))
+
+    const row = await db.one<{ photo_path: string }>(
+      `select photo_path from public.damage_marks where id = $1`, [created.id])
+    expect(row.photo_path).toBe(photoPath)
+
+    // And the file is reachable by exactly the sessions the mark is.
+    const seenByA = await db.asUser(f.repA, () => db.sql(
+      `select name from storage.objects where name = $1`, [photoPath]))
+    expect(seenByA).toHaveLength(1)
+
+    const seenByB = await db.asUser(f.repB, () => db.sql(
+      `select name from storage.objects where name = $1`, [photoPath]))
+    expect(seenByB).toHaveLength(0)
+  })
+
+  test('a rep cannot point a mark at a photo of another booking', async () => {
+    const mine = await bookAsRep(db, f.repA, {
+      carId: f.car1, hotelId: f.hotelA, start: '2026-07-06', end: '2026-07-08',
+    })
+    const theirs = await bookAsRep(db, f.repB, {
+      carId: f.car3, hotelId: f.hotelB, start: '2026-07-06', end: '2026-07-08',
+    })
+    const handover = await fuelOut(f.repA, mine, 8)
+    const created = await mark(f.repA, handover.id, f.car1)
+
+    // Writing the STRING is not the leak — the path is only a key, and the
+    // object policy is what decides. Rep A may name it and still not read it.
+    const foreign = `${theirs}/damage/${created.id}.jpg`
+    await db.asUser(f.repB, () => db.sql(
+      `insert into storage.objects (bucket_id, name) values ('booking-files', $1)`, [foreign]))
+    await db.asUser(f.repA, () => db.sql(
+      `update public.damage_marks set photo_path = $2 where id = $1`, [created.id, foreign]))
+
+    const seen = await db.asUser(f.repA, () => db.sql(
+      `select name from storage.objects where name = $1`, [foreign]))
+    expect(seen).toHaveLength(0)
   })
 
   test('a rep cannot mark damage on another rep\'s handover, nor read theirs', async () => {
