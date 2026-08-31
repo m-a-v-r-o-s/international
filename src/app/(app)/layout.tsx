@@ -22,6 +22,22 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const admin = staff.role === 'admin'
 
+  // Matches the line-icon style already used for the drawer's burger icon.
+  const globeIcon = (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="size-4 shrink-0" fill="none"
+         stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3c2.5 2.5 4 5.7 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.7-4-9s1.5-6.5 4-9Z" />
+    </svg>
+  )
+  const signOutIcon = (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="size-4 shrink-0" fill="none"
+         stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M15.75 8.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v12A2.25 2.25 0 0 0 6 20.25h7.5A2.25 2.25 0 0 0 15.75 18v-2.25" />
+      <path d="M9 12h11.25M17.25 8.25 21 12l-3.75 3.75" />
+    </svg>
+  )
+
   /**
    * The admin's list is his eleven screens with the rep's appended under their
    * own heading — additive, never a mode to be in the wrong one of
@@ -87,10 +103,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               <span className="max-w-[16rem] truncate text-[0.875rem] text-ink-soft">
                 {staff.fullName || tr(staff.role)}
               </span>
-              <Link href="/settings" className="text-[0.875rem] text-ink-soft underline underline-offset-2 hover:text-ink">
+              <Link href="/settings" className="flex items-center gap-1 text-[0.875rem] text-ink-soft underline underline-offset-2 hover:text-ink">
+                {globeIcon}
                 {t('language')}
               </Link>
-              <a href="/signed-out" className="text-[0.875rem] text-ink-soft underline underline-offset-2 hover:text-ink">
+              <a href="/signed-out" className="flex items-center gap-1 text-[0.875rem] text-ink-soft underline underline-offset-2 hover:text-ink">
+                {signOutIcon}
                 {t('signOut')}
               </a>
               <span className="h-6 w-px bg-line" aria-hidden="true" />
@@ -120,21 +138,23 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                   closeLabel={tn('close')}
                   dark
                 />
-                <Link href="/" className="flex items-center rounded-field bg-surface px-2 py-1.5">
+                <Link href="/" className="flex items-center rounded-field bg-surface px-2.5 py-2">
                   <img
                     src="/logo-sm.webp"
                     width={300}
                     height={100}
                     alt={tapp('logoAlt')}
-                    className="h-5 w-auto"
+                    className="h-8 w-auto"
                   />
                 </Link>
               </div>
               <div className="flex items-center gap-3 text-[0.8125rem] text-brand-tint">
-                <Link href="/settings" className="underline underline-offset-2 hover:text-brand-ink">
+                <Link href="/settings" className="flex items-center gap-1 underline underline-offset-2 hover:text-brand-ink">
+                  {globeIcon}
                   {t('language')}
                 </Link>
-                <a href="/signed-out" className="underline underline-offset-2 hover:text-brand-ink">
+                <a href="/signed-out" className="flex items-center gap-1 underline underline-offset-2 hover:text-brand-ink">
+                  {signOutIcon}
                   {t('signOut')}
                 </a>
               </div>

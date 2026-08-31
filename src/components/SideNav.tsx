@@ -137,7 +137,7 @@ export function SideNav({
                  self-start overflow-y-auto bg-brand-strong px-4 py-6 lg:flex print:hidden"
     >
       <Link href="/" className="mb-6 inline-flex w-fit items-center rounded-field bg-surface px-2.5 py-2">
-        <img src="/logo-sm.webp" width={300} height={100} alt={logoAlt} className="h-6 w-auto" />
+        <img src="/logo-sm.webp" width={300} height={100} alt={logoAlt} className="h-9 w-auto" />
       </Link>
       <NavList items={items} variant="dark" />
     </nav>
