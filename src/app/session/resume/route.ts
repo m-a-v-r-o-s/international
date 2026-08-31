@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { currentStaff } from '@/lib/auth/session'
 import { establishSession } from '@/lib/auth/signin'
+import { absoluteUrl } from '@/lib/http/publicUrl'
 
 /**
  * A session that outlived its gate cookie — the app reopened, or the cookie
@@ -11,17 +12,14 @@ import { establishSession } from '@/lib/auth/signin'
  */
 export async function GET(request: NextRequest) {
   const staff = await currentStaff()
-  const url = request.nextUrl.clone()
-  url.search = ''
 
   if (!staff) {
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+    return NextResponse.redirect(absoluteUrl(request, '/login'))
   }
 
   await establishSession(staff.id)
 
   const next = request.nextUrl.searchParams.get('next')
-  url.pathname = next && next.startsWith('/') && !next.startsWith('//') ? next : '/'
-  return NextResponse.redirect(url)
+  const path = next && next.startsWith('/') && !next.startsWith('//') ? next : '/'
+  return NextResponse.redirect(absoluteUrl(request, path))
 }

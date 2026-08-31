@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { clearSession } from '@/lib/auth/signin'
+import { absoluteUrl } from '@/lib/http/publicUrl'
 
 /**
  * Ends the session and says why. Reached when a rep's device binding no longer
@@ -10,8 +11,6 @@ export async function GET(request: NextRequest) {
   await clearSession()
 
   const reason = request.nextUrl.searchParams.get('reason')
-  const url = request.nextUrl.clone()
-  url.pathname = '/login'
-  url.search = reason === 'device' ? '?reason=device' : ''
-  return NextResponse.redirect(url)
+  const path = `/login${reason === 'device' ? '?reason=device' : ''}`
+  return NextResponse.redirect(absoluteUrl(request, path))
 }

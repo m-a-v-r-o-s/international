@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { GATE_COOKIE, isUnlocked, readGate } from './lib/auth/gate'
+import { absoluteUrl } from './lib/http/publicUrl'
 
 /**
  * Three jobs, in this order: keep the Supabase session fresh, set the security
@@ -113,10 +114,7 @@ export async function proxy(request: NextRequest) {
 }
 
 function redirectTo(request: NextRequest, path: string, from: NextResponse) {
-  const url = request.nextUrl.clone()
-  url.pathname = path.split('?')[0]!
-  url.search = path.includes('?') ? `?${path.split('?')[1]}` : ''
-  const response = NextResponse.redirect(url)
+  const response = NextResponse.redirect(absoluteUrl(request, path))
   // Carry over any refreshed session cookies rather than dropping them.
   for (const cookie of from.cookies.getAll()) response.cookies.set(cookie)
   return response
