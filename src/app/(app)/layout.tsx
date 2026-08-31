@@ -123,8 +123,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 <Link href="/" className="flex items-center rounded-field bg-surface px-2 py-1.5">
                   <img
                     src="/logo-sm.webp"
-                    width={400}
-                    height={64}
+                    width={300}
+                    height={100}
                     alt={tapp('logoAlt')}
                     className="h-5 w-auto"
                   />

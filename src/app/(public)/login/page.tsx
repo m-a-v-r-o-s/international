@@ -27,8 +27,8 @@ export default async function LoginPage({
             logo loads on a hotel's wifi. */}
         <img
           src="/logo.webp"
-          width={800}
-          height={127}
+          width={750}
+          height={250}
           alt={tapp('logoAlt')}
           className="h-auto w-full max-w-[17.5rem]"
         />
