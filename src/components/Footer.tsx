@@ -1,9 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 
-/**
- * The credit links to akosds.com on every project, every footer.
- */
 export async function Footer() {
   const t = await getTranslations('footer')
 
@@ -17,15 +14,7 @@ export async function Footer() {
       <p>
         {t.rich('credit', {
           year: new Date().getFullYear(),
-          link: (chunks) => (
-            <a
-              href="https://akosds.com"
-              rel="noopener"
-              className="underline underline-offset-2 hover:text-ink"
-            >
-              {chunks}
-            </a>
-          ),
+          link: (chunks) => <span>{chunks}</span>,
         })}
       </p>
     </footer>
