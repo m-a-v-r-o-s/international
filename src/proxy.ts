@@ -22,10 +22,23 @@ export async function proxy(request: NextRequest) {
   // ── CSRF: a state-changing request has to come from us ────────────────────
   // Server Actions check this themselves, but not everything is an action, and
   // a second lock on the same door costs nothing.
+  //
+  // Compared by host only, not full origin. Railway (like most reverse
+  // proxies) terminates TLS at its edge and forwards internally over plain
+  // HTTP, so request.nextUrl's own scheme is not trustworthy — comparing full
+  // origins there rejected every real POST in production with a false "Bad
+  // origin". The host a browser sends in `Origin` cannot be spoofed by an
+  // attacker page, which is what this check actually needs to defend against;
+  // the scheme a proxy chose to forward with is not part of that threat.
   if (!SAFE_METHODS.has(request.method)) {
     const origin = request.headers.get('origin')
-    if (origin && origin !== request.nextUrl.origin) {
-      return new NextResponse('Bad origin', { status: 403 })
+    if (origin) {
+      const expectedHost = request.headers.get('x-forwarded-host') ?? request.headers.get('host')
+      let originHost: string | null = null
+      try { originHost = new URL(origin).host } catch { /* malformed Origin */ }
+      if (!expectedHost || originHost !== expectedHost) {
+        return new NextResponse('Bad origin', { status: 403 })
+      }
     }
   }
 
