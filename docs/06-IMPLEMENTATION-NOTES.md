@@ -1,4 +1,4 @@
-# Implementation notes — Phases 0 to 5
+# Implementation notes — Phases 0 to 6
 
 What was built, the decisions the planning documents left open, and what is
 still outstanding. `docs/01-DECISIONS.md` remains the authority; nothing here
@@ -31,11 +31,221 @@ Claude vision OCR, the photo per damage mark, the bilingual contract PDF,
 on-screen signature capture with the emailed copy, and A10's contract half.
 373 tests.
 
+**Phase 6, the first real Supabase project** — provisioning, the 23
+migrations applied unmodified, the security and performance advisors, the
+generated types, the pilot's sign-in verified end to end, and the four
+Supabase behaviours that had never been anything but assumptions. Two gaps
+found and closed. 518 tests.
+
 **Phase 5, the run-up to the October pilot** — A8 users and hotels, the licence
 retention purge, A10's remaining half and the pick-up/drop-off times R3 never
 collected, CI, A9 the audit-log viewer, push notifications with R8's
 notification half, and the pre-pilot pass: a WCAG 2.1 AA audit and the load
 test at 200 movements and a full fleet. 510 tests.
+
+## Decisions taken while building — Phase 6
+
+Everything in this repository had been written and tested against an embedded
+Postgres 18 with a hand-written shim and had never run against a real Supabase
+project. 510 tests proved the SQL was correct. They could not prove the
+platform behaves the way the shim assumed, and in two places it does not.
+
+**Both gaps are the same gap: the harness was more forgiving than the
+platform.** That is the dangerous direction for a test to be wrong in — a
+stricter harness produces a failing build, and a looser one produces a green
+build and a broken deployment. Both are fixed in
+`tests/helpers/supabase-shim.sql` as well as in a migration, and both new tests
+were confirmed to fail with the migration removed. That is now the standard for
+a shim change: if the harness cannot reproduce the platform's answer, fixing
+the code is only half the work.
+
+**`anon` could execute twenty-three of this schema's own RPCs**
+(`20260830200000_privileges.sql`). Supabase's default privileges grant EXECUTE
+on every new function in `public` to `anon` *explicitly*. Ten migrations after
+0011 withdrew it with `revoke … from public`, which is the correct statement
+against a bare Postgres and a no-op against an explicit role grant — revoking
+from the PUBLIC pseudo-role does not remove a grant to the role `anon`. Twenty
+of the twenty-three failed closed anyway on `app.assert_admin()`. Three did
+not, because `app.assert_staff()` is deliberately silent when `auth.uid()` is
+null so that the service role and our own triggers can call it, and that
+allowance is load-bearing: `app.bookings_before_write()` reaches
+`public.quote()` on every booking insert. Against the live REST API, holding
+only the publishable key and no session at all, `staff_hotels()` returned every
+hotel's name and area, and `booking_windows()` and `rental_days()` answered
+too. The fix is at the grant and never at the assertion — tightening
+`assert_staff()` would have closed those three and broken every trigger-side
+caller with them — and it is paired with `alter default privileges` so that
+migration 25 inherits the decision instead of re-inheriting the platform's.
+The same class in schema `app`: Postgres's built-in EXECUTE-to-PUBLIC left
+`authenticated` able to call all thirty functions in it, `app.rate_limit_sweep()`
+and `app.log_security_event()` among them. Not reachable — PostgREST exposes
+`public` only, verified with an `Accept-Profile: app` request that came back
+406 — so it is recorded as defence in depth and fixed because
+`20260830090100_extensions.sql` already claims it is true.
+
+**`admin_list_users()` could not run at all** (`20260830210000_admin_list_users_email.sql`),
+and this is the more serious of the two. `auth.users.email` is
+`character varying(255)` on Supabase; the shim declared it `text`; 0018
+declares `email text` in its RETURNS TABLE and hands back `u.email` unchanged.
+plpgsql's RETURN QUERY checks the row type exactly, so the function raised
+42804 on every call against a real database while
+`tests/db/admin-users.test.ts` asserted the emails it returns and passed. A8 is
+the only way the boss creates a rep, and `email` is the column that screen
+exists to show him — `profiles` has no email column and no client role can
+select from `auth.users`. The pilot's first act, creating the two reps the
+October build is for, would have failed at the first page load. The fix is a
+cast and nothing else.
+
+**The advisors were run over the whole schema, and three findings are refused
+rather than fixed.** `authenticated_security_definer_function_executable` fires
+on twenty-eight functions and is describing the architecture in
+"Column grants plus admin RPCs" above, not a defect: an admin holds the same
+`authenticated` database role as a rep, so the privileged fields are withheld
+from that role and reached only through SECURITY DEFINER RPCs that check
+`app.is_admin()` themselves. All twenty-seven non-extension ones were confirmed
+to assert internally — nineteen `assert_admin`, eight `assert_staff`, none
+unguarded. `unused_index` fires on twenty-four indexes including
+`no_double_booking` itself, on a database minutes old that has served no
+queries; acting on it would drop the double-booking guarantee to satisfy a
+statistic. `multiple_permissive_policies` describes the deliberate
+`_select` plus `for all` `_admin_write` pairing on tables holding tens of rows.
+
+Three are accepted with a reason. `extension_in_public` is true of
+`btree_gist`, and moving it means touching the operator classes
+`no_double_booking` rests on — a considered change with the isolation suite
+run against it, not advisor housekeeping during provisioning. Its consequence
+is the one loose end 0024 cannot reach: ~190 extension functions stay
+executable by `anon`, owned by `supabase_admin` and so out of `postgres`'s
+reach to revoke, and they are GiST support routines and crypto primitives with
+no reach into a table. `unindexed_foreign_keys` fires on nine columns that are
+parent-delete paths on tables whose parents are never deleted — and notably NOT
+on `bookings(created_by)`, `bookings(hotel_id)` or `bookings(cash_handover_id)`,
+the three the isolation predicate reads on every rep query, all of which are
+already indexed. `auth_rls_initplan` is real and its `(select auth.uid())`
+rewrite is semantics-preserving, but it rewrites `bookings_select` and
+`bookings_update`, which are the isolation boundary; it wants its own change
+with the isolation suite run against it, and the load test already has the
+movements sheet at 39 ms for 200 rows.
+
+One finding is left with a search_path that the repo's own rule says should
+not be mutable: **six functions in `app` do not set it** — `rental_days`,
+`today`, `touch_updated_at`, `audit_redact`, `window_from` and `window_to`.
+Every SECURITY DEFINER function in the schema does set it, which is the claim
+that mattered and it holds; these six are SECURITY INVOKER, their bodies
+resolve nothing but `pg_catalog`, and each one reached from a definer inherits
+that definer's `search_path = ''`. There is no live hijack path. It is still a
+deviation from the rule and wants a one-line-each follow-up.
+
+**The generated types replaced the hand-written ones, and every mismatch was a
+discrepancy about the SCHEMA rather than about the data.** None of them meant
+the app believed something false about a value. `src/lib/supabase/database.generated.ts`
+is now produced by `supabase gen types` and never edited;
+`src/lib/supabase/database.types.ts` is the thin layer over it holding the row
+aliases and the three things the generator cannot express. First, a CHECK
+constraint is invisible to it: `transmission`, `fuel_type`, `handovers.kind`,
+`damage_marks.view` and `mark_type` are `text` with a CHECK rather than enums,
+so it reports `string` where the app has a union — the database does enforce
+them and the type system simply cannot see it. Making those five real enums
+would delete that section outright and is worth doing, as its own migration.
+Second, the generated `Insert` for `bookings` requires `ref` and `created_by`
+because both are NOT NULL with no default, which is true of the table and wrong
+about the grant: 0011 omits both and `app.bookings_before_write()` sets them,
+so the app cannot send what the type demands and must not. Third, a parameter
+with no DEFAULT is typed non-nullable, and several RPCs take a null that means
+something — no home hotel, an exception closed with no charge, a block with no
+reason typed, and the missing-licence-date failure §11 exists to catch. Where
+the parameter has a default, `?? undefined` is right and is what is used; where
+it has none, PostgREST resolves an RPC by the keys it is given and omitting one
+finds no function at all, so the null has to go on the wire.
+`src/lib/supabase/args.ts` is that cast, named once so the sites are greppable.
+
+**A user who has ever written anything cannot be deleted, and the database is
+what says so.** `audit_log.actor_id` references `public.profiles` with no ON
+DELETE action, so GoTrue's `deleteUser()` comes back "Database error deleting
+user" for any account with an audit row behind it. That is
+`docs/04-SCREENS.md` A8's "deactivate, never delete" enforced rather than
+trusted to the screen, and it is worth knowing before somebody meets it in
+October and assumes something is broken. Deactivation was confirmed live on
+the same account: `app.is_staff()` and `app.is_admin()` both return false for
+it, which is `20260830150000_deactivation.sql` doing its job against a real
+JWT rather than a simulated one.
+
+## What the real project confirmed, and what it changed
+
+The four behaviours listed under "Not done" as Supabase's own, each of which
+had only ever been an assumption. Confirmed on a scratch fixture that was
+deleted afterwards:
+
+- **A signed URL expires on its TTL.** 200 immediately, 400 four seconds after
+  a one-second TTL.
+- **The storage service does consult the bucket policies.** A rep's session was
+  issued a signed URL for a licence image on their own booking and refused one
+  for another booking's — "Object not found", which is the right shape of
+  refusal because it does not confirm the object exists. A direct download was
+  refused identically. `tests/db/storage-isolation.test.ts` proves Postgres
+  refuses; this is the half that proves the service asks.
+- **`storage.remove()` destroys the object.** The row leaves
+  `storage.objects`, the bucket listing empties, and a signed URL minted before
+  the delete stops serving — eight trials at 400, one earlier reading of 200
+  immediately after the call that could not be reproduced and is most plausibly
+  a warmed CDN edge rather than the file surviving. The reason
+  `src/lib/retention/purge.ts` deletes through the Storage API rather than with
+  SQL was the right call, and it is now checked rather than reasoned about.
+- **The bucket landed correctly**: private, 10 MB, the four MIME types, and all
+  four object policies present with the expressions 0016 wrote.
+
+**Public signup was open, and closing it is the most consequential setting
+changed here.** A new project ships with `disable_signup: false`, so anyone
+holding the publishable key — which reaches the browser by design — could
+create an account. `app.handle_new_user()` gives it role `'rep'` and
+`active` defaults to true, which means `app.is_staff()` returns TRUE for a
+stranger, and `assert_staff()` is the whole of the guard on `quote()`,
+`availability()`, `check_eligibility()` and `staff_hotels()`. A stranger could
+therefore have called `quote()` across categories, dates and durations and
+reconstructed the entire price table — which is exactly what
+`docs/03-SECURITY.md` rule 4 exists to prevent, defeated not through the rep's
+client but around it. Signup is now disabled; A8 mints accounts through the
+GoTrue Admin API, which `disable_signup` does not affect, and that was verified
+after the change. This is also the answer to why a rep with no `hotel_reps` row
+being "inert" is a necessary property and not a sufficient one: inert against
+the booking tables is not inert against the pricing engine.
+
+**Settings changed, each deliberately:**
+
+| Setting | Was | Now | Why |
+|---|---|---|---|
+| `disable_signup` | false | **true** | above |
+| `mailer_otp_length` | 8 | **6** | the app validates `/^\d{6}$/` and the input is `maxLength={6}`; the boss would have received a code he could not type |
+| `mailer_otp_exp` | 3600 | **900** | `docs/03-SECURITY.md` already says fifteen minutes for a reset link; an hour-long sign-in code is looser than the standard the file sets |
+| `jwt_exp` | 3600 | **1800** | the deactivation window. `profiles.active` is authoritative in Postgres so a dismissed rep's live token can do nothing, but the token still exists until it expires and halving that costs nothing with refresh-token rotation on |
+| `password_min_length` | 6 | **12** | nothing chooses a password today — `generateTempPassword()` produces nineteen characters — but rep-side password change is on the hardening list and six would be the floor it inherited |
+
+`site_url` is still `http://localhost:3000` and `uri_allow_list` is still
+empty, deliberately: there is no domain (client item 8) and inventing one would
+be worse than leaving it visibly provisional. Both must be set before the TWA
+or any deployed URL exists.
+
+**The admin cannot sign in yet, and it is not a code problem.** The magic-link
+template has to carry `{{ .Token }}` for a six-digit code to reach the boss at
+all, and the Management API refuses the change: *"Email template modification
+is not available for free tier projects using the default email provider."* So
+the template edit is blocked behind either a paid plan or custom SMTP — and
+custom SMTP is client item 8, the same missing domain that has kept
+`src/lib/email/mailer.ts` from ever sending. Compounding it, the built-in
+sender is capped at two messages an hour and is documented as being for
+testing, so even with a correct template the boss would get two sign-in
+attempts an hour. **Reps are unaffected** — they sign in with a password and
+need no mail — so the pilot is not blocked outright, but the boss's own sign-in
+is, and it resolves the moment SMTP credentials exist. That makes client item 8
+a harder blocker than "the domain would be nice", and it should be said to the
+client in those terms.
+
+**Backups: there are none.** The project is on the Free plan, which has no PITR
+and no restorable daily backup. For a pilot holding no real data that is
+acceptable and it is a deliberate, recorded choice. It must not be the state on
+1 March 2027: this database holds scanned driving licences of foreign tourists,
+where a loss is worse than a breach is reportable. Upgrading to a plan with
+PITR is a hard pre-production item, not a nice-to-have.
 
 ## Decisions taken while building — Phase 5
 
@@ -258,25 +468,52 @@ and `prefers-reduced-motion` honoured.
 
 ## Getting the pilot signed in
 
-Not a decision, but the thing that will otherwise cost an afternoon in October.
-There is no Supabase project yet, so nothing in this repo has ever authenticated
-against a real GoTrue. When one exists:
+Done, and verified end to end against the real project rather than reasoned
+about. The order below is what was actually run, and it is the order to repeat
+on any future project:
 
-1. Paste the project URL, the anon key, the service-role key, a real
-   `SESSION_SECRET` and `DATABASE_URL` into `.env.local`.
-2. `npm run db:reset -- --seed` applies every migration plus the placeholder
-   fleet and price tables.
-3. **The first admin has to be made by hand**, in the dashboard, with "Auto
-   Confirm User" ticked — there is no SMTP, so a confirmation mail would never
-   arrive — and then `update public.profiles set role = 'admin' where id = …`.
-   `app.handle_new_user()` starts everybody at `'rep'`, and A8 refuses to act
-   for a caller who is not already an admin, so somebody has to be one first.
-   Every rep after that is created on A8.
-4. **The admin's one-time code needs Supabase's Magic Link email template to
-   include `{{ .Token }}`.** The app verifies a six-digit token
-   (`verifyOtp({ type: 'email' })`) and the default template sends only a link,
-   so out of the box the boss would receive something the login screen cannot
-   accept. Worth fixing before the pilot rather than during it.
+1. `.env.local` holds the project URL, the publishable key, the service-role
+   key, a real `SESSION_SECRET` and a `DATABASE_URL`. Two notes on that last
+   one: the direct host (`db.<ref>.supabase.co`) is IPv6-only and unreachable
+   from an IPv4-only machine, so it is the **session pooler** on port 5432 —
+   not the transaction pooler, which will not take this DDL; and the pooler
+   presents Supabase's own CA, so `sslmode=no-verify` is what connects. It is
+   used by `npm run db:reset` and by nothing at runtime.
+2. `npm run db:reset` applies every migration in filename order in one
+   transaction. All of them applied unmodified, first attempt, including the
+   `auth.users` trigger and the `storage.objects` policies. **Not** `--seed`:
+   `supabase/seed/dev-seed.sql` is invented throughout and this project is the
+   pilot's.
+3. **The first admin is made by hand**, because `app.handle_new_user()` starts
+   everybody at `'rep'` and A8 refuses a caller who is not already an admin.
+   Create the account through the GoTrue Admin API with `email_confirm: true`
+   — there is no SMTP, so a confirmation mail would never arrive — and then
+   `update public.profiles set role = 'admin' where id = …`. Every rep after
+   that is created on A8.
+4. `{{ .Token }}` in the magic-link template. **Still outstanding, and
+   blocked** — see "What the real project confirmed" above: the Management API
+   refuses template edits on the Free plan with the default email provider, so
+   this waits on custom SMTP (client item 8) or a paid plan. Until then the
+   boss cannot complete a sign-in; reps can, because they use a password.
+
+Confirmed working on the real project, in this order: the trigger fires and
+writes a profile at role `rep` with the name and language out of the user
+metadata; promotion to admin by hand; a real sign-in with
+`signInWithPassword`; that session calling `admin_list_users()` through
+PostgREST, which is A8's page load; `createRepAccount()` minting a rep with a
+real temporary password; that rep signing in with it; and the new account
+proving inert — role `rep`, seeing nothing but its own profile row, and IR001
+from any admin RPC. The accounts and the scratch fixture were deleted
+afterwards.
+
+Two things worth knowing before they surprise somebody. `auth.users` INSERT is
+refused with 42501 for `service_role` as well as for `authenticated`, so the
+assumption A8's whole design rests on holds on a real project and the GoTrue
+Admin API really is the only door — the note in `src/lib/users/accounts.ts` is
+accurate as written. And GoTrue's own signup endpoint validates the address:
+`@example.invalid` and `@example.com` are both rejected, which is why the
+scratch accounts had to be created through the Admin API, and which is a
+useful thing to know when writing a test.
 
 ## Decisions taken while building — Phase 4
 
@@ -715,18 +952,18 @@ first.
   is neither a domain nor a Supabase project (client item 8). A lab figure off
   a laptop would mean nothing and is not offered in its place. The data layer
   IS measured, at full volume, in `tests/db/load.test.ts`.
-- **The signed-URL HTTP layer.** The authorisation decision behind a signed URL
-  is tested against the real policies (`tests/db/storage-isolation.test.ts`);
-  that a minted URL expires on time, and that the Supabase storage service
-  consults those policies at all, is Supabase's own behaviour and is not
-  simulated. Confirm it once against a real project before the pilot.
-- **The purge against real Storage.** Same shape as the item above and for the
-  same reason. The predicate, the two-layer path check, the window either side
-  of the cut-off and the marking are all tested against real Postgres; that
-  `storage.remove()` actually destroys the object is Supabase's behaviour.
-  Confirm it once, on a file that does not matter, before the retention window
-  first comes due — which given a 24-month default is not urgent, and which is
-  exactly why it would otherwise be discovered late.
+- ~~**The signed-URL HTTP layer.**~~ DONE in Phase 6, against the real
+  project: a URL expires on its TTL, and the storage service does consult the
+  policies — a rep was refused a signed URL for another booking's licence
+  image, and refused the direct download too. See "What the real project
+  confirmed".
+- ~~**The purge against real Storage.**~~ DONE in Phase 6, on a file that did
+  not matter: `storage.remove()` destroys the object, the row leaves
+  `storage.objects`, and a signed URL minted beforehand stops serving. The
+  reason the deletion lives in `src/lib/retention/purge.ts` rather than in SQL
+  is confirmed rather than reasoned about. The purge has still never been run
+  end to end against real licence images, because there are none and the
+  24-month window has not come due.
 - **A push actually arriving on a phone.** `web-push` signs and posts to
   Google's and Mozilla's services; with no VAPID keys configured nothing has
   ever been sent, the same honest state as the mailer. The sender, the targets,
@@ -760,5 +997,29 @@ first.
   `my_cash_in_hand()` counts bookings, and `admin_confirm_cash_handover()`
   makes every receipt a claim the boss confirms — but both are writes that say
   something untrue about who did what.
+- **`{{ .Token }}` in the magic-link email template**, and with it the boss's
+  ability to sign in at all. Blocked behind custom SMTP or a paid plan — see
+  "What the real project confirmed". The single highest-priority item on this
+  list, because it is the difference between the boss being able to open the
+  app in October and not.
+- **Backups and PITR.** None on the Free plan. A hard pre-production item for a
+  database of scanned driving licences; not urgent while the project holds no
+  real data.
+- **`site_url` and the redirect allow-list**, both still pointing at
+  `localhost`. Blocked on client item 8 and must be set before any deployed URL
+  or TWA exists.
+- **Six `app` functions without an explicit `search_path`** — `rental_days`,
+  `today`, `touch_updated_at`, `audit_redact`, `window_from`, `window_to`. All
+  SECURITY INVOKER, no live hijack path, but the repo's own rule says every
+  function sets it. One line each.
+- **Five CHECK-constrained columns that want to be real enums** —
+  `car_models.transmission` and `.fuel_type`, `handovers.kind`,
+  `damage_marks.view` and `.mark_type`. Doing so would delete a section of
+  `src/lib/supabase/database.types.ts` and let the generator carry the unions
+  itself.
+- **`auth_rls_initplan` on ten policies.** The `(select auth.uid())` rewrite is
+  semantics-preserving and worth doing, but it touches `bookings_select` and
+  `bookings_update` and so wants the isolation suite run against it as its own
+  change.
 - **Staff training and the written runbook, in Greek.** Phase 5 in the build
   plan, and the one item on it that is not code.
