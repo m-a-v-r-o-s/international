@@ -1,0 +1,126 @@
+-- ═════════════════════════════════════════════════════════════════════════════
+-- 0024 · Privileges that arrived by default rather than by decision
+--
+-- GAP FOUND ON THE FIRST REAL SUPABASE PROJECT, and it could not have been
+-- found anywhere else: it is a difference between Supabase's default privileges
+-- and the ones tests/helpers/supabase-shim.sql gives a bare Postgres. Every
+-- migration in this repo had run only against the shim, where the statements
+-- below were unnecessary. On Supabase they are not.
+--
+-- ── What Supabase does that a bare Postgres does not ────────────────────────
+-- A Supabase project ships with, in effect:
+--
+--     alter default privileges in schema public
+--       grant execute on functions to anon, authenticated, service_role;
+--
+-- so EVERY function created in `public` is born with an EXPLICIT `anon=X`
+-- entry in its ACL. `20260830091100_rls.sql` knew about the table half of this
+-- and opens by withdrawing it — but it withdrew it ONCE, as
+-- `revoke all on all functions in schema public from anon`, at the moment it
+-- ran. Ten migrations create functions in `public` after it.
+--
+-- Those ten wrote `revoke all on function … from public`, which is the correct
+-- statement against the shim and a NO-OP against Supabase: revoking from the
+-- PUBLIC pseudo-role does not remove an explicit grant to the role `anon`.
+--
+-- ── What that actually left open, probed and not theorised ──────────────────
+-- Twenty-three of this schema's own functions in `public` were left executable
+-- by `anon` — that is, by anyone holding the publishable key, which reaches
+-- the browser by design and is safe to publish. Twenty of them fail closed
+-- anyway: every `admin_*` RPC calls app.assert_admin(), and app.is_admin()
+-- coalesces a null auth.uid() to false, so PostgREST answered IR001.
+--
+-- Three did not, because app.assert_staff() is deliberately silent when
+-- auth.uid() IS NULL — the service role and our own triggers call it with no
+-- JWT, and that allowance is load-bearing (app.bookings_before_write() reaches
+-- public.quote() on every booking insert). Its comment in
+-- 20260830090800_auth_helpers.sql states the invariant it rests on:
+--
+--     "A caller with no JWT at all can only be the service role or one of our
+--      own triggers — `anon` is never granted EXECUTE on any of them."
+--
+-- That invariant was false on Supabase. Against the real REST API, with the
+-- publishable key and no session at all:
+--
+--     POST /rest/v1/rpc/staff_hotels     → 200, every active hotel's name+area
+--     POST /rest/v1/rpc/booking_windows  → 200, the configured windows
+--     POST /rest/v1/rpc/rental_days      → 200, the day count
+--
+-- staff_hotels() is the one that matters: its own comment says "for any
+-- signed-in staff member", and it was answering callers who are not signed in.
+-- The hotel list is client item 6 — the names and areas of the company's
+-- partner hotels — and the fix is not to weaken the function but to make the
+-- sentence in 0008 true again. The others are trivia; they are the same hole.
+--
+-- The fix is therefore the GRANT, never the assertion. Requiring a non-null
+-- auth.uid() in app.assert_staff() would close these three and break every
+-- server-side and trigger-side caller with them.
+--
+-- ── The second half: schema `app` ───────────────────────────────────────────
+-- 20260830090100_extensions.sql says of `app`:
+--
+--     "Nothing in here is queryable by a client directly; `authenticated` only
+--      ever gets EXECUTE on named functions."
+--
+-- Also false, for the mirror-image reason: `app` is our own schema, so it has
+-- no Supabase default ACL and gets Postgres's BUILT-IN one, which grants
+-- EXECUTE on every new function to PUBLIC. `authenticated` holds USAGE on the
+-- schema (0001), so it could execute all thirty functions in it, including
+-- app.rate_limit_sweep() — which deletes rate-limit state, i.e. the Postgres
+-- limiter standing in front of every auth path and the OCR spend cap — and
+-- app.log_security_event(), which would let a caller forge entries in the log
+-- that is supposed to be evidence about them.
+--
+-- This one is NOT reachable today and is recorded as defence in depth rather
+-- than as a live hole: PostgREST exposes `public` only (verified against this
+-- project: an `Accept-Profile: app` request is refused with 406), and no
+-- client is ever given a direct Postgres connection. It is fixed because the
+-- file says it is already fixed, and because the day `app` is exposed, or a
+-- connection string is handed to something, must not be the day this is
+-- discovered.
+--
+-- ── Why the revokes are also written as defaults ────────────────────────────
+-- A one-shot `revoke` is what created this gap: it is correct on the day it
+-- runs and silent about every object created afterwards. The paired
+-- `alter default privileges` statements are what make the twenty-fourth
+-- migration's functions inherit the decision instead of re-inheriting the
+-- platform's. They apply to objects created by `postgres`, which is the role
+-- every migration here runs as.
+--
+-- Tables and sequences get the same treatment for `authenticated` as well as
+-- `anon`, which 0011 only ever did once and by hand. A future migration that
+-- adds a table and forgets to revoke should get a table nobody can read, not a
+-- table everybody can — and if it also forgets `enable row level security`,
+-- that difference is the whole of the exposure.
+-- ═════════════════════════════════════════════════════════════════════════════
+
+-- ── public · withdraw what the platform granted anon ────────────────────────
+-- Repeats 0011's line now that every function exists. `authenticated` is left
+-- alone: every function in `public` is granted to it deliberately, by name, in
+-- the migration that creates it.
+--
+-- This reaches every function this schema defines and none of the ~190 that
+-- btree_gist and pgcrypto install alongside them: on Supabase those are owned
+-- by `supabase_admin`, so the statement skips them silently rather than
+-- failing — `postgres` is not their owner and holds no grant option. They keep
+-- Postgres's ordinary EXECUTE-to-PUBLIC, which is what they have on any
+-- database anywhere, and they are GiST support routines and crypto primitives:
+-- computation over their arguments, with no reach into a table. Verified on
+-- the project rather than assumed; tests/db/privileges.test.ts draws the same
+-- line and says why.
+revoke all on all functions in schema public from anon;
+
+alter default privileges in schema public revoke execute on functions from anon;
+alter default privileges in schema public revoke all on tables from anon, authenticated;
+alter default privileges in schema public revoke all on sequences from anon, authenticated;
+
+-- ── app · withdraw Postgres's built-in grant to PUBLIC ──────────────────────
+-- The named grants in 0001, 0008, 0011 and 0016 are explicit entries in each
+-- function's ACL and survive this untouched; what goes is the blanket one
+-- nobody wrote. app.object_booking_id() and app.object_file_kind() are the two
+-- to keep an eye on — they are evaluated inside the storage.objects policies,
+-- which run as the querying role and not as a definer, so they need a real
+-- grant to `authenticated`. 20260830120000_storage.sql gives them one.
+revoke all on all functions in schema app from public;
+
+alter default privileges in schema app revoke execute on functions from public;

@@ -17,6 +17,34 @@ create schema if not exists auth;
 grant usage on schema auth to anon, authenticated, service_role;
 grant usage on schema public to anon, authenticated, service_role;
 
+-- ─────────────────────────────────────────────────────────────────────────────
+-- DEFAULT PRIVILEGES — the part of a Supabase project that is easiest to forget
+-- is here and not in a table definition.
+--
+-- A Supabase project ships with default privileges on `public` that grant every
+-- newly created table, sequence and function to anon, authenticated and
+-- service_role, and that withdraw the built-in EXECUTE that Postgres would
+-- otherwise give PUBLIC on a function. Without these four lines the harness is
+-- MORE RESTRICTIVE than production, which is the dangerous direction for a
+-- test to be wrong in: a migration that leaves `anon` holding EXECUTE on an
+-- RPC passes here and ships a hole.
+--
+-- That is not hypothetical. It is exactly how `anon` came to be able to call
+-- public.staff_hotels() on the first real project — `revoke … from public`
+-- does what the name suggests against a bare Postgres and nothing at all
+-- against Supabase's explicit `anon=X`. See
+-- supabase/migrations/20260830200000_privileges.sql, and
+-- tests/db/privileges.test.ts, which fails without it.
+-- ─────────────────────────────────────────────────────────────────────────────
+alter default privileges in schema public
+  grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema public
+  grant all on sequences to anon, authenticated, service_role;
+alter default privileges in schema public
+  grant execute on functions to anon, authenticated, service_role;
+alter default privileges in schema public
+  revoke execute on functions from public;
+
 create table auth.users (
   id                  uuid primary key default gen_random_uuid(),
   email               text unique,
