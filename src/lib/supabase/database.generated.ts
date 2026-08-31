@@ -236,6 +236,7 @@ export type Database = {
           cust_first?: string | null
           cust_last?: string | null
           cust_phone?: string | null
+          cust_phone_e164?: string | null
           days?: number | null
           dropoff_at?: string | null
           eligibility_override_at?: string | null
@@ -270,6 +271,7 @@ export type Database = {
           cust_first?: string | null
           cust_last?: string | null
           cust_phone?: string | null
+          cust_phone_e164?: string | null
           days?: number | null
           dropoff_at?: string | null
           eligibility_override_at?: string | null
@@ -581,6 +583,13 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: true
             referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_bookings_consent_by_fkey"
+            columns: ["consent_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1128,6 +1137,14 @@ export type Database = {
         }[]
       }
       admin_car_notes: { Args: { p_car_id: string }; Returns: string }
+      admin_clear_customer_ledger: {
+        Args: {
+          p_confirm: string
+          p_irreversible: boolean
+          p_understood: boolean
+        }
+        Returns: number
+      }
       admin_confirm_cash_handover: {
         Args: { p_id: string }
         Returns: undefined
@@ -1141,7 +1158,26 @@ export type Database = {
         }
         Returns: string
       }
+      admin_customer_ledger_status: {
+        Args: never
+        Returns: {
+          last_cleared_at: string
+          last_erasure_at: string
+          linked_bookings: number
+          newest_seen: string
+          oldest_seen: string
+          total: number
+          with_licence_images: number
+        }[]
+      }
       admin_delete_block: { Args: { p_id: string }; Returns: undefined }
+      admin_erase_customer: {
+        Args: { p_customer_id: string }
+        Returns: {
+          back_path: string
+          front_path: string
+        }[]
+      }
       admin_exception_detail: {
         Args: { p_id: string }
         Returns: {
@@ -1156,26 +1192,6 @@ export type Database = {
           resolved_by: string
           type: Database["public"]["Enums"]["exception_type"]
         }[]
-      }
-      admin_clear_customer_ledger: {
-        Args: { p_confirm: string; p_irreversible: boolean; p_understood: boolean }
-        Returns: number
-      }
-      admin_customer_ledger_status: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          last_cleared_at: string
-          last_erasure_at: string
-          linked_bookings: number
-          newest_seen: string
-          oldest_seen: string
-          total: number
-          with_licence_images: number
-        }[]
-      }
-      admin_erase_customer: {
-        Args: { p_customer_id: string }
-        Returns: { back_path: string; front_path: string }[]
       }
       admin_licence_retention_status: {
         Args: never
@@ -1280,15 +1296,6 @@ export type Database = {
           ok: boolean
         }[]
       }
-      drop_push_subscription: { Args: { p_endpoint: string }; Returns: number }
-      licence_images_due_for_purge: {
-        Args: { p_limit?: number }
-        Returns: {
-          booking_id: string
-          ended_on: string
-          object_name: string
-        }[]
-      }
       customer_by_phone: {
         Args: { p_phone: string }
         Returns: {
@@ -1306,7 +1313,20 @@ export type Database = {
       }
       customer_licence_images: {
         Args: { p_customer_id: string }
-        Returns: { back_path: string; front_path: string; source_booking_id: string }[]
+        Returns: {
+          back_path: string
+          front_path: string
+          source_booking_id: string
+        }[]
+      }
+      drop_push_subscription: { Args: { p_endpoint: string }; Returns: number }
+      licence_images_due_for_purge: {
+        Args: { p_limit?: number }
+        Returns: {
+          booking_id: string
+          ended_on: string
+          object_name: string
+        }[]
       }
       log_security_event: {
         Args: {
@@ -1319,8 +1339,6 @@ export type Database = {
         Returns: undefined
       }
       mark_exceptions_notified: { Args: { p_ids: string[] }; Returns: number }
-      record_customer_consent: { Args: { p_booking_id: string }; Returns: string }
-      withdraw_customer_consent: { Args: { p_booking_id: string }; Returns: boolean }
       mark_licences_purged: {
         Args: { p_booking_ids: string[] }
         Returns: number
@@ -1364,6 +1382,10 @@ export type Database = {
         Args: { p_bucket: string; p_limit: number; p_window_seconds: number }
         Returns: boolean
       }
+      record_customer_consent: {
+        Args: { p_booking_id: string }
+        Returns: string
+      }
       rental_days: { Args: { p_end: string; p_start: string }; Returns: number }
       rep_day_movements: {
         Args: { p_on: string; p_profile_id: string }
@@ -1395,6 +1417,10 @@ export type Database = {
           id: string
           name: string
         }[]
+      }
+      withdraw_customer_consent: {
+        Args: { p_booking_id: string }
+        Returns: boolean
       }
     }
     Enums: {
