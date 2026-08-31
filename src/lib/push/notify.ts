@@ -8,7 +8,10 @@ import { sendEach, targetsFor, type PushMessage, type SendOutcome, type Target }
  * The three notifications docs/01-DECISIONS.md §22 asks for, and no others.
  *
  *   · Admin, on an exception:   damage flagged, car not returned, override.
- *   · Rep, in the morning:      their own pickups today.
+ *   · Rep, in the morning:      their own pickups today (plus any return due
+ *                               today, since that shift is the only chance to
+ *                               catch one that falls outside the usual
+ *                               evening-shift pattern).
  *   · Rep, in the evening:      their own returns due today.
  *
  * The rep messages LIST movements and never count them. §7 gives a rep exactly
@@ -72,14 +75,29 @@ async function repDigest(
   const all = await movementsFor(target.profile_id, on)
   const mine = all.filter((m) => m.kind === kind)
 
+  // The morning push also flags any return due today. Returns are normally
+  // an evening-shift thing, but the rare one that falls in the morning shift
+  // needs to reach a rep before the shift ends — the evening digest at 17:30
+  // would be hours too late for it.
+  const returnsToo = kind === 'pickup' ? all.filter((m) => m.kind === 'return') : []
+
   // Nothing on today is silence, not an empty notification. A push that says
   // "no pickups" every morning is a push a rep turns off in a week.
-  if (mine.length === 0) return null
+  if (mine.length === 0 && returnsToo.length === 0) return null
 
   const key = kind === 'pickup' ? 'morning' : 'evening'
+  const sections = [
+    mine.length > 0 ? lines(mine) : null,
+    returnsToo.length > 0
+      ? `${translate(target.lang, 'push.morning.alsoReturns')}\n${lines(returnsToo)}`
+      : null,
+  ].filter((section): section is string => section !== null)
+
   return {
-    title: translate(target.lang, `push.${key}.title`),
-    body: lines(mine),
+    // A morning digest with no pickups at all, only a stray return, reads as
+    // what it actually is rather than borrowing the pickups title.
+    title: translate(target.lang, `push.${mine.length > 0 ? key : 'evening'}.title`),
+    body: sections.join('\n\n'),
     url: '/',
     tag: `ir-${key}`,
     lang: target.lang,
