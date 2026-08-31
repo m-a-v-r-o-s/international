@@ -37,6 +37,9 @@ export function PasswordForm() {
         type="password"
         autoComplete="current-password"
         required
+        revealable
+        showLabel={t('showPassword')}
+        hideLabel={t('hidePassword')}
         error={state.error === 'passwordTooShort' ? t('passwordTooShort') : undefined}
       />
 

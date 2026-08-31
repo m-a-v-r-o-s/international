@@ -42,6 +42,8 @@
     "managerIntro": "We will email you a six-digit code. It is valid for a few minutes.",
     "email": "Email",
     "password": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "signIn": "Sign in",
     "sendCode": "Email me a code",
     "code": "Six-digit code",
