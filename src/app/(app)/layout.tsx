@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import { requireUnlocked } from '@/lib/auth/session'
 import { Footer } from '@/components/Footer'
 import { SideNav, NavDrawer, type NavItem } from '@/components/SideNav'
+import { SignOutButton } from '@/components/SignOutButton'
 
 /**
  * Everything behind this layout requires an active, unlocked staff session.
@@ -109,10 +110,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 {globeIcon}
                 {t('language')}
               </Link>
-              <a href="/signed-out" className="flex items-center gap-1 text-[0.875rem] text-ink-soft underline underline-offset-2 hover:text-ink">
+              <SignOutButton className="flex items-center gap-1 text-[0.875rem] text-ink-soft underline underline-offset-2 hover:text-ink">
                 {signOutIcon}
                 {t('signOut')}
-              </a>
+              </SignOutButton>
               <span className="h-6 w-px bg-line" aria-hidden="true" />
               <Link href="/contracts/new" className="ir-btn-quiet !w-auto">
                 {tn('writeContract')}
@@ -155,10 +156,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                   {globeIcon}
                   {t('language')}
                 </Link>
-                <a href="/signed-out" className="flex items-center gap-1 underline underline-offset-2 hover:text-brand-ink">
+                <SignOutButton className="flex items-center gap-1 underline underline-offset-2 hover:text-brand-ink">
                   {signOutIcon}
                   {t('signOut')}
-                </a>
+                </SignOutButton>
               </div>
             </div>
             <div className="flex gap-2 px-4 pb-3">

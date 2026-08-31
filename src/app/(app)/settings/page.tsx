@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server'
 import { requireUnlocked } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { SignOutButton } from '@/components/SignOutButton'
 import { vapidPublicKey } from '@/lib/push/keys'
 import { NotificationPreferences } from './NotificationPreferences'
 import { PushToggle } from './PushToggle'
@@ -68,7 +69,7 @@ export default async function SettingsPage() {
 
       <section className="ir-card flex flex-col gap-3 p-5" aria-labelledby="acct-heading">
         <h2 id="acct-heading" className="text-[1.125rem] font-semibold">{t('account')}</h2>
-        <a href="/signed-out" className="ir-btn-quiet">{tc('signOut')}</a>
+        <SignOutButton className="ir-btn-quiet">{tc('signOut')}</SignOutButton>
       </section>
     </div>
   )
