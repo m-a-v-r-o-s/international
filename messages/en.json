@@ -35,7 +35,9 @@
     "myBookings": "My bookings",
     "settings": "Settings",
     "quickBooking": "Booking",
-    "writeContract": "Contract"
+    "writeContract": "Contract",
+    "pickups": "Pickups",
+    "dropoffs": "Drop-offs"
   },
   "login": {
     "title": "Sign in",
@@ -244,7 +246,9 @@
     "goToAvailability": "Check availability",
     "goToMyBookings": "My bookings",
     "goToMovements": "Movements sheet",
-    "goToExceptions": "Exceptions"
+    "goToExceptions": "Exceptions",
+    "pickedUp": "Picked up",
+    "droppedOff": "Dropped off"
   },
   "damage": {
     "viewLabel": "View",

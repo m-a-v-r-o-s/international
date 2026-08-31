@@ -35,7 +35,9 @@
     "myBookings": "Οι κρατήσεις μου",
     "settings": "Ρυθμίσεις",
     "quickBooking": "Κράτηση",
-    "writeContract": "Συμβόλαιο"
+    "writeContract": "Συμβόλαιο",
+    "pickups": "Παραλαβές",
+    "dropoffs": "Επιστροφές"
   },
   "login": {
     "title": "Σύνδεση",
@@ -244,7 +246,9 @@
     "goToAvailability": "Έλεγχος διαθεσιμότητας",
     "goToMyBookings": "Οι κρατήσεις μου",
     "goToMovements": "Φύλλο κινήσεων",
-    "goToExceptions": "Εξαιρέσεις"
+    "goToExceptions": "Εξαιρέσεις",
+    "pickedUp": "Παραλήφθηκε",
+    "droppedOff": "Επιστράφηκε"
   },
   "damage": {
     "viewLabel": "Όψη",

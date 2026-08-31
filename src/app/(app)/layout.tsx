@@ -70,6 +70,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       ]
     : [
         { href: '/', label: tn('today') },
+        { href: '/pickups', label: tn('pickups') },
+        { href: '/returns', label: tn('dropoffs') },
         { href: '/availability', label: tn('availability') },
         { href: '/bookings/new', label: tn('newBooking') },
         { href: '/bookings', label: tn('myBookings') },
