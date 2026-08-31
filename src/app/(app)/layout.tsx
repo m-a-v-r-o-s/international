@@ -68,75 +68,98 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="border-b border-line bg-surface print:hidden">
-        <div className={`mx-auto flex w-full ${shell} flex-nowrap items-center justify-between gap-3 px-5 py-3`}>
-          <div className="flex min-w-0 items-center gap-2">
-            <NavDrawer
-              items={items}
-              label={navLabel}
-              openLabel={tn('open')}
-              closeLabel={tn('close')}
-            />
-            <Link href="/" className="flex items-center">
-              {/* Fixed intrinsic size, so the header never reflows around it
-                  once the image arrives. */}
-              <img
-                src="/logo-sm.webp"
-                width={400}
-                height={64}
-                alt={tapp('logoAlt')}
-                className="h-7 w-auto sm:h-8"
-              />
-            </Link>
-          </div>
-          <div className="flex shrink-0 items-center gap-3 text-[0.875rem] text-ink-soft">
-            <span className="hidden max-w-[16rem] truncate sm:inline">
-              {staff.fullName || tr(staff.role)}
-            </span>
-            <Link href="/settings" className="underline underline-offset-2 hover:text-ink">
-              {t('language')}
-            </Link>
-            <a href="/signed-out" className="underline underline-offset-2 hover:text-ink">
-              {t('signOut')}
-            </a>
-          </div>
-        </div>
-
-        {/*
-          The two things a rep does standing in front of a guest, on every
-          screen rather than only from the one they happen to be on
-          (docs/01-DECISIONS.md §30 decision 1). They are the same two acts for
-          the boss, so both roles get both.
-
-          A second row, not squeezed into the first: at 360px the top row is
-          already a burger, a logo and three text links, and a phone call comes
-          in while the rep is looking at something else. Full-width halves on a
-          phone so each is a thumb-sized target; auto width from `sm` up.
-        */}
-        <div className={`mx-auto flex w-full ${shell} gap-2 px-5 pb-3`}>
-          <Link href="/bookings/confirm" className="ir-btn-primary flex-1 sm:!w-auto sm:flex-none">
-            {tn('quickBooking')}
-          </Link>
-          <Link href="/contracts/new" className="ir-btn-quiet flex-1 sm:!w-auto sm:flex-none">
-            {tn('writeContract')}
-          </Link>
-        </div>
-      </header>
-
       {/*
-        The sidebar sits outside the centered `shell` container so it hugs the
-        true left edge of the viewport on desktop, rather than the left edge
-        of the centered content column.
+        The rail carries the brand and the section list for the full height of
+        the page — header included — so it sits outside both headers below
+        rather than above them. On a screen too narrow for it (`lg:hidden`
+        everywhere else in this file), the mobile header below stands in for
+        it: same navy, same two acts, collapsed to a drawer behind a burger.
       */}
       <div className="flex w-full flex-1 print:block">
-        <SideNav items={items} label={navLabel} />
-        <div className={`mx-auto flex w-full ${shell} flex-1 gap-6 px-5 print:max-w-none print:gap-0 print:px-0`}>
-          <main
-            id="main"
-            className={`min-w-0 flex-1 py-6 print:max-w-none print:py-0 ${admin ? '' : 'max-w-3xl'}`}
-          >
-            {children}
-          </main>
+        <SideNav items={items} label={navLabel} logoAlt={tapp('logoAlt')} />
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          {/* Desktop header: the rail already carries the logo and section
+              list, so this is just identity and the two acts, in one line,
+              pinned to the trailing edge. */}
+          <header className="hidden border-b border-line bg-surface lg:block print:hidden">
+            <div className="flex items-center justify-end gap-4 px-6 py-3">
+              <span className="max-w-[16rem] truncate text-[0.875rem] text-ink-soft">
+                {staff.fullName || tr(staff.role)}
+              </span>
+              <Link href="/settings" className="text-[0.875rem] text-ink-soft underline underline-offset-2 hover:text-ink">
+                {t('language')}
+              </Link>
+              <a href="/signed-out" className="text-[0.875rem] text-ink-soft underline underline-offset-2 hover:text-ink">
+                {t('signOut')}
+              </a>
+              <span className="h-6 w-px bg-line" aria-hidden="true" />
+              <Link href="/contracts/new" className="ir-btn-quiet !w-auto">
+                {tn('writeContract')}
+              </Link>
+              <Link href="/bookings/confirm" className="ir-btn-primary !w-auto">
+                {tn('quickBooking')}
+              </Link>
+            </div>
+          </header>
+
+          {/*
+            Mobile header: the rail is hidden below `lg`, so this carries the
+            burger, the logo, and the two acts — the two things a rep does
+            standing in front of a guest, on every screen rather than only
+            from the one they happen to be on (docs/01-DECISIONS.md §30
+            decision 1). Navy like the rail it stands in for.
+          */}
+          <header className="bg-brand-strong lg:hidden print:hidden">
+            <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <div className="flex items-center gap-2">
+                <NavDrawer
+                  items={items}
+                  label={navLabel}
+                  openLabel={tn('open')}
+                  closeLabel={tn('close')}
+                  dark
+                />
+                <Link href="/" className="flex items-center rounded-field bg-surface px-2 py-1.5">
+                  <img
+                    src="/logo-sm.webp"
+                    width={400}
+                    height={64}
+                    alt={tapp('logoAlt')}
+                    className="h-5 w-auto"
+                  />
+                </Link>
+              </div>
+              <div className="flex items-center gap-3 text-[0.8125rem] text-brand-tint">
+                <Link href="/settings" className="underline underline-offset-2 hover:text-brand-ink">
+                  {t('language')}
+                </Link>
+                <a href="/signed-out" className="underline underline-offset-2 hover:text-brand-ink">
+                  {t('signOut')}
+                </a>
+              </div>
+            </div>
+            <div className="flex gap-2 px-4 pb-3">
+              <Link href="/bookings/confirm" className="ir-btn-primary flex-1">
+                {tn('quickBooking')}
+              </Link>
+              <Link
+                href="/contracts/new"
+                className="ir-btn flex-1 border border-brand-ink/40 bg-brand-ink/10 text-brand-ink hover:bg-brand-ink/20"
+              >
+                {tn('writeContract')}
+              </Link>
+            </div>
+          </header>
+
+          <div className={`mx-auto flex w-full ${shell} flex-1 px-5 print:max-w-none print:px-0`}>
+            <main
+              id="main"
+              className={`min-w-0 flex-1 py-6 print:max-w-none print:py-0 ${admin ? '' : 'max-w-3xl'}`}
+            >
+              {children}
+            </main>
+          </div>
         </div>
       </div>
 

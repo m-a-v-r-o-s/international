@@ -84,6 +84,14 @@ body {
   border-radius: 4px;
 }
 
+/* The nav rail and its mobile burger sit on brand-strong navy, where the
+   ring above (brand-colored) would land on its own background and vanish.
+   Higher specificity than the :where() above wins it back in white. */
+.ir-rail :where(a, button):focus-visible,
+button.ir-rail:focus-visible {
+  outline-color: var(--color-brand-ink);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

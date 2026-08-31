@@ -54,12 +54,21 @@ function grouped(items: NavItem[]): { section?: string; items: NavItem[] }[] {
   return out
 }
 
-function NavList({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void }) {
+function NavList({
+  items, onNavigate, variant = 'light',
+}: {
+  items: NavItem[]
+  onNavigate?: () => void
+  /** 'dark' is the rail's own navy background; the phone drawer stays 'light'
+      even when it is opened from the navy mobile header. */
+  variant?: 'light' | 'dark'
+}) {
   const pathname = usePathname()
   // Matched against the WHOLE list, not group by group, so the longest prefix
   // still wins across a boundary.
   const current = currentHref(items, pathname)
   const uid = useId()
+  const dark = variant === 'dark'
 
   return (
     <div className="flex flex-col gap-5">
@@ -70,7 +79,9 @@ function NavList({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => v
             {group.section ? (
               <h2
                 id={headingId}
-                className="mb-1 px-3.5 text-[0.75rem] font-semibold uppercase tracking-wide text-ink-soft"
+                className={`mb-1 px-3.5 text-[0.75rem] font-semibold uppercase tracking-wide ${
+                  dark ? 'text-brand-tint/70' : 'text-ink-soft'
+                }`}
               >
                 {group.section}
               </h2>
@@ -83,10 +94,14 @@ function NavList({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => v
                     onClick={onNavigate}
                     aria-current={item.href === current ? 'page' : undefined}
                     className={`flex min-h-12 items-center rounded-field px-3.5 text-[1.0625rem]
-                                transition-colors duration-150 ease-ui hover:bg-brand-tint ${
-                                  item.href === current
-                                    ? 'bg-brand-tint font-semibold text-brand'
-                                    : 'text-ink'
+                                transition-colors duration-150 ease-ui ${
+                                  dark
+                                    ? item.href === current
+                                      ? 'bg-brand-ink/15 font-semibold text-brand-ink'
+                                      : 'text-brand-tint hover:bg-brand-ink/10 hover:text-brand-ink'
+                                    : item.href === current
+                                      ? 'bg-brand-tint font-semibold text-brand hover:bg-brand-tint'
+                                      : 'text-ink hover:bg-brand-tint'
                                 }`}
                   >
                     {item.label}
@@ -101,15 +116,30 @@ function NavList({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => v
   )
 }
 
-/** The desktop column. Sticks to the top so it survives a long table. */
-export function SideNav({ items, label }: { items: NavItem[]; label: string }) {
+/**
+ * The desktop rail. Sticks to the top so it survives a long table, and now
+ * spans the full page height — header included, see the app layout — rather
+ * than starting below it, carrying the logo up with it. `ir-rail` gives its
+ * links a focus ring the global one (tuned for a light page) would render
+ * invisible against navy — see globals.css.
+ */
+export function SideNav({
+  items, label, logoAlt,
+}: {
+  items: NavItem[]
+  label: string
+  logoAlt: string
+}) {
   return (
     <nav
       aria-label={label}
-      className="sticky top-0 hidden max-h-dvh w-60 shrink-0 self-start
-                 overflow-y-auto py-6 pl-5 lg:block print:hidden"
+      className="ir-rail sticky top-0 hidden max-h-dvh w-60 shrink-0 flex-col
+                 self-start overflow-y-auto bg-brand-strong px-4 py-6 lg:flex print:hidden"
     >
-      <NavList items={items} />
+      <Link href="/" className="mb-6 inline-flex w-fit items-center rounded-field bg-surface px-2.5 py-2">
+        <img src="/logo-sm.webp" width={400} height={64} alt={logoAlt} className="h-6 w-auto" />
+      </Link>
+      <NavList items={items} variant="dark" />
     </nav>
   )
 }
@@ -121,12 +151,14 @@ export function SideNav({ items, label }: { items: NavItem[]; label: string }) {
  * ourselves — the same reasoning as Disclosure.tsx.
  */
 export function NavDrawer({
-  items, label, openLabel, closeLabel,
+  items, label, openLabel, closeLabel, dark = false,
 }: {
   items: NavItem[]
   label: string
   openLabel: string
   closeLabel: string
+  /** The trigger sits on the navy mobile header now, not always a white one. */
+  dark?: boolean
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const pathname = usePathname()
@@ -151,8 +183,9 @@ export function NavDrawer({
         type="button"
         aria-label={openLabel}
         onClick={() => dialog.current?.showModal()}
-        className="-ml-2 flex size-11 items-center justify-center rounded-field
-                   text-ink hover:bg-brand-tint lg:hidden print:hidden"
+        className={`-ml-2 flex size-11 items-center justify-center rounded-field lg:hidden print:hidden ${
+          dark ? 'ir-rail text-brand-ink hover:bg-brand-ink/10' : 'text-ink hover:bg-brand-tint'
+        }`}
       >
         <svg viewBox="0 0 24 24" aria-hidden="true" className="size-6" fill="none"
              stroke="currentColor" strokeWidth="2" strokeLinecap="round">
