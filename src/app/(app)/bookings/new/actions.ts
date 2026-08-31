@@ -7,6 +7,7 @@ import { supabaseServer } from '@/lib/supabase/server'
 import type { BookingInsert, Database } from '@/lib/supabase/database.types'
 import { errorKey, type ErrorKey } from '@/lib/errors'
 import { findCustomerByPhone } from '@/lib/customers/lookup'
+import { athensInstant } from '@/lib/dates'
 
 const uuidSchema = z.string().uuid()
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -109,22 +110,6 @@ export type CreateBookingState = { error?: ErrorKey; fieldErrors?: Record<string
 const phoneSchema = z.string().trim().min(4).max(32)
 const nameSchema = z.string().trim().min(1).max(80)
 const timeSchema = z.string().trim().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional()
-
-/**
- * A calendar date plus a wall-clock time at the hotel desk, as an instant.
- *
- * Postgres does the conversion, not JavaScript: the literal names the zone, so
- * `timestamptz` resolves it with the same tz database that app.today() and
- * app.outside_default_windows() use. Doing it here with a Date would bake in
- * whatever zone the Railway container happens to run in, and would get the
- * March and October changeovers wrong in a country that observes both.
- *
- * A missing time is null rather than a guess — the columns have always been
- * nullable, and every booking made before R3 collected times has null in them.
- */
-function athensInstant(date: string, time: string | undefined): string | null {
-  return time ? `${date} ${time}:00 Europe/Athens` : null
-}
 
 /**
  * R3 confirm → Booked. Only the fields a rep may ever send

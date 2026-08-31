@@ -9,13 +9,9 @@ import {
   type QuoteState, type CreateBookingState, type CustomerLookupState,
 } from './actions'
 import type { CarWithSpecs } from '@/lib/availability/types'
+import type { BookingWindows, Hotel } from '@/lib/bookings/types'
 
-type Hotel = { id: string; name: string; area: string | null }
 const SEAT_TYPES = ['infant', 'child', 'booster'] as const
-
-export type BookingWindows = {
-  pickupFrom: string; pickupTo: string; dropoffFrom: string; dropoffTo: string
-}
 
 export function NewBookingForm({
   cars, hotels, defaultHotelId, preselectedCar, defaultFrom, defaultTo, windows,

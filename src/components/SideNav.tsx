@@ -2,9 +2,19 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useRef } from 'react'
+import { useEffect, useId, useRef } from 'react'
 
-export type NavItem = { href: string; label: string }
+export type NavItem = {
+  href: string
+  label: string
+  /**
+   * Starts a new labelled group at this item. The admin's list is his own
+   * eleven screens followed by the rep screens he gained in §30, and running
+   * the two together as one undifferentiated column would lose which is which
+   * (docs/01-DECISIONS.md §30 decision 4).
+   */
+  section?: string
+}
 
 /**
  * The app's section list, in the two places it appears: a standing column on a
@@ -31,30 +41,63 @@ function currentHref(items: NavItem[], pathname: string): string | undefined {
     .sort((a, b) => b.href.length - a.href.length)[0]?.href
 }
 
+/**
+ * Consecutive items under one heading. A group whose first item carries no
+ * `section` is unlabelled, which is what a rep's single flat list is.
+ */
+function grouped(items: NavItem[]): { section?: string; items: NavItem[] }[] {
+  const out: { section?: string; items: NavItem[] }[] = []
+  for (const item of items) {
+    if (item.section || out.length === 0) out.push({ section: item.section, items: [] })
+    out[out.length - 1]!.items.push(item)
+  }
+  return out
+}
+
 function NavList({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void }) {
   const pathname = usePathname()
+  // Matched against the WHOLE list, not group by group, so the longest prefix
+  // still wins across a boundary.
   const current = currentHref(items, pathname)
+  const uid = useId()
 
   return (
-    <ul className="flex flex-col gap-1">
-      {items.map((item) => (
-        <li key={item.href}>
-          <Link
-            href={item.href}
-            onClick={onNavigate}
-            aria-current={item.href === current ? 'page' : undefined}
-            className={`flex min-h-12 items-center rounded-field px-3.5 text-[1.0625rem]
-                        transition-colors duration-150 ease-ui hover:bg-brand-tint ${
-                          item.href === current
-                            ? 'bg-brand-tint font-semibold text-brand'
-                            : 'text-ink'
-                        }`}
-          >
-            {item.label}
-          </Link>
-        </li>
-      ))}
-    </ul>
+    <div className="flex flex-col gap-5">
+      {grouped(items).map((group, index) => {
+        const headingId = group.section ? `${uid}-${index}` : undefined
+        return (
+          <div key={group.section ?? index}>
+            {group.section ? (
+              <h2
+                id={headingId}
+                className="mb-1 px-3.5 text-[0.75rem] font-semibold uppercase tracking-wide text-ink-soft"
+              >
+                {group.section}
+              </h2>
+            ) : null}
+            <ul className="flex flex-col gap-1" aria-labelledby={headingId}>
+              {group.items.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    onClick={onNavigate}
+                    aria-current={item.href === current ? 'page' : undefined}
+                    className={`flex min-h-12 items-center rounded-field px-3.5 text-[1.0625rem]
+                                transition-colors duration-150 ease-ui hover:bg-brand-tint ${
+                                  item.href === current
+                                    ? 'bg-brand-tint font-semibold text-brand'
+                                    : 'text-ink'
+                                }`}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      })}
+    </div>
   )
 }
 

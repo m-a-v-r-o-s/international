@@ -335,3 +335,122 @@ The data model must not *preclude* a public booking channel later, but no work g
 - Which fuel charge rate applies — a per-litre figure or the boss's judgement each time?
   *(Assumed: the boss's judgement, since all fuel shortfalls route to him as exceptions.
   The app records the shortfall in eighths and litres, and charges nothing automatically.)*
+
+## 30. The boss at the desk, and two front-desk actions that reach every screen
+
+The owner's ask, in his words: admin accounts should be able to operate like rep accounts
+too — *"even the boss makes bookings sometimes"* — the Ψηφιακό πελατολόγιο should be its own
+sidebar item rather than a section buried in Settings, and the header should carry two new
+buttons: a **booking confirmation** for a guest who orders a car by phone, and **write up
+the full contract**, which opens the licence-photo-and-signature flow either against an
+existing booking slip or from nothing at all for an impromptu rental.
+
+### What was actually broken
+
+The admin could not create a rental, and the reason was not the missing link. Every
+booking-flow route already gates on `requireUnlocked()` rather than `requireAdmin()`, so the
+boss could reach `/bookings/new` by typing it — and the insert at the end of it would have
+failed. `app.bookings_before_write()` fills `created_by` inside `if not v_is_admin`, along
+with the fields a rep is not trusted to send; `bookings.created_by` is `not null` with no
+default and is absent from the INSERT grant **for the admin too**, so it could not be
+supplied from a client either. Every admin-created booking was a NOT NULL violation waiting
+for someone to find it. Nothing had, because the only admin insert path in the app —
+`public.admin_create_block()` — passes `created_by := auth.uid()` itself.
+
+`20260831140000_admin_creates_rentals.sql` fixes it with a second BEFORE trigger,
+`bookings_owner`, rather than an edit to the guard: that function is 200 lines of
+load-bearing transition rules, it has been re-pasted whole once already (0015), and 0021
+declined to paste it again to add two lines for exactly this reason. The new trigger only
+ever fills a `created_by` the guard left null, so a rep's row — already stamped with
+`coalesce(auth.uid(), …)` — behaves exactly as before, and a service-role insert with no
+`auth.uid()` still has to name an author rather than being quietly given one.
+
+**A second finding, from the test that caught it.** `tests/db/privileges.test.ts` asserts the
+exact list of `app` functions `authenticated` may execute, and it failed on the new function.
+0025 withdrew Postgres's built-in EXECUTE-to-PUBLIC across `app` and wrote the same
+withdrawal as a *default privilege* so later functions would be covered without anyone
+remembering — and they are not: there is no `pg_default_acl` row for the schema, so a
+function created after 0025 arrives with `proacl` null and the built-in grant intact. It is
+now revoked by name. **Every future function added to `app` needs that line until the
+default itself is fixed**, and the test is what will keep saying so.
+
+### The four decisions, and who made them
+
+All four were the owner's (Θεοδωρής, 1 Sep 2026), put to him before anything was built
+because each has a UX or compliance consequence that a default would have got wrong. Three
+went the way the advice went; one deliberately did not, and is written down as such.
+
+**1 · Both new buttons are for reps and for the admin. The ledger link is not.**
+> The ask was "admin gains rep capabilities", not "reps lose or gain something", so the two
+> header buttons belong to whoever is standing at a desk — which is both roles. They sit in
+> a second header row rather than squeezed into the first: at 360px the top row is already a
+> burger, a logo and three text links, and a phone call arrives while the rep is looking at
+> some other screen.
+>
+> The Ψηφιακό πελατολόγιο stays admin-only, and that is not a UI choice. §25a gives reps no
+> `SELECT` on `public.customers` at all — their entire access is one rate-limited,
+> exact-match, logged function — and erasing a guest or clearing the ledger are admin RPCs
+> that refuse a rep twice over. A sidebar link for a rep would be a link to a refusal.
+
+**2 · The phone booking collects the number, the room, the car, the dates and the seats — and
+offers a name it never requires.**
+> *Asked:* whether the quick form should ask for the guest's name at all, even optionally,
+> or defer identity 100% to pickup as the instruction "collects ONLY" says.
+>
+> *Chosen:* an optional name field, never required.
+>
+> *Why the letter of the instruction was not followed:* R1 Today and A1 Movements both print
+> a guest name per row, and a booking with none prints a blank there until the contract is
+> written — on the boss's morning sheet as well as the rep's. A rep who was given a name on
+> the call can record it; a rep who was not is never held up by a required field. The date of
+> birth genuinely is deferred, in full: `cust_dob` is written null and read off the licence
+> at pickup (§9, §10), where it is needed for the eligibility gate anyway.
+>
+> The form also **shows** the price, which is not a field it collects. The guest's next
+> sentence after naming the dates is "how much is that?", and the alternative is a rep
+> quoting from memory or booking-then-cancelling when the guest declines. It is the same
+> read-only `public.quote()` R3 shows, computed server-side, never in the browser (§6). Say
+> so if it should come off.
+
+**3 · The walk-in runs the eligibility check first, then continues through the whole pickup
+to `Out`.**
+> *Asked:* whether "write up the contract" stops at the signed PDF and leaves fuel, damage
+> and payment for later, and whether the §11 eligibility hard block — which sits on the
+> `booked → out` transition, not on signing — should be evaluated earlier for this path.
+>
+> *Chosen:* the gate first, then the rest of R4 inline, ending at `Out`.
+>
+> *What made this weightier than it first looked:* R4 already refuses to show the agreement
+> step until the gate passes (`agreement: gateOpen && pickup !== null`). So a global entry
+> point that jumped straight to a signature would not merely have reordered an unenforced
+> rule — it would have **removed a check that exists today**, and let a guest sign a rental
+> agreement for a car they are not legally allowed to drive. Both new doors therefore open at
+> the FIRST step of the pickup flow, never at the signature. And a walk-in is one transaction
+> to the rep: a rental left half-processed at the moment the car drives away is the paper
+> problem this app exists to replace.
+
+**4 · The admin's sidebar is his own list with the rep screens appended under a heading.**
+> *Asked:* additive, one flat merged list, or a mode toggle.
+>
+> *Chosen:* additive, grouped. Nothing is removed, and there is no mode to be in the wrong
+> one of — a toggle would have re-created the "cannot get there from here" problem that
+> prompted the ask.
+>
+> `/` is deliberately **not** in the appended group, and this is the one place the
+> implementation narrowed what was described. For an admin `/` is not a Today screen at all;
+> it is his landing card, and A1 Movements is his morning screen. Listing it under "Today"
+> would have named it wrongly, and the logo links there for everyone regardless.
+
+### What these screens are not
+
+The contract picker lists `booked` rentals with no `contracts` row. A rental already `out`
+without a signed agreement is **not** listed, because R4 stops at "already out" and the link
+would be to a dead end. That combination is possible — the agreement is a step and not a
+gate, and nothing in the database requires a signed contract to reach `out` — so if it turns
+out to happen in practice, it wants an exceptions-queue item (§14) rather than a second
+signing path.
+
+Neither new screen is a second way to write a booking. Both go through the same `bookings`
+insert, the same guard trigger and the same exclusion constraint as R3, so a phone booking
+that double-books a car is refused with the same 23P01 as any other, and the price still
+comes from the engine rather than from anything either form sends.

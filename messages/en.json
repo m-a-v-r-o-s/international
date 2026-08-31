@@ -33,7 +33,9 @@
     "availability": "Availability",
     "newBooking": "New booking",
     "myBookings": "My bookings",
-    "settings": "Settings"
+    "settings": "Settings",
+    "quickBooking": "Booking confirmation",
+    "writeContract": "Write the contract"
   },
   "login": {
     "title": "Sign in",
@@ -159,6 +161,15 @@
     "windowHint": "Usually {from}–{to}",
     "phoneHint": "With the country code where you have it — +30 for a Greek number. A number we already know fills the guest in.",
     "returningGuest": "We have rented to this number before ({name}). The fields below were filled in from that rental — check them with the guest and correct anything that has changed."
+  },
+  "quickBooking": {
+    "title": "Booking confirmation",
+    "intro": "For a guest who orders a car over the phone. The number, the room, the car, the dates and any child seats — that is all. The name, date of birth and licence are taken at pickup, from the licence itself.",
+    "guestTitle": "Caller",
+    "nameOptional": "Optional. Leave blank if they did not give a name — it is read off the licence at pickup. A name here only saves you writing it on the day sheet.",
+    "carHint": "If this car is already taken for these dates the booking is refused and nothing is saved.",
+    "seatsTitle": "Child seats",
+    "confirm": "Confirm the booking"
   },
   "bookingDetail": {
     "title": "Booking",
@@ -379,6 +390,21 @@
     "reuseGone": "Those photographs are no longer available. Take new ones.",
     "reuseNeedsDriver": "Save the driver first, then you can copy last time’s licence photos onto this rental."
   },
+  "writeContract": {
+    "title": "Write up the contract",
+    "intro": "Photograph the driving licence, let it fill the form in, and have the guest sign. Choose the booking the contract belongs to, or start one from scratch for a guest with no booking.",
+    "pickTitle": "For an existing booking",
+    "pickIntro": "Bookings you can see that have no signed agreement yet. Opens at the licence, and the eligibility check comes before the signature.",
+    "pickAction": "Write it",
+    "searchLabel": "Search bookings",
+    "searchPlaceholder": "Name, phone, plate or reference",
+    "empty": "Every booking you can see already has a signed agreement.",
+    "walkInTitle": "No booking — walk-in",
+    "walkInIntro": "A guest at the desk with nothing booked in advance, taking a car now. The booking is made here and the pickup carries straight on from it.",
+    "walkInAction": "Start a walk-in",
+    "walkInFormIntro": "Fill in the rental first — a contract cannot exist without one. You go straight to the licence afterwards.",
+    "walkInSubmit": "Create and continue to the licence"
+  },
   "returnFlow": {
     "title": "Return",
     "stepsLabel": "Return steps",
@@ -417,7 +443,9 @@
       "settings": "Settings",
       "users": "Staff",
       "hotels": "Hotels",
-      "audit": "Audit log"
+      "audit": "Audit log",
+      "customers": "Customer ledger",
+      "deskSection": "Front desk"
     },
     "movements": {
       "title": "Movements sheet",
@@ -967,7 +995,8 @@
     "purgeConfirm": "{n, plural, one {Permanently delete # licence photo} other {Permanently delete # licence photos}}. This cannot be undone.",
     "purgeNothingDue": "Nothing is due for deletion. The scheduled job runs on its own; this button is only for running it early.",
     "purgeDone": "Deleted {images, plural, one {# licence photo} other {# licence photos}} across {bookings, plural, one {# booking} other {# bookings}}.",
-    "purgeRefused": "{n, plural, one {# file was skipped because its name did not look like a licence photo} other {# files were skipped because their names did not look like licence photos}}. Report this."
+    "purgeRefused": "{n, plural, one {# file was skipped because its name did not look like a licence photo} other {# files were skipped because their names did not look like licence photos}}. Report this.",
+    "ledgerMoved": "The digital customer ledger now has a screen of its own. Its records have no expiry date at all — read that beside the licence retention window above, because the two behave completely differently."
   },
   "contractStep": {
     "agreementTitle": "Rental agreement",
@@ -1053,6 +1082,8 @@
     "clearConfirm3": "I understand this cannot be undone.",
     "clearAction": "Clear the ledger permanently",
     "clearDone": "Cleared. {n, plural, =0 {No customer records were held.} =1 {One customer record was deleted.} other {# customer records were deleted.}}",
-    "clearNothing": "The ledger is empty. There is nothing to clear."
+    "clearNothing": "The ledger is empty. There is nothing to clear.",
+    "statusTitle": "What the ledger holds",
+    "retentionPointer": "Licence photographs are a separate store with a window that empties itself:"
   }
 }

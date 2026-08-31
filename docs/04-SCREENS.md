@@ -34,6 +34,33 @@ Filters: category, transmission, seats, A/C.
 6. **Price** — returned by the server, read-only, with the day breakdown shown.
 Confirm → `Booked`.
 
+### R3b · Booking confirmation
+Reached from the **header, on every screen**, by reps and by the admin alike
+(docs/01-DECISIONS.md §30) — a phone call does not wait for the right page to be open.
+For a guest who orders a car by telephone. Collects the **phone number, hotel + room, car,
+dates and child seats**, and offers a **name it never requires**. No date of birth: it is
+read off the licence at pickup, where the eligibility gate needs it anyway.
+The price is shown, read-only, from the same server quote R3 uses — the caller always asks.
+A returning number fills the name in from the ledger (§25a), exactly as R3 does.
+Confirm → `Booked`, and the rep lands on the booking slip.
+
+### R4b · Write up the contract
+The other header button, also both roles. The contract flow itself is R4's agreement step and
+is unchanged; what this adds is a way IN that is not "find the booking, open it, start
+pickup". Two doors:
+1. **An existing booking** — every `booked` rental the caller can see with no signed
+   agreement against it, searchable by name, phone, plate or reference. Tapping one opens
+   that booking's pickup flow.
+2. **No booking — walk-in** — a guest at the desk with nothing booked, taking a car now.
+   R3b's form with today's dates and the current time, then straight on into the pickup flow.
+   A contract cannot exist without a rental beneath it (`contracts.booking_id` is NOT NULL),
+   so one is made here.
+
+Both doors open at R4 step 1, the licence — **never at the signature**. The eligibility gate
+(§11) stays in front of the agreement, which is where R4 already put it.
+A rental already `out` with no contract is not listed: R4 stops at "already out", so the link
+would go nowhere.
+
 ### R4 · Pickup flow
 Sequential, one thing per screen, resumable if the app is closed.
 1. **Licence capture** — camera, front then back, per driver. OCR runs, fields come back
@@ -69,6 +96,11 @@ Language (Ελληνικά / English), PIN and biometric setup, notification pre
 ---
 
 ## ADMIN APP
+
+The admin's sidebar is these screens, then the rep screens appended under a **Front desk**
+heading — Availability, New booking, My bookings — because "even the boss makes bookings
+sometimes" (docs/01-DECISIONS.md §30). Additive: nothing of his is removed and there is no
+mode to be in the wrong one of. Both header buttons (R3b, R4b) are his as well.
 
 ### A1 · Movements sheet
 The paper day-sheet, replaced. Any chosen day, all hotels: pickups then returns, in time
@@ -111,13 +143,20 @@ Filterable by actor, entity and date. Read-only. Permanent.
 Company legal details for the contract, contract terms text (Greek + English), licence
 retention window, pickup and drop-off default windows.
 
-Plus the **Ψηφιακό πελατολόγιο** section (docs/01-DECISIONS.md §25a), directly under
-licence retention so the two stores of guest data are read side by side and their
-difference is obvious: how many customers are held, how many have licence photographs, a
-search-then-erase desk for a guest who asks to be forgotten, and the clear-the-whole-ledger
-button behind three separate confirmations. There is deliberately **no retention-window
-field** in that section — there is no window, and a disabled box implying there might be
-would be worse than its absence. The section states that in as many words.
+The **Ψηφιακό πελατολόγιο** left this screen for A11 (docs/01-DECISIONS.md §30). What stays
+is a pointer to it, carrying the "these records never expire" line — because the reason the
+section was here was to be read beside licence retention, and the boss should not be able to
+read about the store that empties itself without being told about the one that does not.
+
+### A11 · Ψηφιακό πελατολόγιο
+The customer ledger (docs/01-DECISIONS.md §25a), its own sidebar item since §30. How many
+customers are held, how many have licence photographs, a search-then-erase desk for a guest
+who asks to be forgotten, and the clear-the-whole-ledger button behind three separate
+confirmations. There is deliberately **no retention-window field** — there is no window, and
+a disabled box implying there might be would be worse than its absence. The screen states
+that in as many words, and links back to A10 for the licence window it is not.
+**Admin only**, and not merely by hiding a link: reps hold no `SELECT` on `public.customers`,
+and erasure and clearing are admin RPCs that refuse them.
 
 ---
 

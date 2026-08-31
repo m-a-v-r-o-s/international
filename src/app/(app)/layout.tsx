@@ -22,6 +22,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const admin = staff.role === 'admin'
 
+  /**
+   * The admin's list is his eleven screens with the rep's appended under their
+   * own heading — additive, never a mode to be in the wrong one of
+   * (docs/01-DECISIONS.md §30 decision 4). Before this the admin branch linked
+   * to none of them, which is why "even the boss makes bookings sometimes" was
+   * not something the boss could do.
+   *
+   * `/` is deliberately not in the appended group. For an admin it is not a
+   * Today screen at all — it is his landing card, and A1 Movements is his
+   * morning screen — so listing it under "Today" would name it wrongly. The
+   * logo links there for everyone regardless.
+   */
   const items: NavItem[] = admin
     ? [
         { href: '/admin/movements', label: ta('nav.movements') },
@@ -33,8 +45,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: '/admin/exceptions', label: ta('nav.exceptions') },
         { href: '/admin/users', label: ta('nav.users') },
         { href: '/admin/hotels', label: ta('nav.hotels') },
+        { href: '/admin/customers', label: ta('nav.customers') },
         { href: '/admin/audit', label: ta('nav.audit') },
         { href: '/admin/settings', label: ta('nav.settings') },
+        { href: '/availability', label: tn('availability'), section: ta('nav.deskSection') },
+        { href: '/bookings/new', label: tn('newBooking') },
+        { href: '/bookings', label: tn('myBookings') },
       ]
     : [
         { href: '/', label: tn('today') },
@@ -84,6 +100,26 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               {t('signOut')}
             </a>
           </div>
+        </div>
+
+        {/*
+          The two things a rep does standing in front of a guest, on every
+          screen rather than only from the one they happen to be on
+          (docs/01-DECISIONS.md §30 decision 1). They are the same two acts for
+          the boss, so both roles get both.
+
+          A second row, not squeezed into the first: at 360px the top row is
+          already a burger, a logo and three text links, and a phone call comes
+          in while the rep is looking at something else. Full-width halves on a
+          phone so each is a thumb-sized target; auto width from `sm` up.
+        */}
+        <div className={`mx-auto flex w-full ${shell} gap-2 px-5 pb-3`}>
+          <Link href="/bookings/confirm" className="ir-btn-primary flex-1 sm:!w-auto sm:flex-none">
+            {tn('quickBooking')}
+          </Link>
+          <Link href="/contracts/new" className="ir-btn-quiet flex-1 sm:!w-auto sm:flex-none">
+            {tn('writeContract')}
+          </Link>
         </div>
       </header>
 
