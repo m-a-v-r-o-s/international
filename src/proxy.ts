@@ -134,14 +134,18 @@ function contentSecurityPolicy(nonce: string): string {
 
 export const config = {
   matcher: [
-    // Everything except Next's own assets and the files a browser fetches by
-    // convention. Those need no session and no policy.
-    // `sw.js` joins them for a reason of its own: a browser re-fetches the
+    // Everything except Next's own image-optimization endpoint and any
+    // request path that ends in a file extension — static files served
+    // straight out of `public/` (images, sw.js, robots.txt, …) and generated
+    // convention files (favicon.ico, icon.svg, …) alike. Those need no
+    // session and no policy, and the login and 404 pages both hold images
+    // that must render before, or without, a session.
+    // `sw.js` matters here for a reason of its own: a browser re-fetches the
     // service worker on its own schedule, including while a rep's device is
-    // PIN-locked, and this proxy would answer that fetch with a redirect to
-    // /unlock. A service worker that fails to update is one that keeps
-    // running the version it has for ever. The file is static JS with no
-    // session in it, so there is nothing here for the proxy to protect.
-    '/((?!_next/static|_next/image|favicon.ico|icon.svg|apple-icon.png|manifest.webmanifest|sw.js|robots.txt|sitemap.xml).*)',
+    // PIN-locked, and this proxy would otherwise answer that fetch with a
+    // redirect to /unlock. A service worker that fails to update is one that
+    // keeps running the version it has for ever. The file is static JS with
+    // no session in it, so there is nothing here to protect.
+    '/((?!_next/image|.*\\.[\\w]+$).*)',
   ],
 }
