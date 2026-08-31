@@ -140,13 +140,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                   closeLabel={tn('close')}
                   dark
                 />
-                <Link href="/" className="flex items-center rounded-field bg-surface px-2.5 py-2">
+                <Link href="/" className="flex items-center rounded-field bg-surface px-3 py-2">
                   <img
                     src="/logo-sm.webp"
                     width={300}
                     height={100}
                     alt={tapp('logoAlt')}
-                    className="h-8 w-auto"
+                    className="h-11 w-auto"
                   />
                 </Link>
               </div>
