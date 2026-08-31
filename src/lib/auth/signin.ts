@@ -108,7 +108,11 @@ export async function writeGate(gate: Gate): Promise<void> {
     secure: isProduction,
     sameSite: 'lax',
     path: '/',
-    maxAge: 60 * 60 * 24 * 30,
+    // A rep's cookie only ever carries a locked (unlockedUntil: 0) or
+    // shift-length unlock, so 30 days is plenty of shell to hold that in.
+    // An admin's unlockedUntil is the real, long-lived grant, so the cookie
+    // itself has to live at least as long or it disappears out from under it.
+    maxAge: gate.role === 'admin' ? ADMIN_GATE_TTL_SECONDS : 60 * 60 * 24 * 30,
   })
 }
 

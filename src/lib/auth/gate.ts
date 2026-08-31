@@ -26,9 +26,10 @@ export const UNLOCK_TTL_SECONDS = 12 * 60 * 60
 
 /**
  * The admin has no PIN (docs/01-DECISIONS.md §21) and signs in on desktop and
- * phone at once, so their gate simply runs with the session cookie.
+ * phone at once, so their gate simply runs with the session cookie. Set long
+ * so an admin who opens the app regularly is never forced back through login.
  */
-export const ADMIN_GATE_TTL_SECONDS = 30 * 24 * 60 * 60
+export const ADMIN_GATE_TTL_SECONDS = 365 * 24 * 60 * 60
 
 // Keyed by the secret rather than memoised once: a rotated SESSION_SECRET has
 // to produce a different key, not silently reuse the first one this process saw.
