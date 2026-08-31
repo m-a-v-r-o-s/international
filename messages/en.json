@@ -23,6 +23,16 @@
     "admin": "Manager",
     "rep": "Rep"
   },
+  "nav": {
+    "primary": "Main sections",
+    "open": "Menu",
+    "close": "Close menu",
+    "today": "Today",
+    "availability": "Availability",
+    "newBooking": "New booking",
+    "myBookings": "My bookings",
+    "settings": "Settings"
+  },
   "login": {
     "title": "Sign in",
     "intro": "This app is for International Rentals staff.",

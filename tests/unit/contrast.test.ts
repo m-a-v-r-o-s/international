@@ -51,6 +51,7 @@ const TEXT_PAIRS: [string, string, string][] = [
   ['ink', 'surface', 'body text on a card'],
   ['ink', 'canvas', 'body text on the page'],
   ['ink', 'brand-tint', 'a quiet button, hovered'],
+  ['brand', 'brand-tint', 'the current section in the side nav'],
   ['ink-soft', 'surface', 'hints and secondary text on a card'],
   ['ink-soft', 'canvas', 'hints and secondary text on the page'],
   ['brand', 'surface', 'a link on a card'],

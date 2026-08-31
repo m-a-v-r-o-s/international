@@ -129,12 +129,24 @@ body {
     @apply border border-control bg-surface text-ink hover:bg-brand-tint;
   }
 
+  /* The phone nav drawer slides in from the edge it is anchored to, which is
+     the state change: it came from off-screen and it goes back there. The
+     reduced-motion rule above turns it off. */
+  .ir-drawer[open] {
+    animation: ir-drawer-in 160ms var(--ease-ui);
+  }
+
   .ir-card {
     @apply rounded-card border border-line bg-surface;
   }
   .ir-notice {
     @apply rounded-field border px-3.5 py-3 text-[0.9375rem];
   }
+}
+
+@keyframes ir-drawer-in {
+  from { transform: translateX(-100%); }
+  to   { transform: none; }
 }
 
 /* A1's movements sheet is printed as the boss's morning paper replacement. */
