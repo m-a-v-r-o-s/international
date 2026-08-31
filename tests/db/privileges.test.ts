@@ -88,9 +88,16 @@ test('authenticated reaches only the named functions in app', async () => {
        and has_function_privilege('authenticated', p.oid, 'EXECUTE')
      order by 1`)
 
-  // Granted by name in 0001, 0008, 0011 and 0016. Everything else in `app` —
-  // the trigger functions, the rate limiter, the security log, the audit
-  // redactor — is the server's and the schema's own business.
+  // Granted by name in 0001, 0008, 0011, 0016 and 0021. Everything else in
+  // `app` — the trigger functions, the rate limiter, the security log, the
+  // audit redactor — is the server's and the schema's own business.
+  //
+  // `phone_e164` is the odd one out and is here on purpose. It backs the
+  // GENERATED column bookings.cust_phone_e164 (0021), and Postgres checks
+  // EXECUTE on a generated column's expression against the role doing the
+  // INSERT — so withholding it does not hide the function, it stops every rep
+  // creating a booking. It is immutable, string in and string out, and reads
+  // nothing.
   expect(rows.map((r) => r.fn)).toEqual([
     'assert_admin',
     'assert_staff',
@@ -102,6 +109,7 @@ test('authenticated reaches only the named functions in app', async () => {
     'my_hotel_ids',
     'object_booking_id',
     'object_file_kind',
+    'phone_e164',
     'rental_days',
     'today',
   ])

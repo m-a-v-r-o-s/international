@@ -6,6 +6,7 @@ import { requireUnlocked } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
 import type { BookingInsert, Database } from '@/lib/supabase/database.types'
 import { errorKey, type ErrorKey } from '@/lib/errors'
+import { findCustomerByPhone } from '@/lib/customers/lookup'
 
 const uuidSchema = z.string().uuid()
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -49,6 +50,58 @@ export async function previewBookingQuote(_prev: QuoteState, formData: FormData)
   if (!row) return { error: 'unknown' }
 
   return { days: row.days, periodId: row.period_id, totalCents: row.total_cents }
+}
+
+/**
+ * R3 — recognising a returning guest from the number the rep is typing
+ * (docs/01-DECISIONS.md §25a).
+ *
+ * The booking form captures a name, a phone number and a date of birth; the
+ * licence is not seen until pickup. So this fills in the first three and
+ * nothing else, and the pickup screen does the rest when the guest is
+ * standing there with the licence in their hand.
+ *
+ * It reports `notFound` explicitly rather than an empty match, because the
+ * form has to distinguish "we asked and this is a new guest" from "we have
+ * not asked yet" — the first should stop the fields being touched again, the
+ * second should not.
+ */
+export type CustomerLookupState = {
+  status: 'found' | 'notFound' | 'error'
+  error?: ErrorKey
+  match?: {
+    firstName: string | null
+    lastName: string | null
+    dob: string | null
+    lastSeenAt: string
+  }
+} | undefined
+
+export async function lookupCustomer(
+  _prev: CustomerLookupState, formData: FormData,
+): Promise<CustomerLookupState> {
+  await requireUnlocked()
+
+  const phone = z.string().trim().min(4).max(32).safeParse(formData.get('cust_phone'))
+  if (!phone.success) return { status: 'notFound' }
+
+  const supabase = await supabaseServer()
+  const outcome = await findCustomerByPhone(supabase, phone.data)
+
+  // A refused lookup is never allowed to become a blocked booking. The rep
+  // types the guest in exactly as they did before this feature existed.
+  if (!outcome.ok) return { status: 'error', error: outcome.reason }
+  if (!outcome.match) return { status: 'notFound' }
+
+  return {
+    status: 'found',
+    match: {
+      firstName: outcome.match.firstName,
+      lastName: outcome.match.lastName,
+      dob: outcome.match.dob,
+      lastSeenAt: outcome.match.lastSeenAt,
+    },
+  }
 }
 
 export type CreateBookingState = { error?: ErrorKey; fieldErrors?: Record<string, string> } | undefined

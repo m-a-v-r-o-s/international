@@ -18,7 +18,8 @@
     "english": "English",
     "required": "Required",
     "tryAgain": "Try again",
-    "skipToContent": "Skip to content"
+    "skipToContent": "Skip to content",
+    "noResults": "Nothing found."
   },
   "roles": {
     "admin": "Manager",
@@ -155,7 +156,9 @@
     "confirm": "Confirm booking",
     "pickupTime": "Pick-up time",
     "dropoffTime": "Drop-off time",
-    "windowHint": "Usually {from}–{to}"
+    "windowHint": "Usually {from}–{to}",
+    "phoneHint": "With the country code where you have it — +30 for a Greek number. A number we already know fills the guest in.",
+    "returningGuest": "We have rented to this number before ({name}). The fields below were filled in from that rental — check them with the guest and correct anything that has changed."
   },
   "bookingDetail": {
     "title": "Booking",
@@ -367,7 +370,14 @@
     "toCopy": "Continue to the copy",
     "contractOnFile": "Agreement",
     "contractSigned": "Signed",
-    "contractUnsigned": "Not signed"
+    "contractUnsigned": "Not signed",
+    "returningTitle": "Returning guest",
+    "returningBody": "{name} rented from us before, most recently {when}. The licence details below were filled in from that rental. Check every one of them against the licence in front of you.",
+    "reuseImages": "Use the licence photos from last time",
+    "reuseHint": "Copies the photographs onto this rental so you do not have to scan the licence again. They are copied, not shared — this rental gets its own, deleted on its own schedule.",
+    "reuseDone": "Copied {n, plural, =1 {one photograph} other {# photographs}}. Check them before continuing.",
+    "reuseGone": "Those photographs are no longer available. Take new ones.",
+    "reuseNeedsDriver": "Save the driver first, then you can copy last time’s licence photos onto this rental."
   },
   "returnFlow": {
     "title": "Return",
@@ -778,7 +788,8 @@
     "duplicate": "That already exists.",
     "IR115": "That is already the rep’s home hotel.",
     "emailInUse": "A staff account already uses that email address.",
-    "accountFailed": "The account could not be created. Nothing was saved — try again."
+    "accountFailed": "The account could not be created. Nothing was saved — try again.",
+    "IR122": "Too many customer lookups in a short time. Type the details in by hand and try the lookup again later."
   },
   "eligibility": {
     "title": "Eligibility",
@@ -820,10 +831,12 @@
       "lawful": "Rental and driver data is held to perform the rental contract and to meet the legal requirement to check that a driver is licensed and eligible to drive the vehicle. Staff data is held to operate the system and to keep it secure.",
       "retentionTitle": "How long we keep it",
       "retention": "Photographs of driving licences are deleted automatically after a period set by the company, twenty-four months after the rental ends by default. The booking record, the signed agreement and the typed licence number are kept for longer, as accounting and insurance obligations require. Every deletion is logged.",
+      "ledgerTitle": "Guests who choose to be remembered",
+      "ledger": "At the signing step we ask, in a separate tick box next to the signature, whether you agree that we keep your name, phone number, date of birth and driving licence details after your rental ends, so that renting from us again is quicker. This is optional and is not part of the rental agreement — you can leave it unticked, decline it, and still rent the vehicle on exactly the same terms. If you do agree, those details are held in a customer record that is separate from any one booking, and the next time a member of our staff enters your phone number at any of our locations, your details are filled in for them. They see your name, date of birth and licence details; they do not see your previous bookings, where you stayed, or what you paid. Every one of those look-ups is recorded. These records have NO automatic expiry date: unlike licence photographs, they are kept until you ask us to delete them or until the company clears the ledger. That is a longer time than we keep anything else about you, which is why we ask for it separately and why you can withdraw it at any point.",
       "securityTitle": "How it is protected",
       "security": "Licence photographs are held in private storage and can only be reached through short-lived links issued to a member of staff who is entitled to that booking. All access is over HTTPS. Staff can only see the bookings they created or those belonging to a hotel they cover.",
       "rightsTitle": "Your rights",
-      "rights": "You can ask for a copy of the personal data held about you, ask for it to be corrected, or ask for it to be deleted where there is no legal obligation to keep it. Contact the company using the details on the rental agreement.",
+      "rights": "You can ask for a copy of the personal data held about you, ask for it to be corrected, or ask for it to be deleted where there is no legal obligation to keep it. If you agreed to be kept in our customer records, you can withdraw that at any time and we will delete that record and any driving licence photographs held with it — tell any member of our staff, or contact us using the details on the rental agreement. Your booking and the signed agreement itself will remain, because accounting and insurance obligations require us to keep them.",
       "contactTitle": "Contact",
       "contact": "Company registered details and a data contact address are to be confirmed and will appear here before launch."
     },
@@ -991,7 +1004,15 @@
     "copyRecordedOnly": "The address was saved. Email sending is not set up on this installation yet, so no copy has gone out.",
     "copyFailed": "The address was saved, but the copy could not be sent. Try again later.",
     "mailNotConfigured": "Email sending is not set up on this installation yet. An address entered here is saved with the booking so the copy can be sent once it is.",
-    "notSignedYet": "Sign the agreement first."
+    "notSignedYet": "Sign the agreement first.",
+    "ledgerLegend": "Keeping the guest’s details",
+    "ledgerConsent": "The guest agrees that we keep their name, phone number, date of birth and licence details after this rental, so that renting from us again is quicker.",
+    "ledgerConsentHint": "Optional, and separate from the agreement. Leave it unticked and nothing is kept beyond this booking. The guest can ask us to delete their details at any time.",
+    "ledger": {
+      "kept": "The guest’s details have been kept for next time.",
+      "declined": "The guest’s details were not kept.",
+      "noPhone": "The guest agreed, but their phone number could not be read as a full number, so nothing could be kept. Add the country code to the booking and sign again if they want their details kept."
+    }
   },
   "push": {
     "morning": {
@@ -1004,5 +1025,34 @@
     "exceptions": {
       "title": "{n, plural, one {# new exception} other {# new exceptions}}"
     }
+  },
+  "adminLedger": {
+    "title": "Digital customer ledger",
+    "intro": "Guests who agreed, at signing, that we keep their details so a future rental is quicker. Only guests who ticked the box are here. Reps can match a guest by typing their full phone number; they cannot browse or list this.",
+    "noWindow": "These records have no expiry date. Unlike licence photographs, nothing here is deleted automatically — it stays until you erase a guest on request or clear the ledger below.",
+    "total": "Customers held",
+    "withImages": "With licence photos",
+    "oldest": "Oldest record",
+    "lastCleared": "Last cleared",
+    "neverCleared": "Never",
+    "erasureTitle": "Erase one guest (on request)",
+    "erasureIntro": "When a guest asks to be forgotten, find them here and erase them. This removes their ledger record and their licence photographs. Their past bookings and the signed agreements stay, as accounting and insurance require.",
+    "searchLabel": "Phone number or name",
+    "searchHint": "Search the ledger to find the guest before erasing them, so you can check it is the right person.",
+    "searchAction": "Search",
+    "lastSeen": "Last rental {when}",
+    "hasImages": "licence photos held",
+    "eraseAction": "Erase this guest",
+    "eraseDone": "Erased. {n, plural, =0 {No licence photographs were held.} =1 {One licence photograph was deleted.} other {# licence photographs were deleted.}}",
+    "clearTitle": "Clear the whole ledger",
+    "clearIntro": "Deletes every customer record in the ledger. Bookings, agreements and licence photographs on bookings are not touched.",
+    "clearWarning": "This will permanently delete {n, plural, =1 {one customer record} other {all # customer records}}. It cannot be undone and there is no backup you can restore it from.",
+    "clearConfirm1": "I understand this deletes {n, plural, =1 {one customer record} other {all # customer records}}.",
+    "clearConfirm2": "Type {phrase} to confirm",
+    "clearConfirm2Hint": "Exactly as shown, in capitals.",
+    "clearConfirm3": "I understand this cannot be undone.",
+    "clearAction": "Clear the ledger permanently",
+    "clearDone": "Cleared. {n, plural, =0 {No customer records were held.} =1 {One customer record was deleted.} other {# customer records were deleted.}}",
+    "clearNothing": "The ledger is empty. There is nothing to clear."
   }
 }

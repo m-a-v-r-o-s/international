@@ -22,10 +22,12 @@ import { signContract, type ContractState } from './contract-actions'
  * exported as a PNG data URL that the action re-validates by content.
  */
 export function SignaturePad({
-  bookingId, defaultSignerName,
+  bookingId, defaultSignerName, ledgerConsent,
 }: {
   bookingId: string
   defaultSignerName: string
+  /** Whether this guest has already agreed to stay in the ledger (§25a). */
+  ledgerConsent: boolean
 }) {
   const t = useTranslations('contractStep')
   const tc = useTranslations('common')
@@ -157,7 +159,45 @@ export function SignaturePad({
         <p className="ir-hint" id="signature_photo_hint">{t('photoHint')}</p>
       </div>
 
+      {/*
+        The ledger consent (docs/01-DECISIONS.md §25a).
+
+        A SEPARATE tick box, beside the signature and never inside the
+        agreement, unchecked unless the guest has already agreed on an earlier
+        signing. This is the whole legal basis for keeping a customer after
+        their rental ends: consent rolled into a contract the guest must sign
+        to get the car is not freely given (GDPR Art. 7(4)), so it is its own
+        box, with its own words, that the guest can leave alone and still drive
+        away. Nothing on this screen depends on it — the signature, the
+        agreement and the pickup all proceed either way.
+      */}
+      <fieldset className="rounded-field border border-line bg-canvas p-4">
+        <legend className="ir-label px-1">{t('ledgerLegend')}</legend>
+        <label className="flex items-start gap-3 text-[0.9375rem]">
+          <input
+            type="checkbox"
+            name="ledger_consent"
+            defaultChecked={ledgerConsent}
+            className="mt-1 size-5 shrink-0"
+          />
+          <span>{t('ledgerConsent')}</span>
+        </label>
+        <p className="ir-hint mt-2">{t('ledgerConsentHint')}</p>
+      </fieldset>
+
       <SubmitButton label={t('signAction')} />
+
+      {state?.saved && state.ledger ? (
+        <p
+          className={state.ledger === 'noPhone'
+            ? 'ir-notice border-warn bg-warn-tint text-warn'
+            : 'text-[0.875rem] text-ink-soft'}
+          role="status"
+        >
+          {t(`ledger.${state.ledger}`)}
+        </p>
+      ) : null}
+
       <p className="ir-hint">{tc('required')}</p>
     </form>
   )

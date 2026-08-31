@@ -201,6 +201,7 @@ export type Database = {
           cust_first: string | null
           cust_last: string | null
           cust_phone: string | null
+          cust_phone_e164: string | null
           days: number | null
           dropoff_at: string | null
           eligibility_override_at: string | null
@@ -546,6 +547,107 @@ export type Database = {
           {
             foreignKeyName: "contracts_booking_id_fkey"
             columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_bookings: {
+        Row: {
+          booking_id: string
+          consent_at: string
+          consent_by: string | null
+          created_at: string
+          customer_id: string
+        }
+        Insert: {
+          booking_id: string
+          consent_at?: string
+          consent_by?: string | null
+          created_at?: string
+          customer_id: string
+        }
+        Update: {
+          booking_id?: string
+          consent_at?: string
+          consent_by?: string | null
+          created_at?: string
+          customer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_bookings_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_bookings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customers: {
+        Row: {
+          dob: string | null
+          first_name: string | null
+          first_seen_at: string
+          id: string
+          last_name: string | null
+          last_seen_at: string
+          licence_back_path: string | null
+          licence_booking_id: string | null
+          licence_country: string | null
+          licence_expires_on: string | null
+          licence_front_path: string | null
+          licence_issued_on: string | null
+          licence_number: string | null
+          phone_e164: string
+          updated_at: string
+        }
+        Insert: {
+          dob?: string | null
+          first_name?: string | null
+          first_seen_at?: string
+          id?: string
+          last_name?: string | null
+          last_seen_at?: string
+          licence_back_path?: string | null
+          licence_booking_id?: string | null
+          licence_country?: string | null
+          licence_expires_on?: string | null
+          licence_front_path?: string | null
+          licence_issued_on?: string | null
+          licence_number?: string | null
+          phone_e164: string
+          updated_at?: string
+        }
+        Update: {
+          dob?: string | null
+          first_name?: string | null
+          first_seen_at?: string
+          id?: string
+          last_name?: string | null
+          last_seen_at?: string
+          licence_back_path?: string | null
+          licence_booking_id?: string | null
+          licence_country?: string | null
+          licence_expires_on?: string | null
+          licence_front_path?: string | null
+          licence_issued_on?: string | null
+          licence_number?: string | null
+          phone_e164?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_licence_booking_id_fkey"
+            columns: ["licence_booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
             referencedColumns: ["id"]
@@ -1055,6 +1157,26 @@ export type Database = {
           type: Database["public"]["Enums"]["exception_type"]
         }[]
       }
+      admin_clear_customer_ledger: {
+        Args: { p_confirm: string; p_irreversible: boolean; p_understood: boolean }
+        Returns: number
+      }
+      admin_customer_ledger_status: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          last_cleared_at: string
+          last_erasure_at: string
+          linked_bookings: number
+          newest_seen: string
+          oldest_seen: string
+          total: number
+          with_licence_images: number
+        }[]
+      }
+      admin_erase_customer: {
+        Args: { p_customer_id: string }
+        Returns: { back_path: string; front_path: string }[]
+      }
       admin_licence_retention_status: {
         Args: never
         Returns: {
@@ -1167,6 +1289,25 @@ export type Database = {
           object_name: string
         }[]
       }
+      customer_by_phone: {
+        Args: { p_phone: string }
+        Returns: {
+          customer_id: string
+          dob: string
+          first_name: string
+          has_licence_images: boolean
+          last_name: string
+          last_seen_at: string
+          licence_country: string
+          licence_expires_on: string
+          licence_issued_on: string
+          licence_number: string
+        }[]
+      }
+      customer_licence_images: {
+        Args: { p_customer_id: string }
+        Returns: { back_path: string; front_path: string; source_booking_id: string }[]
+      }
       log_security_event: {
         Args: {
           p_detail?: Json
@@ -1178,6 +1319,8 @@ export type Database = {
         Returns: undefined
       }
       mark_exceptions_notified: { Args: { p_ids: string[] }; Returns: number }
+      record_customer_consent: { Args: { p_booking_id: string }; Returns: string }
+      withdraw_customer_consent: { Args: { p_booking_id: string }; Returns: boolean }
       mark_licences_purged: {
         Args: { p_booking_ids: string[] }
         Returns: number

@@ -28,6 +28,14 @@ export type DriverFields = Pick<BookingDriverRow,
  * The main driver's name and date of birth are pre-filled from what the
  * booking already captured (docs/01-DECISIONS.md §9), because retyping a name
  * with a guest waiting is how wrong names get recorded.
+ *
+ * `defaults` also carries the LICENCE fields now, because a returning guest
+ * recognised by phone number fills them in too (§25a). They arrive by exactly
+ * the same door as the booking's own values and are exactly as editable — a
+ * default is a suggestion, never a saved fact, and nothing is written until
+ * the rep presses Save. That is what keeps "fill immediately on a phone
+ * match", which is what the owner asked for, from being able to record a
+ * stranger's licence number: the rep is looking at every value it filled.
  */
 export function DriverForm({
   bookingId, driver, isMain, defaults,
@@ -35,7 +43,15 @@ export function DriverForm({
   bookingId: string
   driver?: DriverFields
   isMain: boolean
-  defaults?: { first_name?: string | null; last_name?: string | null; dob?: string | null }
+  defaults?: {
+    first_name?: string | null
+    last_name?: string | null
+    dob?: string | null
+    licence_number?: string | null
+    licence_country?: string | null
+    licence_issued_on?: string | null
+    licence_expires_on?: string | null
+  }
 }) {
   const t = useTranslations('pickup')
   const tn = useTranslations('newBooking')
@@ -88,12 +104,12 @@ export function DriverForm({
         <div className="grid grid-cols-2 gap-3">
           <Field
             id={`licence_number_${driver?.id ?? 'new'}`} name="licence_number" label={t('licenceNumber')}
-            defaultValue={driver?.licence_number ?? undefined} required maxLength={40}
+            defaultValue={driver?.licence_number ?? defaults?.licence_number ?? undefined} required maxLength={40}
             autoComplete="off" autoCapitalize="characters" spellCheck={false}
           />
           <Field
             id={`licence_country_${driver?.id ?? 'new'}`} name="licence_country" label={t('licenceCountry')}
-            defaultValue={driver?.licence_country ?? undefined} required maxLength={3}
+            defaultValue={driver?.licence_country ?? defaults?.licence_country ?? undefined} required maxLength={3}
             hint={t('licenceCountryHint')} autoComplete="off" autoCapitalize="characters" spellCheck={false}
           />
         </div>
@@ -101,11 +117,11 @@ export function DriverForm({
         <div className="grid grid-cols-2 gap-3">
           <Field
             id={`licence_issued_on_${driver?.id ?? 'new'}`} name="licence_issued_on" type="date"
-            label={t('licenceIssued')} defaultValue={driver?.licence_issued_on ?? undefined} required
+            label={t('licenceIssued')} defaultValue={driver?.licence_issued_on ?? defaults?.licence_issued_on ?? undefined} required
           />
           <Field
             id={`licence_expires_on_${driver?.id ?? 'new'}`} name="licence_expires_on" type="date"
-            label={t('licenceExpires')} defaultValue={driver?.licence_expires_on ?? undefined} required
+            label={t('licenceExpires')} defaultValue={driver?.licence_expires_on ?? defaults?.licence_expires_on ?? undefined} required
           />
         </div>
 

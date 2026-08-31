@@ -13,7 +13,9 @@ import { DamageDiagram } from '../DamageDiagram'
 import { FuelSlider } from '../FuelSlider'
 import { ConfirmTransition } from '../ConfirmTransition'
 import { StepNav, type StepState } from '../StepNav'
+import { findCustomerByPhone } from '@/lib/customers/lookup'
 import { DriverForm } from './DriverForm'
+import { ReturningGuest } from './ReturningGuest'
 import { LicenceCapture, type StoredLicenceImages } from './LicenceCapture'
 import { SignaturePad } from './SignaturePad'
 import { ContractCopyForm } from './ContractCopyForm'
@@ -142,6 +144,34 @@ export default async function PickupPage({
   const requested = (STEPS as readonly string[]).includes(query.step ?? '') ? (query.step as Step) : 'drivers'
   const step: Step = reachable[requested] ? requested : 'drivers'
 
+  // ── The returning guest (docs/01-DECISIONS.md §25a) ──────────────────────
+  // Asked here rather than from the browser, so the lookup runs under this
+  // rep's own session and is subject to the rate limit and the audit line in
+  // public.customer_by_phone() like every other call.
+  //
+  // The CONDITION is doing real work. It is not "look the guest up every time
+  // this page renders": the pickup screen is reloaded after every step, and a
+  // lookup per reload would burn the rep's hourly budget and fill the security
+  // log with noise for no benefit. It asks once, while there is still
+  // something to pre-fill — before the main driver exists, or while their
+  // licence photos are still missing — and stops asking the moment the answer
+  // could not change anything.
+  const mainDriver = drivers.find((d) => d.is_main)
+  const wantsLookup = step === 'drivers'
+    && booking.cust_phone !== null
+    && (mainDriver === undefined || mainDriver.front_image_path === null)
+
+  const returning = wantsLookup
+    ? (await findCustomerByPhone(supabase, booking.cust_phone as string))
+    : null
+  const match = returning?.ok ? returning.match : null
+
+  // Whether this guest already agreed to stay in the ledger, so a re-signature
+  // shows the box as they left it rather than silently resetting their choice.
+  const { data: consentRow } = await supabase
+    .from('customer_bookings').select('booking_id').eq('booking_id', booking.id).maybeSingle()
+  const ledgerConsent = consentRow !== null
+
   const steps: StepState[] = STEPS.map((key) => ({
     key,
     label: t(`step.${key}`),
@@ -177,30 +207,49 @@ export default async function PickupPage({
           <h2 className="text-[1.25rem] font-semibold">{t('step.drivers')}</h2>
           <p className="text-ink-soft">{t('driversIntro')}</p>
 
-          {(() => {
-            const main = drivers.find((d) => d.is_main)
-            return (
-              <div className="ir-card flex flex-col gap-4 p-4">
-                <h3 className="text-[1.0625rem] font-semibold">{t('mainDriver')}</h3>
-                <LicenceCapture
-                  bookingId={booking.id}
-                  driverId={main?.id}
-                  isMain
-                  stored={main ? storedFor(indexOfDriver.get(main.id) ?? 0, main) : undefined}
-                />
-                <DriverForm
-                  bookingId={booking.id}
-                  isMain
-                  driver={main}
-                  defaults={{
-                    first_name: booking.cust_first,
-                    last_name: booking.cust_last,
-                    dob: booking.cust_dob,
-                  }}
-                />
-              </div>
-            )
-          })()}
+          {match ? (
+            <ReturningGuest
+              bookingId={booking.id}
+              customerId={match.customerId}
+              name={`${match.firstName ?? ''} ${match.lastName ?? ''}`.trim() || '—'}
+              lastSeen={athensDateTime(match.lastSeenAt)}
+              hasImages={match.hasLicenceImages}
+              driverId={mainDriver?.id}
+              imagesAlreadyOnBooking={mainDriver?.front_image_path !== null
+                && mainDriver?.front_image_path !== undefined}
+            />
+          ) : null}
+
+          <div className="ir-card flex flex-col gap-4 p-4">
+            <h3 className="text-[1.0625rem] font-semibold">{t('mainDriver')}</h3>
+            <LicenceCapture
+              bookingId={booking.id}
+              driverId={mainDriver?.id}
+              isMain
+              stored={mainDriver ? storedFor(indexOfDriver.get(mainDriver.id) ?? 0, mainDriver) : undefined}
+            />
+            {/*
+              The booking's own values first, then the ledger's. A returning
+              guest fills in the licence fields the booking never captured
+              (§9 captures a name, a phone and a date of birth at booking
+              time; the licence is only seen at pickup), and every one of them
+              stays editable.
+            */}
+            <DriverForm
+              bookingId={booking.id}
+              isMain
+              driver={mainDriver}
+              defaults={{
+                first_name: booking.cust_first ?? match?.firstName,
+                last_name: booking.cust_last ?? match?.lastName,
+                dob: booking.cust_dob ?? match?.dob,
+                licence_number: match?.licenceNumber,
+                licence_country: match?.licenceCountry,
+                licence_issued_on: match?.licenceIssuedOn,
+                licence_expires_on: match?.licenceExpiresOn,
+              }}
+            />
+          </div>
 
           {drivers.filter((d) => !d.is_main).map((driver) => (
             <div key={driver.id} className="ir-card flex flex-col gap-4 p-4">
@@ -350,6 +399,7 @@ export default async function PickupPage({
               <SignaturePad
                 bookingId={booking.id}
                 defaultSignerName={`${booking.cust_first ?? ''} ${booking.cust_last ?? ''}`.trim()}
+                ledgerConsent={ledgerConsent}
               />
             </div>
           )}

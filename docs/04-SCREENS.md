@@ -111,6 +111,14 @@ Filterable by actor, entity and date. Read-only. Permanent.
 Company legal details for the contract, contract terms text (Greek + English), licence
 retention window, pickup and drop-off default windows.
 
+Plus the **Ψηφιακό πελατολόγιο** section (docs/01-DECISIONS.md §25a), directly under
+licence retention so the two stores of guest data are read side by side and their
+difference is obvious: how many customers are held, how many have licence photographs, a
+search-then-erase desk for a guest who asks to be forgotten, and the clear-the-whole-ledger
+button behind three separate confirmations. There is deliberately **no retention-window
+field** in that section — there is no window, and a disabled box implying there might be
+would be worse than its absence. The section states that in as many words.
+
 ---
 
 ## Public pages

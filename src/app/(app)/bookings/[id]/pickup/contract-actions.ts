@@ -16,6 +16,14 @@ export type ContractState = {
   saved?: boolean
   /** The copy was recorded against the contract but no mail was sent. */
   mailPending?: 'not_configured' | 'failed'
+  /**
+   * What became of the ledger tick box beside the signature
+   * (docs/01-DECISIONS.md §25a). `noPhone` is not a failure: the guest agreed,
+   * but the number on the booking could not be resolved to a country, so there
+   * is nothing to key a ledger entry on and the screen says so rather than
+   * silently doing nothing.
+   */
+  ledger?: 'kept' | 'declined' | 'noPhone'
 } | undefined
 
 const uuidSchema = z.string().uuid()
@@ -55,6 +63,14 @@ export async function signContract(_prev: ContractState, formData: FormData): Pr
   })
   if (!parsed.success) return { error: 'IR104' }
   const { booking_id, signer_name } = parsed.data
+
+  // The ledger consent is read as its OWN field, from its OWN tick box, and it
+  // is unchecked by default. That is not a UI preference — it is the legal
+  // basis (docs/01-DECISIONS.md §25a). Consent that is bundled into an
+  // agreement the guest has to sign in order to get the car is not freely
+  // given (GDPR Art. 7(4)), so it is asked separately, beside the signature,
+  // and signing with the box untouched keeps them out of the ledger.
+  const ledgerConsent = formData.get('ledger_consent') === 'on'
 
   const signature = await signatureBytes(formData)
   if ('error' in signature) return { error: signature.error }
@@ -111,9 +127,24 @@ export async function signContract(_prev: ContractState, formData: FormData): Pr
   })
   if (error) return { error: errorKey(error) }
 
+  // Last, and never a reason to fail a signature. The agreement is the thing
+  // that had to happen; the ledger is a convenience the guest agreed to or did
+  // not. A re-signature re-reads the box, so un-ticking it on a second signing
+  // is a withdrawal and really deletes (public.withdraw_customer_consent →
+  // the orphan trigger).
+  let ledger: 'kept' | 'declined' | 'noPhone' = 'declined'
+  if (ledgerConsent) {
+    const { data: customerId } = await supabase.rpc('record_customer_consent', {
+      p_booking_id: booking_id,
+    })
+    ledger = customerId ? 'kept' : 'noPhone'
+  } else {
+    await supabase.rpc('withdraw_customer_consent', { p_booking_id: booking_id })
+  }
+
   revalidatePath(`/bookings/${booking_id}/pickup`)
   revalidatePath(`/bookings/${booking_id}`)
-  return { saved: true }
+  return { saved: true, ledger }
 }
 
 /**

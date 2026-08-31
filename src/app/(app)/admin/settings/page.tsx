@@ -7,6 +7,7 @@ import {
 } from '@/lib/contract/company'
 import { CompanyForm } from './CompanyForm'
 import { PurgeForm, RetentionForm, WindowsForm } from './RetentionForms'
+import { ClearLedgerForm, LedgerErasureForm } from './LedgerForms'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('adminSettings')
@@ -36,14 +37,16 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function AdminSettingsPage() {
   await requireAdmin()
   const t = await getTranslations('adminSettings')
+  const tl = await getTranslations('adminLedger')
   const format = await getFormatter()
   const supabase = await supabaseServer()
 
-  const [{ data }, { data: retention }] = await Promise.all([
+  const [{ data }, { data: retention }, { data: ledger }] = await Promise.all([
     supabase.from('app_settings')
       .select('id, company, licence_retention_months, pickup_window, dropoff_window')
       .eq('id', 1).maybeSingle(),
     supabase.rpc('admin_licence_retention_status'),
+    supabase.rpc('admin_customer_ledger_status'),
   ])
 
   const company = parseCompany(data?.company)
@@ -55,6 +58,12 @@ export default async function AdminSettingsPage() {
   const status = ((retention ?? []) as {
     retention_months: number; cutoff: string; due_count: number; orphan_count: number
     oldest_due: string | null; purged_drivers: number; last_purge_at: string | null
+  }[])[0]
+
+  const ledgerStatus = ((ledger ?? []) as {
+    total: number; with_licence_images: number; linked_bookings: number
+    oldest_seen: string | null; newest_seen: string | null
+    last_cleared_at: string | null; last_erasure_at: string | null
   }[])[0]
 
   const [pickupFrom = '08:30', pickupTo = '11:30'] = (settings?.pickup_window ?? '').split('-')
@@ -143,6 +152,65 @@ export default async function AdminSettingsPage() {
             <PurgeForm dueCount={status.due_count} />
           </>
         ) : null}
+      </section>
+
+      {/*
+        Ψηφιακό πελατολόγιο (docs/01-DECISIONS.md §25a).
+
+        Placed directly under the licence-retention section on purpose: these
+        are the two stores of guest personal data this system holds, and the
+        boss should see them together and see how differently they behave. One
+        has a window and empties itself; the other has neither and empties only
+        when he says so. The line that says exactly that is `ledgerNoWindow`,
+        and it is not softened.
+      */}
+      <section className="ir-card flex flex-col gap-4 p-4" aria-labelledby="ledger-heading">
+        <h2 id="ledger-heading" className="text-[1.0625rem] font-semibold">
+          {tl('title')}
+        </h2>
+        <p className="text-[0.9375rem] text-ink-soft">{tl('intro')}</p>
+        <p className="ir-notice border-warn bg-warn-tint text-warn">{tl('noWindow')}</p>
+
+        {ledgerStatus ? (
+          <dl className="grid grid-cols-1 gap-x-4 gap-y-1 text-[0.9375rem] sm:grid-cols-2">
+            <div className="flex gap-2">
+              <dt className="text-ink-soft">{tl('total')}</dt>
+              <dd>{ledgerStatus.total}</dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="text-ink-soft">{tl('withImages')}</dt>
+              <dd>{ledgerStatus.with_licence_images}</dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="text-ink-soft">{tl('oldest')}</dt>
+              <dd>
+                {ledgerStatus.oldest_seen
+                  ? format.dateTime(new Date(ledgerStatus.oldest_seen), { dateStyle: 'medium' })
+                  : '—'}
+              </dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="text-ink-soft">{tl('lastCleared')}</dt>
+              <dd>
+                {ledgerStatus.last_cleared_at
+                  ? format.dateTime(new Date(ledgerStatus.last_cleared_at), {
+                      dateStyle: 'medium', timeStyle: 'short',
+                    })
+                  : tl('neverCleared')}
+              </dd>
+            </div>
+          </dl>
+        ) : null}
+
+        <hr className="border-line" />
+        <h3 className="text-[1rem] font-semibold">{tl('erasureTitle')}</h3>
+        <p className="text-[0.9375rem] text-ink-soft">{tl('erasureIntro')}</p>
+        <LedgerErasureForm />
+
+        <hr className="border-line" />
+        <h3 className="text-[1rem] font-semibold text-danger">{tl('clearTitle')}</h3>
+        <p className="text-[0.9375rem] text-ink-soft">{tl('clearIntro')}</p>
+        <ClearLedgerForm total={ledgerStatus?.total ?? 0} />
       </section>
     </div>
   )

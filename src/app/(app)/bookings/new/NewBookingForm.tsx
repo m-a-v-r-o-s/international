@@ -4,7 +4,10 @@ import { useActionState, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
 import { SubmitButton } from '@/components/SubmitButton'
-import { previewBookingQuote, createBooking, type QuoteState, type CreateBookingState } from './actions'
+import {
+  previewBookingQuote, createBooking, lookupCustomer,
+  type QuoteState, type CreateBookingState, type CustomerLookupState,
+} from './actions'
 import type { CarWithSpecs } from '@/lib/availability/types'
 
 type Hotel = { id: string; name: string; area: string | null }
@@ -51,6 +54,45 @@ export function NewBookingForm({
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCar?.category_id, start, end])
+
+  // ── The returning guest (docs/01-DECISIONS.md §25a) ──────────────────────
+  // The owner's rule is that an exact phone match fills the fields in
+  // immediately, with no "is this them?" step. So this is a controlled
+  // section: the three guest fields are React state, the match writes into
+  // them, and — this is the part that makes it safe — the rep can type over
+  // any of them and the notice stays on screen saying where the values came
+  // from. Nothing is saved until they press Create.
+  //
+  // It asks on BLUR, not on every keystroke: a lookup per character would be
+  // both useless (a partial number never normalises to a match) and a fast way
+  // through the rate limit in public.customer_by_phone().
+  const [phone, setPhone] = useState('')
+  const [first, setFirst] = useState('')
+  const [last, setLast] = useState('')
+  const [dob, setDob] = useState('')
+  const [askedFor, setAskedFor] = useState<string | null>(null)
+
+  const [lookup, lookupAction] = useActionState<CustomerLookupState, FormData>(
+    lookupCustomer, undefined)
+
+  useEffect(() => {
+    const match = lookup?.status === 'found' ? lookup.match : null
+    if (!match) return
+    // Never blank a field the rep has already typed into: the ledger fills the
+    // gaps, it does not overrule the person at the desk.
+    setFirst((v) => v || match.firstName || '')
+    setLast((v) => v || match.lastName || '')
+    setDob((v) => v || match.dob || '')
+  }, [lookup])
+
+  const askLedger = () => {
+    const trimmed = phone.trim()
+    if (trimmed.length < 4 || trimmed === askedFor) return
+    setAskedFor(trimmed)
+    const fd = new FormData()
+    fd.set('cust_phone', trimmed)
+    lookupAction(fd)
+  }
 
   const [createState, createAction] = useActionState<CreateBookingState, FormData>(
     createBooking, undefined)
@@ -167,13 +209,44 @@ export function NewBookingForm({
 
       <section className="ir-card p-4">
         <h2 className="mb-3 text-[1.0625rem] font-semibold">{t('guestTitle')}</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <Field id="cust_first" name="cust_first" label={t('firstName')} required maxLength={80} />
-          <Field id="cust_last" name="cust_last" label={t('lastName')} required maxLength={80} />
+        <div className="mb-3">
+          <Field
+            id="cust_phone" name="cust_phone" type="tel" label={t('phone')} required maxLength={32}
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            onBlur={askLedger}
+            hint={t('phoneHint')}
+          />
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          <Field id="cust_phone" name="cust_phone" type="tel" label={t('phone')} required maxLength={32} />
-          <Field id="cust_dob" name="cust_dob" type="date" label={t('dob')} required />
+
+        {lookup?.status === 'found' && lookup.match ? (
+          <p className="ir-notice border-brand bg-brand-tint mb-3" role="status">
+            {t('returningGuest', {
+              name: `${lookup.match.firstName ?? ''} ${lookup.match.lastName ?? ''}`.trim() || '—',
+            })}
+          </p>
+        ) : null}
+        {lookup?.status === 'error' ? (
+          <p className="ir-notice border-warn bg-warn-tint text-warn mb-3" role="status">
+            {te(lookup.error ?? 'unknown')}
+          </p>
+        ) : null}
+
+        <div className="grid grid-cols-2 gap-3">
+          <Field
+            id="cust_first" name="cust_first" label={t('firstName')} required maxLength={80}
+            value={first} onChange={(e) => setFirst(e.target.value)}
+          />
+          <Field
+            id="cust_last" name="cust_last" label={t('lastName')} required maxLength={80}
+            value={last} onChange={(e) => setLast(e.target.value)}
+          />
+        </div>
+        <div className="mt-3">
+          <Field
+            id="cust_dob" name="cust_dob" type="date" label={t('dob')} required
+            value={dob} onChange={(e) => setDob(e.target.value)}
+          />
         </div>
       </section>
 

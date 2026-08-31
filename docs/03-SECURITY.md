@@ -97,6 +97,16 @@ issuance for licence images, and every retention purge. Rate-limit the logging i
 hostile loop cannot flood storage. **Never log secrets, tokens, licence numbers or full
 request bodies.**
 
+Since the customer ledger (docs/01-DECISIONS.md §25a) that list also includes every
+cross-booking action on guest identity, because the ledger is readable company-wide and an
+open door needs a record of who walked through it: `customer_lookup` (every match attempt,
+hit or miss, with the caller and **never the number tried**), `customer_consent` and
+`customer_consent_withdrawn`, `licence_image_reused` (both bookings, no path),
+`customer_erased` and `customer_ledger_cleared` (counts only). `public.customers` itself is
+deliberately **not** in the audit log — see §25a: auditing a table whose whole point is that
+it can be erased on request would write the guest's name and date of birth into a table with
+no erasure path, in the same statement that claimed to erase them.
+
 **AI boundary** — the OCR call is the one place untrusted third-party content reaches an
 LLM. The prompt is fixed server-side; the licence image is the only variable input; the
 response is parsed into a strict schema and anything outside it is discarded. Per-user and
@@ -105,3 +115,11 @@ per-day caps on OCR calls so a hostile or broken loop cannot run up an API bill.
 **GDPR** — cookie consent banner, privacy policy page, terms page: three real components,
 not placeholders. Licence images auto-purged on the retention schedule with each purge
 logged. A documented process for a subject access or erasure request.
+
+The customer ledger is the one store here with **no automatic expiry** — the owner's
+decision, argued out in docs/01-DECISIONS.md §25a — so its compensating controls are load
+bearing rather than nice to have: consent is a separate tick box beside the signature and
+never bundled into the agreement, withdrawal really deletes, `admin_erase_customer()` takes
+the guest's licence photographs with the record and does it through the Storage API, and the
+privacy policy states in plain words that these records are kept indefinitely rather than
+implying a window that does not exist.
