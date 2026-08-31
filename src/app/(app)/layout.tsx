@@ -69,7 +69,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="border-b border-line bg-surface print:hidden">
-        <div className={`mx-auto flex w-full ${shell} items-center justify-between gap-3 px-5 py-3`}>
+        <div className={`mx-auto flex w-full ${shell} flex-nowrap items-center justify-between gap-3 px-5 py-3`}>
           <div className="flex min-w-0 items-center gap-2">
             <NavDrawer
               items={items}
@@ -90,7 +90,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </Link>
           </div>
           <div className="flex shrink-0 items-center gap-3 text-[0.875rem] text-ink-soft">
-            <span className="hidden sm:inline">
+            <span className="hidden max-w-[16rem] truncate sm:inline">
               {staff.fullName || tr(staff.role)}
             </span>
             <Link href="/settings" className="underline underline-offset-2 hover:text-ink">
@@ -123,14 +123,21 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </header>
 
-      <div className={`mx-auto flex w-full ${shell} flex-1 gap-6 px-5 print:max-w-none print:gap-0 print:px-0`}>
+      {/*
+        The sidebar sits outside the centered `shell` container so it hugs the
+        true left edge of the viewport on desktop, rather than the left edge
+        of the centered content column.
+      */}
+      <div className="flex w-full flex-1 print:block">
         <SideNav items={items} label={navLabel} />
-        <main
-          id="main"
-          className={`min-w-0 flex-1 py-6 print:max-w-none print:py-0 ${admin ? '' : 'max-w-3xl'}`}
-        >
-          {children}
-        </main>
+        <div className={`mx-auto flex w-full ${shell} flex-1 gap-6 px-5 print:max-w-none print:gap-0 print:px-0`}>
+          <main
+            id="main"
+            className={`min-w-0 flex-1 py-6 print:max-w-none print:py-0 ${admin ? '' : 'max-w-3xl'}`}
+          >
+            {children}
+          </main>
+        </div>
       </div>
 
       <div className="print:hidden"><Footer /></div>

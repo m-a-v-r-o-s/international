@@ -34,8 +34,8 @@
     "newBooking": "Νέα κράτηση",
     "myBookings": "Οι κρατήσεις μου",
     "settings": "Ρυθμίσεις",
-    "quickBooking": "Επιβεβαίωση κράτησης",
-    "writeContract": "Σύνταξη συμβολαίου"
+    "quickBooking": "Κράτηση",
+    "writeContract": "Συμβόλαιο"
   },
   "login": {
     "title": "Σύνδεση",

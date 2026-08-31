@@ -34,8 +34,8 @@
     "newBooking": "New booking",
     "myBookings": "My bookings",
     "settings": "Settings",
-    "quickBooking": "Booking confirmation",
-    "writeContract": "Write the contract"
+    "quickBooking": "Booking",
+    "writeContract": "Contract"
   },
   "login": {
     "title": "Sign in",

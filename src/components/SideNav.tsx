@@ -107,7 +107,7 @@ export function SideNav({ items, label }: { items: NavItem[]; label: string }) {
     <nav
       aria-label={label}
       className="sticky top-0 hidden max-h-dvh w-60 shrink-0 self-start
-                 overflow-y-auto py-6 lg:block print:hidden"
+                 overflow-y-auto py-6 pl-5 lg:block print:hidden"
     >
       <NavList items={items} />
     </nav>
