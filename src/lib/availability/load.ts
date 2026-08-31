@@ -1,7 +1,7 @@
 import 'server-only'
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/lib/supabase/database.types'
+import type { Database, FuelType, Transmission } from '@/lib/supabase/database.types'
 import type { CarWithSpecs } from './types'
 
 export type AvailabilityRow = { car_id: string; occupied_dates: string[] }
@@ -42,8 +42,10 @@ export async function loadCarsWithSpecs(
       model: model.model,
       category_id: model.category_id,
       category_code: category.code,
-      transmission: model.transmission,
-      fuel_type: model.fuel_type,
+      // CHECK-constrained text, not an enum, so the generator reports
+      // `string`. See the note in src/lib/supabase/database.types.ts.
+      transmission: model.transmission as Transmission,
+      fuel_type: model.fuel_type as FuelType,
       seats: model.seats,
       doors: model.doors,
       aircon: model.aircon,

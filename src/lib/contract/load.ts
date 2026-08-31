@@ -1,7 +1,7 @@
 import 'server-only'
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/lib/supabase/database.types'
+import type { Database, DamageViewCol, MarkTypeCol } from '@/lib/supabase/database.types'
 import { pointToZone } from '@/lib/damage/zones'
 import { parseCompany, contractReadiness, type ContractReadiness } from './company'
 import type { ContractData, ContractDriver, ContractMark } from './data'
@@ -85,10 +85,11 @@ export async function loadContractSource(
     const x = Number(mark.x)
     const y = Number(mark.y)
     return {
-      view: mark.view,
+      // CHECK-constrained text — see src/lib/supabase/database.types.ts.
+      view: mark.view as DamageViewCol,
       x, y,
       zone: pointToZone(x, y),
-      markType: mark.mark_type,
+      markType: mark.mark_type as MarkTypeCol,
       note: mark.note,
       index: index + 1,
     }

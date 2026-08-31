@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
+import { sqlNull } from '@/lib/supabase/args'
 import { errorKey, type ErrorKey } from '@/lib/errors'
 import { createRepAccount, resetRepPassword } from '@/lib/users/accounts'
 import { allow } from '@/lib/rate-limit'
@@ -221,7 +222,8 @@ export async function setHomeHotel(
   const supabase = await supabaseServer()
   const { error } = await supabase.rpc('admin_set_home_hotel', {
     p_profile_id: parsed.data.id,
-    p_hotel_id: parsed.data.hotel_id,
+    // null clears the home hotel — 0018 calls that a legitimate state.
+    p_hotel_id: sqlNull(parsed.data.hotel_id),
   })
   if (error) return { error: errorKey(error) }
 

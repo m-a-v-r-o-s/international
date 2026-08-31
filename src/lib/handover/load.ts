@@ -2,10 +2,11 @@ import 'server-only'
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
-  BookingDriverRow, BookingRow, Database, HandoverRow,
+  BookingDriverRow, BookingRow, Database, DamageViewCol, HandoverRow, MarkTypeCol,
 } from '@/lib/supabase/database.types'
 import type { DiagramMark } from '@/app/(app)/bookings/[id]/DamageDiagram'
 import { signBookingFiles } from '@/lib/storage/booking-files'
+import { sqlNull } from '@/lib/supabase/args'
 
 /**
  * Everything R4 and R5 need about one booking, in one place.
@@ -91,10 +92,11 @@ export async function loadHandoverContext(
     // numeric(5,4) arrives as a string over PostgREST; coerce once, here.
     list.push({
       id: mark.id,
-      view: mark.view,
+      // CHECK-constrained text — see src/lib/supabase/database.types.ts.
+      view: mark.view as DamageViewCol,
       x: Number(mark.x),
       y: Number(mark.y),
-      mark_type: mark.mark_type,
+      mark_type: mark.mark_type as MarkTypeCol,
       note: mark.note,
       hasPhoto: mark.photo_path !== null,
       photoUrl: photoUrls[index] ?? null,
@@ -107,8 +109,12 @@ export async function loadHandoverContext(
     car: car ?? null,
     model: model ?? null,
     drivers: (drivers ?? []) as unknown as BookingDriverRow[],
-    pickup: (handovers ?? []).find((h) => h.kind === 'pickup') ?? null,
-    ret: (handovers ?? []).find((h) => h.kind === 'return') ?? null,
+    // `handovers.kind` is CHECK-constrained text; the find() predicate is the
+    // same value the constraint permits.
+    pickup: ((handovers ?? []).find((h) => h.kind === 'pickup') ?? null) as
+      Pick<HandoverRow, 'id' | 'kind' | 'fuel_eighths' | 'notes' | 'occurred_at'> | null,
+    ret: ((handovers ?? []).find((h) => h.kind === 'return') ?? null) as
+      Pick<HandoverRow, 'id' | 'kind' | 'fuel_eighths' | 'notes' | 'occurred_at'> | null,
     marksByHandover,
   }
 }
@@ -134,8 +140,13 @@ export async function checkDriverEligibility(
     const { data, error } = await supabase.rpc('check_eligibility', {
       p_category_id: categoryId,
       p_dob: driver.dob,
-      p_licence_issued_on: driver.licence_issued_on,
-      p_licence_expires_on: driver.licence_expires_on,
+      // Both columns are nullable and a null is the POINT: check_eligibility()
+      // answers 'licence_issue_date_missing' / 'licence_expiry_missing' for it,
+      // which is a §11 failure the gate must report rather than a bad call. The
+      // generated Args type models a parameter with no DEFAULT as non-nullable,
+      // so the cast is what keeps a missing date reaching the function.
+      p_licence_issued_on: sqlNull(driver.licence_issued_on),
+      p_licence_expires_on: sqlNull(driver.licence_expires_on),
       p_start: start,
       p_end: end,
     })

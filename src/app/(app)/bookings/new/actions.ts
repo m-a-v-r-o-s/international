@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { requireUnlocked } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
+import type { BookingInsert, Database } from '@/lib/supabase/database.types'
 import { errorKey, type ErrorKey } from '@/lib/errors'
 
 const uuidSchema = z.string().uuid()
@@ -115,7 +116,11 @@ export async function createBooking(
   if (parsed.data.end_date < parsed.data.start_date) return { error: 'IR104' }
 
   const supabase = await supabaseServer()
-  const { data: booking, error } = await supabase.from('bookings').insert({
+  // `ref` and `created_by` are absent on purpose: 0011's insert grant does not
+  // include them and app.bookings_before_write() sets both. The generated
+  // Insert type describes the table, which requires them; BookingInsert
+  // describes the grant, which is what this call actually writes through.
+  const newBooking: BookingInsert = {
     car_id: parsed.data.car_id,
     hotel_id: parsed.data.hotel_id,
     room_number: parsed.data.room_number,
@@ -127,7 +132,10 @@ export async function createBooking(
     cust_dob: parsed.data.cust_dob,
     pickup_at: athensInstant(parsed.data.start_date, parsed.data.pickup_time),
     dropoff_at: athensInstant(parsed.data.end_date, parsed.data.dropoff_time),
-  }).select('id').single()
+  }
+  const { data: booking, error } = await supabase.from('bookings')
+    .insert(newBooking as Database['public']['Tables']['bookings']['Insert'])
+    .select('id').single()
 
   if (error) return { error: errorKey(error) }
 

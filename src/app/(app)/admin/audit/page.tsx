@@ -58,10 +58,12 @@ export default async function AdminAuditPage({
     // count(*) over a permanent log would get slower every month for an
     // answer nobody needs.
     supabase.rpc('admin_audit_log', {
-      p_actor: actor,
-      p_entity: entity,
-      p_from: from,
-      p_to: to,
+      // All four are `default null`, so the generated Args makes them
+      // optional; an omitted key takes the same default.
+      p_actor: actor ?? undefined,
+      p_entity: entity ?? undefined,
+      p_from: from ?? undefined,
+      p_to: to ?? undefined,
       p_limit: PAGE_SIZE + 1,
       p_offset: page * PAGE_SIZE,
     }),

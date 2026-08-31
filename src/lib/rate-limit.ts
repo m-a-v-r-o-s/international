@@ -32,11 +32,15 @@ export type SecurityEvent = {
 
 /** Never a token, never a licence number, never a request body. */
 export async function logSecurityEvent(event: SecurityEvent): Promise<void> {
+  // `?? undefined` rather than `?? null`: these three are `default null` in
+  // 20260830090700_platform.sql, so the generated Args type makes them
+  // optional rather than nullable. Omitting the key and sending an explicit
+  // null reach the function identically — PostgREST applies the default.
   await supabaseAdmin().rpc('log_security_event', {
     p_kind: event.kind,
-    p_profile_id: event.profileId ?? null,
-    p_email_hash: event.emailHash ?? null,
-    p_ip_hash: event.ipHash ?? null,
+    p_profile_id: event.profileId ?? undefined,
+    p_email_hash: event.emailHash ?? undefined,
+    p_ip_hash: event.ipHash ?? undefined,
     p_detail: event.detail ?? {},
   })
 }

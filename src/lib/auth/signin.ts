@@ -75,7 +75,9 @@ export async function establishSession(profileId: string): Promise<{
     const { data: replaced } = await admin.rpc('bind_rep_device', {
       p_profile_id: profileId,
       p_device_id: deviceId,
-      p_user_agent: h.get('user-agent') ?? null,
+      // `p_user_agent text default null` — optional in the generated Args,
+      // and an omitted key takes the same default.
+      p_user_agent: h.get('user-agent') ?? undefined,
     })
 
     if (replaced === true) {

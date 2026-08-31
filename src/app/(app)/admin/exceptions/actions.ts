@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
+import { sqlNull } from '@/lib/supabase/args'
 import { errorKey, type ErrorKey } from '@/lib/errors'
 
 export type FormState = { error?: ErrorKey; saved?: boolean } | undefined
@@ -44,8 +45,8 @@ export async function resolveException(_prev: FormState, formData: FormData): Pr
   const supabase = await supabaseServer()
   const { error } = await supabase.rpc('admin_resolve_exception', {
     p_id: parsed.data.id,
-    p_charge_cents: parsed.data.charge_cents,
-    p_resolution: parsed.data.resolution,
+    p_charge_cents: sqlNull(parsed.data.charge_cents),
+    p_resolution: sqlNull(parsed.data.resolution),
   })
   if (error) return { error: errorKey(error) }
 

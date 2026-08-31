@@ -1,443 +1,113 @@
 /**
- * Database types.
+ * The app's view of the database types.
  *
- * Hand-written to match supabase/migrations while there is no Supabase project
- * to generate against. Once one exists, replace this file wholesale with
+ * `./database.generated` is regenerated from the real project after every
+ * migration and is never edited. This file is the thin hand-written layer over
+ * it, and it exists for three reasons — each one a place where the generated
+ * types are correct about the TABLE and wrong about what the app actually
+ * works with.
  *
- *   npx supabase gen types typescript --project-id <id> > src/lib/supabase/database.types.ts
+ * 1. NAMES. The generator exposes rows as
+ *    Database['public']['Tables']['bookings']['Row']. Thirty-odd modules ask
+ *    for `BookingRow`. The aliases below are that, and nothing more.
  *
- * and keep the shape below in mind when reading it: the client only needs Row,
- * Insert and Update per table, and Args/Returns per function.
+ * 2. THE CHECK-CONSTRAINED COLUMNS. `car_models.transmission`,
+ *    `car_models.fuel_type`, `handovers.kind`, `damage_marks.view` and
+ *    `damage_marks.mark_type` are `text` with a CHECK constraint rather than
+ *    Postgres enums, so the generator can only report `string` — a CHECK is
+ *    invisible to it in a way that a real enum is not. The database still
+ *    enforces the value; TypeScript simply cannot see the enforcement. The
+ *    unions are declared once here rather than asserted at each read.
+ *    Worth doing properly one day: making these five columns real enums would
+ *    delete this section and let the generator carry the unions itself. That
+ *    is a schema change and wants its own migration, not a provisioning
+ *    session — recorded in docs/06-IMPLEMENTATION-NOTES.md.
+ *
+ * 3. THE INSERT GRANT. See `BookingInsert` at the bottom.
  */
-export type Json = string | number | boolean | null | { [key: string]: Json } | Json[]
+export * from './database.generated'
 
-export type UserRole = 'admin' | 'rep'
-export type BookingKind = 'rental' | 'block'
-export type BookingStatus = 'booked' | 'out' | 'returned' | 'cancelled' | 'no_show' | 'blocked'
-export type PayMethod = 'cash' | 'card' | 'transfer'
-export type SeatType = 'infant' | 'child' | 'booster'
-export type ExceptionType =
-  | 'fuel_short' | 'new_damage' | 'late_return' | 'no_show' | 'eligibility_override' | 'other'
+import type { Database } from './database.generated'
 
-type Table<Row, Insert = Partial<Row>, Update = Partial<Row>> = {
-  Row: Row
-  Insert: Insert
-  Update: Update
-  Relationships: []
+type Tbl = Database['public']['Tables']
+type Row<T extends keyof Tbl> = Tbl[T]['Row']
+
+// ── Enums, straight from the generated ones ─────────────────────────────────
+export type UserRole = Database['public']['Enums']['user_role']
+export type BookingKind = Database['public']['Enums']['booking_kind']
+export type BookingStatus = Database['public']['Enums']['booking_status']
+export type PayMethod = Database['public']['Enums']['pay_method']
+export type SeatType = Database['public']['Enums']['seat_type']
+export type ExceptionType = Database['public']['Enums']['exception_type']
+
+// ── The unions a CHECK constraint enforces and the generator cannot see ─────
+// Each one names the migration that constrains it, so a change there has an
+// obvious second place to change.
+/** `car_models.transmission` — CHECK in 20260830090300_fleet.sql. */
+export type Transmission = 'manual' | 'automatic'
+/** `car_models.fuel_type` — CHECK in 20260830090300_fleet.sql. */
+export type FuelType = 'petrol' | 'diesel' | 'hybrid' | 'electric'
+/** `handovers.kind` — CHECK in 20260830090600_operations.sql. */
+export type HandoverKind = 'pickup' | 'return'
+/** `damage_marks.view` — CHECK in 20260830090600_operations.sql. */
+export type DamageViewCol = 'front' | 'rear' | 'left' | 'right' | 'top'
+/** `damage_marks.mark_type` — CHECK in 20260830090600_operations.sql. */
+export type MarkTypeCol = 'scratch' | 'dent' | 'chip' | 'crack' | 'other'
+
+// ── Row aliases ─────────────────────────────────────────────────────────────
+export type ProfileRow = Row<'profiles'>
+export type HotelRow = Row<'hotels'>
+export type HotelRepRow = Row<'hotel_reps'>
+export type RepDeviceRow = Row<'rep_devices'>
+export type CategoryRow = Row<'categories'>
+export type CarRow = Row<'cars'>
+export type PricingPeriodRow = Row<'pricing_periods'>
+export type PriceRowRow = Row<'price_rows'>
+export type PriceExtraDayRow = Row<'price_extra_day'>
+export type BookingRow = Row<'bookings'>
+export type BookingExtraRow = Row<'booking_extras'>
+export type BookingDriverRow = Row<'booking_drivers'>
+export type ContractRow = Row<'contracts'>
+export type ExceptionRow = Row<'exceptions'>
+export type CashHandoverRow = Row<'cash_handovers'>
+export type AuditLogRow = Row<'audit_log'>
+export type AppSettingsRow = Row<'app_settings'>
+export type PushSubscriptionRow = Row<'push_subscriptions'>
+
+/** Narrowed per note 2 above. */
+export type CarModelRow = Omit<Row<'car_models'>, 'transmission' | 'fuel_type'> & {
+  transmission: Transmission
+  fuel_type: FuelType
 }
 
-export type ProfileRow = {
-  id: string
-  role: UserRole
-  full_name: string
-  phone: string | null
-  lang: 'el' | 'en'
-  pin_hash: string | null
-  active: boolean
-  // Which of docs/01-DECISIONS.md §22's messages this person wants. The
-  // sender's public.push_targets() re-checks the role, so a rep with
-  // notify_exceptions set is still never a target for one.
-  notify_morning: boolean
-  notify_evening: boolean
-  notify_exceptions: boolean
-  created_at: string
-  updated_at: string
+/** Narrowed per note 2 above. */
+export type HandoverRow = Omit<Row<'handovers'>, 'kind'> & { kind: HandoverKind }
+
+/** Narrowed per note 2 above. */
+export type DamageMarkRow = Omit<Row<'damage_marks'>, 'view' | 'mark_type'> & {
+  view: DamageViewCol
+  mark_type: MarkTypeCol
 }
 
-export type BookingRow = {
-  id: string
-  ref: string
-  kind: BookingKind
-  status: BookingStatus
-  car_id: string
-  category_id: string | null
-  hotel_id: string | null
-  room_number: string | null
-  start_date: string
-  end_date: string
-  pickup_at: string | null
-  dropoff_at: string | null
-  window_override: boolean
-  cust_first: string | null
-  cust_last: string | null
-  cust_phone: string | null
-  cust_dob: string | null
-  cust_email: string | null
-  period_id: string | null
-  days: number | null
-  total_cents: number | null
-  collected_cents: number
-  pay_method: PayMethod | null
-  paid: boolean
-  block_reason: string | null
-  eligibility_override_by: string | null
-  eligibility_override_at: string | null
-  created_by: string
-  returned_at: string | null
-  created_at: string
-  updated_at: string
-  cash_handover_id: string | null
-}
-
-/** The columns a client may actually send when creating a booking. Everything
- *  else on the row is derived server-side or refused by the column grant. */
-export type BookingInsert = {
-  car_id: string
-  hotel_id?: string | null
-  room_number?: string | null
-  start_date: string
-  end_date: string
-  pickup_at?: string | null
-  dropoff_at?: string | null
-  window_override?: boolean
-  cust_first?: string | null
-  cust_last?: string | null
-  cust_phone?: string | null
-  cust_dob?: string | null
-  cust_email?: string | null
-}
-
-export type BookingUpdate = Partial<BookingInsert> & {
-  status?: BookingStatus
-  collected_cents?: number
-  pay_method?: PayMethod | null
-  paid?: boolean
-}
-
-export type CarRow = {
-  id: string
-  plate: string
-  model_id: string
-  year: number | null
-  colour: string | null
-  photo_path: string | null
-  archived_at: string | null
-  created_at: string
-  updated_at: string
-}
-
-export type CategoryRow = {
-  id: string
-  code: string
-  name_el: string
-  name_en: string
-  min_driver_age: number
-  min_licence_years: number
-  sort_order: number
-}
-
-export type CarModelRow = {
-  id: string
-  make: string
-  model: string
-  category_id: string
-  transmission: 'manual' | 'automatic'
-  fuel_type: 'petrol' | 'diesel' | 'hybrid' | 'electric'
-  seats: number
-  doors: number
-  aircon: boolean
-  tank_litres: number | null
-  photo_path: string | null
-}
-
-export type HotelRow = {
-  id: string
-  name: string
-  area: string | null
-  address: string | null
-  active: boolean
-  created_at: string
-}
-
-export type BookingDriverRow = {
-  id: string
-  booking_id: string
-  is_main: boolean
-  first_name: string
-  last_name: string
-  dob: string
-  licence_number: string | null
-  licence_country: string | null
-  licence_issued_on: string | null
-  licence_expires_on: string | null
-  front_image_path: string | null
-  back_image_path: string | null
-  ocr_confidence: number | null
-  ocr_reviewed: boolean
-  images_purged_at: string | null
-  created_at: string
-}
-
-export type HandoverRow = {
-  id: string
-  booking_id: string
-  kind: 'pickup' | 'return'
-  occurred_at: string
-  by_profile: string
-  fuel_eighths: number | null
-  notes: string | null
-}
-
-export type ExceptionRow = {
-  id: string
-  booking_id: string
-  type: ExceptionType
-  detail: string | null
-  raised_by: string | null
-  raised_at: string
-  resolved_at: string | null
-  // Written by the notifier on the service role and by nothing else, so a rep
-  // cannot mark the boss's inbox as read.
-  notified_at: string | null
-}
-
-export type Database = {
-  public: {
-    Tables: {
-      profiles: Table<
-        ProfileRow, never,
-        Partial<Pick<ProfileRow,
-          'full_name' | 'phone' | 'lang'
-          | 'notify_morning' | 'notify_evening' | 'notify_exceptions'>>
-      >
-      hotels: Table<HotelRow>
-      hotel_reps: Table<{ hotel_id: string; profile_id: string; is_primary: boolean }>
-      categories: Table<CategoryRow>
-      car_models: Table<CarModelRow>
-      cars: Table<CarRow>
-      pricing_periods: Table<{
-        id: string; season_year: number; name: string
-        start_date: string; end_date: string; created_at: string
-      }>
-      price_rows: Table<{
-        period_id: string; category_id: string; days: number; total_cents: number
-      }>
-      price_extra_day: Table<{ period_id: string; category_id: string; cents: number }>
-      bookings: Table<BookingRow, BookingInsert, BookingUpdate>
-      booking_drivers: Table<BookingDriverRow>
-      booking_extras: Table<{ id: string; booking_id: string; seat: SeatType; qty: number }>
-      handovers: Table<HandoverRow>
-      damage_marks: Table<{
-        id: string; handover_id: string; car_id: string
-        view: 'front' | 'rear' | 'left' | 'right' | 'top'
-        x: number; y: number
-        mark_type: 'scratch' | 'dent' | 'chip' | 'crack' | 'other'
-        note: string | null; photo_path: string | null; pre_existing: boolean; created_at: string
-      }>
-      contracts: Table<{
-        id: string; booking_id: string; pdf_path: string; signature_path: string
-        signed_at: string; signer_name: string
-        emailed_to: string | null; emailed_at: string | null; version: number
-      }>
-      exceptions: Table<ExceptionRow>
-      cash_handovers: Table<{
-        id: string; rep_id: string; amount_cents: number; handed_at: string
-      }>
-      audit_log: Table<{
-        id: number; actor_id: string | null; entity: string; entity_id: string | null
-        action: 'insert' | 'update' | 'delete'; before: Json | null; after: Json | null; at: string
-      }>
-      app_settings: Table<{
-        id: number; licence_retention_months: number
-        pickup_window: string; dropoff_window: string; company: Json; updated_at: string
-      }>
-      push_subscriptions: Table<{
-        id: string; profile_id: string; endpoint: string
-        keys: { p256dh: string; auth: string }; created_at: string
-      }>
-    }
-    Views: Record<string, never>
-    Functions: {
-      // ── The engines ──────────────────────────────────────────────────────
-      availability: {
-        Args: { from_date: string; to_date: string }
-        Returns: { car_id: string; occupied_dates: string[] }[]
-      }
-      quote: {
-        Args: { p_category_id: string; p_start: string; p_end: string }
-        Returns: { days: number; period_id: string; total_cents: number }[]
-      }
-      check_eligibility: {
-        Args: {
-          p_category_id: string; p_dob: string | null
-          p_licence_issued_on: string | null; p_licence_expires_on: string | null
-          p_start: string; p_end: string
-        }
-        Returns: { ok: boolean; failures: string[] }[]
-      }
-      my_cash_in_hand: { Args: Record<string, never>; Returns: number }
-      my_hand_over_cash: {
-        Args: Record<string, never>
-        Returns: { handover_id: string; amount_cents: number }[]
-      }
-      staff_hotels: {
-        Args: Record<string, never>
-        Returns: { id: string; name: string; area: string | null }[]
-      }
-      rental_days: { Args: { p_start: string; p_end: string }; Returns: number }
-
-      // ── Admin only ───────────────────────────────────────────────────────
-      admin_create_block: {
-        Args: { p_car_id: string; p_start: string; p_end: string; p_reason: string | null }
-        Returns: string
-      }
-      admin_update_block: {
-        Args: { p_id: string; p_start: string | null; p_end: string | null; p_reason: string | null }
-        Returns: undefined
-      }
-      admin_delete_block: { Args: { p_id: string }; Returns: undefined }
-      admin_blocks: {
-        Args: { p_from: string; p_to: string }
-        Returns: {
-          id: string; car_id: string; start_date: string; end_date: string
-          block_reason: string | null
-        }[]
-      }
-      admin_car_notes: { Args: { p_car_id: string }; Returns: string | null }
-      admin_set_car_notes: { Args: { p_car_id: string; p_notes: string | null }; Returns: undefined }
-      admin_set_booking_price: {
-        Args: { p_booking_id: string; p_total_cents: number }; Returns: undefined
-      }
-      admin_resolve_exception: {
-        Args: { p_id: string; p_charge_cents: number | null; p_resolution: string | null }
-        Returns: undefined
-      }
-      admin_exception_detail: {
-        Args: { p_id: string }
-        Returns: {
-          id: string; booking_id: string; type: ExceptionType; detail: string | null
-          raised_by: string | null; raised_at: string; resolved_by: string | null
-          resolved_at: string | null; charge_cents: number | null; resolution: string | null
-        }[]
-      }
-      admin_override_eligibility: {
-        Args: { p_booking_id: string; p_note: string | null }; Returns: undefined
-      }
-      admin_set_user_role: { Args: { p_profile_id: string; p_role: UserRole }; Returns: undefined }
-      admin_set_user_active: {
-        Args: { p_profile_id: string; p_active: boolean }; Returns: undefined
-      }
-      admin_confirm_cash_handover: { Args: { p_id: string }; Returns: undefined }
-
-      // ── A8 · users and hotels ────────────────────────────────────────────
-      // `email` and `last_sign_in_at` come out of auth.users, which no client
-      // role can select from; the function asserts app.is_admin() itself.
-      admin_list_users: {
-        Args: Record<string, never>
-        Returns: {
-          id: string; email: string | null; role: UserRole; full_name: string
-          phone: string | null; lang: string; active: boolean
-          created_at: string; last_sign_in_at: string | null
-        }[]
-      }
-      admin_set_home_hotel: {
-        Args: { p_profile_id: string; p_hotel_id: string | null }; Returns: undefined
-      }
-      admin_set_cover: {
-        Args: { p_profile_id: string; p_hotel_id: string; p_covers: boolean }
-        Returns: undefined
-      }
-
-      // ── A10 · retention and the operating windows ────────────────────────
-      admin_licence_retention_status: {
-        Args: Record<string, never>
-        Returns: {
-          retention_months: number; cutoff: string; due_count: number
-          orphan_count: number; oldest_due: string | null
-          purged_drivers: number; last_purge_at: string | null
-        }[]
-      }
-      // A9 · the audit log. Joins the actor's name and nothing else — never
-      // anything app.audit_redact() removed on the way in.
-      admin_audit_log: {
-        Args: {
-          p_actor?: string | null; p_entity?: string | null
-          p_from?: string | null; p_to?: string | null
-          p_limit?: number; p_offset?: number
-        }
-        Returns: {
-          id: number; at: string; actor_id: string | null; actor_name: string | null
-          entity: string; entity_id: string | null
-          action: 'insert' | 'update' | 'delete'
-          before: Json | null; after: Json | null
-        }[]
-      }
-      admin_audit_entities: { Args: Record<string, never>; Returns: { entity: string }[] }
-      booking_windows: {
-        Args: Record<string, never>
-        Returns: {
-          pickup_from: string; pickup_to: string
-          dropoff_from: string; dropoff_to: string
-        }[]
-      }
-
-      // ── Server only (service_role) ───────────────────────────────────────
-      rate_limit_hit: {
-        Args: { p_bucket: string; p_limit: number; p_window_seconds: number }
-        Returns: boolean
-      }
-      log_security_event: {
-        Args: {
-          p_kind: string; p_profile_id?: string | null; p_email_hash?: string | null
-          p_ip_hash?: string | null; p_detail?: Json
-        }
-        Returns: undefined
-      }
-      bind_rep_device: {
-        Args: { p_profile_id: string; p_device_id: string; p_user_agent?: string | null }
-        Returns: boolean
-      }
-      rep_device_matches: {
-        Args: { p_profile_id: string; p_device_id: string }; Returns: boolean
-      }
-      set_pin_hash: { Args: { p_profile_id: string; p_hash: string }; Returns: undefined }
-      role_for_email: { Args: { p_email: string }; Returns: UserRole | null }
-
-      // The retention job's own API. Neither deletes anything: the first
-      // reports what is due and the second records that the Storage API
-      // removed it (src/lib/retention/purge.ts).
-      licence_images_due_for_purge: {
-        Args: { p_limit?: number }
-        Returns: { object_name: string; booking_id: string; ended_on: string }[]
-      }
-      mark_licences_purged: { Args: { p_booking_ids: string[] }; Returns: number }
-
-      // The notifier's own API (docs/01-DECISIONS.md §22). Service role only:
-      // `push_own` restricts push_subscriptions to the row's owner, so no
-      // session can read the devices a notification is FOR.
-      push_targets: {
-        Args: { p_kind: string }
-        Returns: {
-          profile_id: string; lang: string; endpoint: string
-          keys: { p256dh: string; auth: string }
-        }[]
-      }
-      drop_push_subscription: { Args: { p_endpoint: string }; Returns: number }
-      pending_exception_notifications: {
-        Args: { p_limit?: number }
-        Returns: {
-          id: string; type: ExceptionType; raised_at: string
-          booking_ref: string; plate: string
-        }[]
-      }
-      mark_exceptions_notified: { Args: { p_ids: string[] }; Returns: number }
-      // Rows, never a count — see the migration header and §7.
-      rep_day_movements: {
-        Args: { p_profile_id: string; p_on: string }
-        Returns: {
-          kind: 'pickup' | 'return'; booking_id: string; at: string | null
-          plate: string; guest: string | null; room: string | null
-        }[]
-      }
-    }
-    Enums: {
-      user_role: UserRole
-      booking_kind: BookingKind
-      booking_status: BookingStatus
-      pay_method: PayMethod
-      seat_type: SeatType
-      exception_type: ExceptionType
-    }
-    CompositeTypes: Record<string, never>
-  }
-}
+/**
+ * What a client may actually INSERT into `bookings`.
+ *
+ * The generated `Insert` requires `ref` and `created_by`, because both are NOT
+ * NULL with no column default — which is true of the TABLE and wrong about the
+ * GRANT. 20260830091100_rls.sql's insert grant omits both, along with `kind`,
+ * `status`, `days`, `category_id`, `period_id`, `total_cents`, `block_reason`,
+ * `returned_at` and `cash_handover_id`; app.bookings_before_write() derives
+ * every one of them, and a rep who sends one is refused at the privilege check
+ * before any policy runs. So the app cannot send what the generated type
+ * demands, and must not.
+ *
+ * This type is the grant. The cast at the one insert site is what bridges the
+ * two, and it is a cast rather than a widening because the trigger — not the
+ * caller — is what makes the row valid.
+ */
+export type BookingInsert = Pick<
+  Tbl['bookings']['Insert'],
+  'car_id' | 'hotel_id' | 'room_number' | 'start_date' | 'end_date'
+  | 'pickup_at' | 'dropoff_at' | 'cust_first' | 'cust_last' | 'cust_phone'
+  | 'cust_dob' | 'cust_email'
+>
