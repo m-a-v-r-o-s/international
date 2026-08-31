@@ -6,8 +6,10 @@
  *
  * Runs on the service role, so it needs SUPABASE_SERVICE_ROLE_KEY and
  * NEXT_PUBLIC_SUPABASE_URL in the environment and nothing else. On Railway
- * this is a cron service against the same project; daily is ample, since the
- * window is measured in months.
+ * this is a cron service against the same project, scheduled monthly
+ * (00:00 on the 1st) since the retention window is measured in months. The
+ * cutoff in licence_images_due_for_purge() is absolute, not since-last-run,
+ * so a monthly cadence still catches everything that fell due in between.
  *
  * The same function backs the "Purge now" action on A10, so the scheduled run
  * and the boss's button do exactly the same thing.
