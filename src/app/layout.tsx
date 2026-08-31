@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages, getTranslations } from 'next-intl/server'
 import { getLocale } from '@/i18n/locale'
-import { CookieBanner } from '@/components/CookieBanner'
 import './globals.css'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -47,7 +46,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {t('skipToContent')}
           </a>
           {children}
-          <CookieBanner />
         </NextIntlClientProvider>
       </body>
     </html>

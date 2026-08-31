@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
  * be technically accurate and materially misleading.
  */
 const SECTIONS: Section[] = [
-  'intro', 'staff', 'guest', 'lawful', 'retention', 'ledger', 'security', 'rights', 'contact',
+  'intro', 'guest', 'lawful', 'retention', 'ledger', 'security', 'rights', 'contact',
 ]
 
 export default async function PrivacyPage() {

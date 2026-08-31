@@ -13,7 +13,7 @@ import { absoluteUrl } from './lib/http/publicUrl'
  * that. This exists so an unauthenticated phone gets a login screen instead of
  * a flash of an empty app.
  */
-const PUBLIC_PATHS = ['/login', '/privacy', '/terms', '/signed-out', '/session/resume']
+const PUBLIC_PATHS = ['/login', '/privacy', '/signed-out', '/session/resume']
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
 

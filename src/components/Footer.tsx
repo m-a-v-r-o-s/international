@@ -13,9 +13,6 @@ export async function Footer() {
         <Link href="/privacy" className="underline underline-offset-2 hover:text-ink">
           {t('privacy')}
         </Link>
-        <Link href="/terms" className="underline underline-offset-2 hover:text-ink">
-          {t('terms')}
-        </Link>
       </nav>
       <p>
         {t.rich('credit', {

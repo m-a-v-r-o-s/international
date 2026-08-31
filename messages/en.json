@@ -844,26 +844,17 @@
     "altOutside": "Two early International Rentals staff sitting outside the shop entrance.",
     "altReception": "An early International Rentals staff member at the reception desk, phone in hand."
   },
-  "cookies": {
-    "title": "Cookies",
-    "body": "This app uses cookies that keep you signed in, remember your language and protect forms from abuse. There is no advertising or analytics cookie.",
-    "accept": "Got it",
-    "more": "Privacy policy"
-  },
   "legal": {
     "privacyTitle": "Privacy policy",
-    "termsTitle": "Terms of use",
     "lastUpdated": "Last updated {date}",
     "draftNotice": "Draft. The company's registered details and the rental terms are still to be supplied and will be inserted before launch.",
     "privacy": {
       "introTitle": "Who this covers",
-      "intro": "This is an internal application used by International Rentals staff to run vehicle rentals. It holds data about staff who use it and about guests who rent a vehicle.",
-      "staffTitle": "Staff data",
-      "staff": "For each member of staff we store a name, an email address, a phone number, a language preference, the hotel or hotels they cover, and a hashed PIN used to reopen the app. Sign-in attempts and administrative actions are logged so that account misuse can be investigated.",
+      "intro": "This is an internal application used by International Rentals staff to run vehicle rentals. This policy covers the personal data of guests who rent a vehicle.",
       "guestTitle": "Guest data",
       "guest": "For each rental we store the guest's name, phone number, date of birth, hotel and room number, an optional email address used only to send a copy of the agreement, and each driver's licence details together with photographs of the licence.",
       "lawfulTitle": "Why we hold it",
-      "lawful": "Rental and driver data is held to perform the rental contract and to meet the legal requirement to check that a driver is licensed and eligible to drive the vehicle. Staff data is held to operate the system and to keep it secure.",
+      "lawful": "Rental and driver data is held to perform the rental contract and to meet the legal requirement to check that a driver is licensed and eligible to drive the vehicle.",
       "retentionTitle": "How long we keep it",
       "retention": "Photographs of driving licences are deleted automatically after a period set by the company, twenty-four months after the rental ends by default. The booking record, the signed agreement and the typed licence number are kept for longer, as accounting and insurance obligations require. Every deletion is logged.",
       "ledgerTitle": "Guests who choose to be remembered",
@@ -874,26 +865,11 @@
       "rights": "You can ask for a copy of the personal data held about you, ask for it to be corrected, or ask for it to be deleted where there is no legal obligation to keep it. If you agreed to be kept in our customer records, you can withdraw that at any time and we will delete that record and any driving licence photographs held with it — tell any member of our staff, or contact us using the details on the rental agreement. Your booking and the signed agreement itself will remain, because accounting and insurance obligations require us to keep them.",
       "contactTitle": "Contact",
       "contact": "Company registered details and a data contact address are to be confirmed and will appear here before launch."
-    },
-    "terms": {
-      "scopeTitle": "Scope",
-      "scope": "This application is provided to named members of International Rentals staff for the purpose of managing vehicle rentals. It is not a public service and no public booking is possible through it.",
-      "accountsTitle": "Accounts",
-      "accounts": "Accounts are created by the manager. Sign-in details and the device PIN are personal and must not be shared. A rep account is bound to a single device; signing in elsewhere ends the previous binding.",
-      "useTitle": "Acceptable use",
-      "use": "Staff may access only the bookings they are entitled to see, and may not attempt to reach data belonging to another rep or hotel. Prices are set by the company and may not be altered, discounted or negotiated.",
-      "dataTitle": "Guest data",
-      "data": "Guest and licence data may be used only to complete the rental in hand. It must not be copied, photographed, shared or kept outside this application.",
-      "availabilityTitle": "Availability",
-      "availability": "The application requires an internet connection. The company does not guarantee uninterrupted availability, and paper fallback procedures remain in force during the pilot.",
-      "changesTitle": "Changes",
-      "changes": "These terms will be finalised alongside the rental agreement terms before launch."
     }
   },
   "footer": {
     "credit": "© {year} <link>Akos Digital Services</link>",
     "privacy": "Privacy",
-    "terms": "Terms",
     "navLabel": "Legal"
   },
   "contract": {
