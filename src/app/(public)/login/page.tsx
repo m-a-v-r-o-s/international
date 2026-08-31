@@ -17,13 +17,22 @@ export default async function LoginPage({
   const { as, reason } = await searchParams
   const t = await getTranslations('login')
   const te = await getTranslations('errors')
+  const tapp = await getTranslations('app')
   const manager = as === 'manager'
 
   return (
     <main id="main" className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-5 py-8">
       <header>
-        <h1 className="text-[1.75rem] font-bold tracking-tight">{t('title')}</h1>
-        <p className="mt-1 text-[0.9375rem] text-ink-soft">{t('intro')}</p>
+        {/* Intrinsic size given, so the card below does not jump when the
+            logo loads on a hotel's wifi. */}
+        <img
+          src="/logo.webp"
+          width={800}
+          height={127}
+          alt={tapp('logoAlt')}
+          className="h-auto w-full max-w-[17.5rem]"
+        />
+        <h1 className="sr-only">{t('title')}</h1>
       </header>
 
       {reason === 'device' ? (
@@ -41,7 +50,22 @@ export default async function LoginPage({
         <Tab href="/login?as=manager" active={manager} label={t('managerTab')} />
       </nav>
 
-      <div className="ir-card p-5">{manager ? <CodeForm /> : <PasswordForm />}</div>
+      {/* A translucent scrim over the whole photo would fight itself — the
+          more visible the photo, the less reliable the text on top of it. So
+          the photo runs full width and full strength as its own band at the
+          top of the card, and the fields keep the plain, already-tested
+          surface below it untouched. */}
+      <div className="ir-card overflow-hidden">
+        <img
+          src="/heritage-shopfront.webp"
+          width={480}
+          height={443}
+          alt=""
+          aria-hidden="true"
+          className="h-auto w-full"
+        />
+        <div className="p-5">{manager ? <CodeForm /> : <PasswordForm />}</div>
+      </div>
 
       <LanguageSwitcher />
     </main>

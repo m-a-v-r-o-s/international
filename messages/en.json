@@ -2,7 +2,8 @@
   "app": {
     "name": "International Rentals",
     "short": "IR Ops",
-    "description": "Operations app for International Rentals staff."
+    "description": "Operations app for International Rentals staff.",
+    "logoAlt": "International Rentals — rent a car"
   },
   "common": {
     "loading": "Working…",
@@ -35,7 +36,6 @@
   },
   "login": {
     "title": "Sign in",
-    "intro": "This app is for International Rentals staff.",
     "staffTab": "Rep",
     "managerTab": "Manager",
     "staffIntro": "Sign in with your email and password. You will set a PIN afterwards so you can reopen the app quickly.",

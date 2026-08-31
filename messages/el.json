@@ -2,7 +2,8 @@
   "app": {
     "name": "International Rentals",
     "short": "IR Ops",
-    "description": "Εφαρμογή λειτουργίας για το προσωπικό της International Rentals."
+    "description": "Εφαρμογή λειτουργίας για το προσωπικό της International Rentals.",
+    "logoAlt": "International Rentals — ενοικιάσεις αυτοκινήτων"
   },
   "common": {
     "loading": "Γίνεται επεξεργασία…",
@@ -35,7 +36,6 @@
   },
   "login": {
     "title": "Σύνδεση",
-    "intro": "Η εφαρμογή προορίζεται για το προσωπικό της International Rentals.",
     "staffTab": "Συνεργάτης",
     "managerTab": "Υπεύθυνος",
     "staffIntro": "Συνδεθείτε με το email και τον κωδικό σας. Στη συνέχεια θα ορίσετε ένα PIN για γρήγορο άνοιγμα της εφαρμογής.",
