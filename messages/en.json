@@ -635,7 +635,7 @@
       "intro": "Create a rep, station them at a hotel, and set who covers where.",
       "count": "{n, plural, =0 {No staff} one {1 person} other {# people}}",
       "add": "Add a rep",
-      "addIntro": "The rep signs in with this address and the password shown once after you create the account. They set their own PIN on their phone afterwards.",
+      "addIntro": "The rep signs in with this address and the password shown once after you create the account. They set their own PIN on their device afterwards.",
       "fullName": "Full name",
       "email": "Email",
       "emailHint": "This is what they type to sign in. It cannot be changed here afterwards.",
