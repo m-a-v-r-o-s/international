@@ -45,10 +45,17 @@ alter default privileges in schema public
 alter default privileges in schema public
   revoke execute on functions from public;
 
+-- COLUMN TYPES ARE COPIED FROM A REAL PROJECT, not chosen for convenience.
+-- `email` and `encrypted_password` are varchar(255) on Supabase, and the
+-- difference is not cosmetic: public.admin_list_users() declares `email text`
+-- in its RETURNS TABLE, and plpgsql's RETURN QUERY checks the row type exactly.
+-- With `text` here the function returned rows in tests and raised 42804 on the
+-- platform — A8's staff list, broken on every real call, green in CI. See
+-- supabase/migrations/20260830210000_admin_list_users_email.sql.
 create table auth.users (
   id                  uuid primary key default gen_random_uuid(),
-  email               text unique,
-  encrypted_password  text,
+  email               varchar(255) unique,
+  encrypted_password  varchar(255),
   raw_user_meta_data  jsonb not null default '{}'::jsonb,
   created_at          timestamptz not null default now(),
   -- Supabase stamps this on every successful sign-in. A8 shows it, because it
