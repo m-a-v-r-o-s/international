@@ -662,7 +662,11 @@
       "detailsTitle": "Details",
       "backToStaff": "Back to staff",
       "saved": "Saved.",
-      "empty": "No staff yet."
+      "empty": "No staff yet.",
+      "inactiveNote": "{n, plural, one {# deactivated account} other {# deactivated accounts}}",
+      "showInactive": "Show",
+      "hideInactive": "Hide",
+      "allInactive": "All staff are deactivated."
     },
     "hotels": {
       "title": "Hotels",
@@ -991,7 +995,8 @@
   },
   "push": {
     "morning": {
-      "title": "Your pickups today"
+      "title": "Your pickups today",
+      "alsoReturns": "Also due back today"
     },
     "evening": {
       "title": "Returns due back today"

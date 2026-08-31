@@ -25,15 +25,23 @@ export async function generateMetadata(): Promise<Metadata> {
  * account, it is an account that can see only what it created itself, so the
  * screen says so rather than leaving it to be discovered.
  */
-export default async function AdminUsersPage() {
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>
+}) {
   await requireAdmin()
   const t = await getTranslations('admin.users')
   const th = await getTranslations('admin.hotels')
   const tr = await getTranslations('roles')
   const format = await getFormatter()
   const supabase = await supabaseServer()
+  const params = await searchParams
+  const showInactive = params.show_inactive === '1'
 
   const { staff, hotels } = await loadStaffWithHotels(supabase)
+  const inactiveCount = staff.filter((person) => !person.active).length
+  const visibleStaff = showInactive ? staff : staff.filter((person) => person.active)
 
   return (
     <div className="flex flex-col gap-5">
@@ -58,11 +66,25 @@ export default async function AdminUsersPage() {
         <CreateRepForm />
       </Disclosure>
 
+      {inactiveCount > 0 ? (
+        <p className="text-[0.9375rem] text-ink-soft">
+          {t('inactiveNote', { n: inactiveCount })}{' · '}
+          <Link
+            href={showInactive ? '/admin/users' : '/admin/users?show_inactive=1'}
+            className="underline underline-offset-2"
+          >
+            {showInactive ? t('hideInactive') : t('showInactive')}
+          </Link>
+        </p>
+      ) : null}
+
       {staff.length === 0 ? (
         <p className="text-ink-soft">{t('empty')}</p>
+      ) : visibleStaff.length === 0 ? (
+        <p className="text-ink-soft">{t('allInactive')}</p>
       ) : (
         <ul className="flex flex-col gap-3">
-          {staff.map((person) => (
+          {visibleStaff.map((person) => (
             <li key={person.id} className="ir-card p-4">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <Link
