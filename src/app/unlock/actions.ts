@@ -15,9 +15,16 @@ export type UnlockState = {
 
 const pinSchema = z.string().trim().max(32)
 
-/** First use: the rep chooses the PIN they will reopen the app with. */
+/**
+ * First use only: the rep chooses the PIN they will reopen the app with.
+ * Refuses once a PIN already exists — only the boss reissues one after that
+ * (docs/01-DECISIONS.md §21 update), so this cannot become a rep's own
+ * self-service "change PIN" if called directly instead of through the UI,
+ * which never renders SetPinForm once staff.hasPin is true.
+ */
 export async function setPin(_prev: UnlockState, formData: FormData): Promise<UnlockState> {
   const staff = await requireStaff()
+  if (staff.hasPin) return { error: 'unknown' }
 
   const pin = pinSchema.safeParse(formData.get('pin'))
   const confirm = pinSchema.safeParse(formData.get('confirm'))

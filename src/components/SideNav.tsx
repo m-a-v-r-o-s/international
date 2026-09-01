@@ -134,7 +134,7 @@ export function SideNav({
     <nav
       aria-label={label}
       className="ir-rail sticky top-0 hidden max-h-dvh w-60 shrink-0 flex-col
-                 self-start overflow-y-auto bg-brand-strong px-4 py-6 lg:flex print:hidden"
+                 overflow-y-auto bg-brand-strong px-4 py-6 lg:flex print:hidden"
     >
       <Link href="/" className="mb-6 inline-flex w-fit items-center rounded-field bg-surface px-2.5 py-2">
         <img src="/logo-sm.webp" width={300} height={100} alt={logoAlt} className="h-14 w-auto" />

@@ -4,6 +4,8 @@ import { requireUnlocked } from '@/lib/auth/session'
 import { Footer } from '@/components/Footer'
 import { SideNav, NavDrawer, type NavItem } from '@/components/SideNav'
 import { SignOutButton } from '@/components/SignOutButton'
+import { vapidPublicKey } from '@/lib/push/keys'
+import { AutoPushSubscribe } from './settings/AutoPushSubscribe'
 
 /**
  * Everything behind this layout requires an active, unlocked staff session.
@@ -87,6 +89,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-dvh flex-col">
+      {/* Silent — no toggle, no ask on screen. See AutoPushSubscribe.tsx. */}
+      {admin ? null : <AutoPushSubscribe publicKey={vapidPublicKey()} />}
       {/*
         The rail carries the brand and the section list for the full height of
         the page — header included — so it sits outside both headers below

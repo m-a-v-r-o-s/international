@@ -76,24 +76,22 @@ export async function unsubscribeFromPush(
 }
 
 /**
- * Which kinds this person wants. A rep is offered the two rep kinds and the
- * admin the one admin kind, because §22 gives them different messages — but
- * the columns are set the same way either way, and public.push_targets()
- * checks the role again in SQL, so a rep who POSTs `notify_exceptions` gets
- * a column set that no query will ever read for them.
+ * Which kinds this person wants. Only the admin kind is a preference at all —
+ * a rep's two kinds are always on, not a choice, so there is no settings form
+ * offering them and this refuses to write either column for a rep even if
+ * called directly. app.profiles_before_write() clamps the same two columns
+ * back to true in the database, so a forged request past this action still
+ * cannot turn them off.
  */
 export async function saveNotificationPreferences(
   _prev: NotifyState, formData: FormData,
 ): Promise<NotifyState> {
   const staff = await requireUnlocked()
-
-  const on = (name: string) => formData.get(name) === 'on'
+  if (staff.role !== 'admin') return { error: 'forbidden' }
 
   const supabase = await supabaseServer()
   const { error } = await supabase.from('profiles').update({
-    notify_morning: on('notify_morning'),
-    notify_evening: on('notify_evening'),
-    notify_exceptions: on('notify_exceptions'),
+    notify_exceptions: formData.get('notify_exceptions') === 'on',
   }).eq('id', staff.id)
 
   if (error) return { error: errorKey(error) }

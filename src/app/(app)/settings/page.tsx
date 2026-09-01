@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { requireUnlocked } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
@@ -15,15 +14,18 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * R8 · Settings — language, PIN, notifications, sign out
- * (docs/04-SCREENS.md R8). Complete as of this phase.
+ * R8 · Settings — language, notifications (admin only), sign out
+ * (docs/04-SCREENS.md R8).
  *
- * Notifications are two separate things and the screen keeps them separate:
- * whether THIS DEVICE receives pushes at all — a browser permission and a
- * subscription that belong to the phone in the rep's hand — and which KINDS of
- * message this person wants anywhere. Turning off the evening reminder should
- * not mean unregistering the phone, and changing phones should not silently
- * forget what they chose.
+ * A rep has neither a PIN-change nor a notifications section here: only the
+ * boss issues or changes a rep's PIN, and a rep's notifications are always on
+ * rather than a preference — see setPin()'s first-use guard in
+ * src/app/unlock/actions.ts and the notify_morning/notify_evening clamp in
+ * app.profiles_before_write().
+ *
+ * For the boss, notifications stay two separate things: whether THIS DEVICE
+ * receives pushes at all — a browser permission and subscription that belong
+ * to the phone in hand — and which KINDS of message they want anywhere.
  */
 export default async function SettingsPage() {
   const staff = await requireUnlocked()
@@ -33,15 +35,11 @@ export default async function SettingsPage() {
 
   const { data } = await supabase
     .from('profiles')
-    .select('notify_morning, notify_evening, notify_exceptions')
+    .select('notify_exceptions')
     .eq('id', staff.id)
     .maybeSingle()
 
-  const prefs = {
-    morning: (data as { notify_morning?: boolean } | null)?.notify_morning ?? true,
-    evening: (data as { notify_evening?: boolean } | null)?.notify_evening ?? true,
-    exceptions: (data as { notify_exceptions?: boolean } | null)?.notify_exceptions ?? true,
-  }
+  const exceptions = (data as { notify_exceptions?: boolean } | null)?.notify_exceptions ?? true
 
   return (
     <div className="flex flex-col gap-6">
@@ -53,19 +51,14 @@ export default async function SettingsPage() {
         <LanguageSwitcher />
       </section>
 
-      {staff.role === 'rep' ? (
-        <section className="ir-card flex flex-col gap-3 p-5" aria-labelledby="sec-heading">
-          <h2 id="sec-heading" className="text-[1.125rem] font-semibold">{t('security')}</h2>
-          <Link href="/unlock" className="ir-btn-quiet">{t('changePin')}</Link>
+      {staff.role === 'admin' ? (
+        <section className="ir-card flex flex-col gap-3 p-5" aria-labelledby="notify-heading">
+          <h2 id="notify-heading" className="text-[1.125rem] font-semibold">{t('notifications')}</h2>
+          <PushToggle publicKey={vapidPublicKey()} />
+          <hr className="border-line" />
+          <NotificationPreferences exceptions={exceptions} />
         </section>
       ) : null}
-
-      <section className="ir-card flex flex-col gap-3 p-5" aria-labelledby="notify-heading">
-        <h2 id="notify-heading" className="text-[1.125rem] font-semibold">{t('notifications')}</h2>
-        <PushToggle publicKey={vapidPublicKey()} />
-        <hr className="border-line" />
-        <NotificationPreferences role={staff.role} prefs={prefs} />
-      </section>
 
       <section className="ir-card flex flex-col gap-3 p-5" aria-labelledby="acct-heading">
         <h2 id="acct-heading" className="text-[1.125rem] font-semibold">{t('account')}</h2>
