@@ -6,7 +6,7 @@ import { requireAdmin } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
 import { sqlNull } from '@/lib/supabase/args'
 import { errorKey, type ErrorKey } from '@/lib/errors'
-import { createRepAccount, resetRepPassword } from '@/lib/users/accounts'
+import { createRepAccount, reissueRepPin } from '@/lib/users/accounts'
 import { allow } from '@/lib/rate-limit'
 
 /**
@@ -20,11 +20,13 @@ export type UserFormState = {
   error?: ErrorKey
   saved?: boolean
   /**
-   * Shown ONCE, at the moment of creation or re-issue, and never stored,
-   * logged or re-derivable. It lives in the action's return value — which is
-   * this response and nothing else — rather than in any row we own.
+   * The rep's PIN — their whole credential since §32 — shown ONCE, at the
+   * moment of creation or re-issue, and never stored, logged or re-derivable.
+   * It lives in the action's return value — which is this response and nothing
+   * else — rather than in any row we own. What the database keeps is the argon2
+   * hash, and that is not reversible into this.
    */
-  password?: string
+  pin?: string
   createdName?: string
 } | undefined
 
@@ -87,10 +89,16 @@ export async function createRep(_prev: UserFormState, formData: FormData): Promi
   if (!created.ok) return { error: created.reason }
 
   revalidatePath('/admin/users')
-  return { password: created.password, createdName: parsed.data.full_name }
+  return { pin: created.pin, createdName: parsed.data.full_name }
 }
 
-export async function reissuePassword(
+/**
+ * A new PIN for a rep who lost theirs, or whose PIN somebody else has seen.
+ * This is the only way a rep's PIN ever changes — 0027 took self-service away
+ * at the owner's ask — so it is the boss's answer to every credential problem a
+ * rep can have, and it is instant.
+ */
+export async function reissuePin(
   _prev: UserFormState, formData: FormData,
 ): Promise<UserFormState> {
   const admin = await requireAdmin()
@@ -106,11 +114,14 @@ export async function reissuePassword(
   const known = await staffEmails()
   if ('error' in known) return { error: known.error }
 
-  const reset = await resetRepPassword({ profileId: id.data, actorId: admin.id })
-  if (!reset.ok) return { error: reset.reason }
+  // reissueRepPin() re-reads the target's role for itself and refuses anything
+  // that is not a rep, so "the admin has no PIN" is enforced where the write
+  // happens rather than only by the screen that hides the button.
+  const reissued = await reissueRepPin({ profileId: id.data, actorId: admin.id })
+  if (!reissued.ok) return { error: reissued.reason }
 
   revalidatePath(`/admin/users/${id.data}`)
-  return { password: reset.password }
+  return { pin: reissued.pin }
 }
 
 /** Name, phone and language. `role`, `active` and `pin_hash` are not here by design. */
@@ -154,6 +165,12 @@ export async function updateStaffDetails(
  * cover-shift rule reads. Deleting the row would take the history with it.
  * public.admin_set_user_active() refuses to act on the caller's own id
  * (IR113), so the boss cannot lock himself out.
+ *
+ * This one action serves both directions and both framings. The boss asked for
+ * a way to REMOVE a rep, and RemoveAccessForm is that button — with a confirm
+ * dialog in front of it, because an account going dark is the highest-stakes
+ * thing on this screen. Reactivating is the same call with `active: 'true'` and
+ * gets no ceremony at all: it takes nothing away.
  */
 export async function setActive(_prev: UserFormState, formData: FormData): Promise<UserFormState> {
   await requireAdmin()

@@ -26,6 +26,64 @@ describe('the server-only API', () => {
         `select public.set_pin_hash($1, 'pretend-hash')`, [f.repA]))).toBe('42501')
       expect(await errcode(() => db.sql(
         `select public.role_for_email('boss@example.com')`))).toBe('42501')
+      expect(await errcode(() => db.sql(
+        `select * from public.credential_lookup_for_email('rep-a@example.com')`))).toBe('42501')
+    })
+  })
+
+  /**
+   * The read behind PIN-only sign-in (docs/01-DECISIONS.md §32). It is the one
+   * function in this file that hands back a credential hash, so what it answers
+   * and to whom is asserted rather than assumed.
+   */
+  describe('credential_lookup_for_email', () => {
+    test('resolves an address to the row the sign-in needs', async () => {
+      await db.as({ kind: 'service' }, async () => {
+        await db.sql(`select public.set_pin_hash($1, 'argon2-hash-stand-in')`, [f.repA])
+
+        const row = await db.one<{
+          id: string; role: string; active: boolean; pin_hash: string | null
+        }>(`select * from public.credential_lookup_for_email('  REP-A@Example.com ')`)
+
+        // Trimmed and case-folded, exactly like role_for_email — the boss types
+        // a rep's address into the create form however he likes.
+        expect(row.id).toBe(f.repA)
+        expect(row.role).toBe('rep')
+        expect(row.active).toBe(true)
+        expect(row.pin_hash).toBe('argon2-hash-stand-in')
+      })
+    })
+
+    test('answers nothing for an address that does not exist', async () => {
+      await db.as({ kind: 'service' }, async () => {
+        const rows = await db.sql(
+          `select * from public.credential_lookup_for_email('nobody@example.com')`)
+        expect(rows).toEqual([])
+      })
+    })
+
+    /**
+     * The deliberate difference from role_for_email(), which filters to active
+     * accounts and so cannot tell a deactivated rep from a stranger. The login
+     * screen needs that distinction to say "ask the manager to reactivate it"
+     * instead of "wrong PIN" — and it only says it once the PIN has verified,
+     * so nothing about it is reachable without the credential.
+     */
+    test('still answers for a deactivated account, and says so', async () => {
+      await db.as({ kind: 'service' }, async () => {
+        const row = await db.one<{ role: string; active: boolean }>(
+          `select * from public.credential_lookup_for_email('gone@example.com')`)
+        expect(row.role).toBe('rep')
+        expect(row.active).toBe(false)
+      })
+    })
+
+    test('reports the admin as an admin, so the PIN path can refuse him', async () => {
+      await db.as({ kind: 'service' }, async () => {
+        const row = await db.one<{ role: string }>(
+          `select * from public.credential_lookup_for_email('boss@example.com')`)
+        expect(row.role).toBe('admin')
+      })
     })
   })
 

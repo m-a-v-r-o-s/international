@@ -155,7 +155,9 @@ Today's movements sheet · live fleet board · full booking search · simple rev
 - **Admin:** email + one-time code. Concurrent desktop and mobile sessions allowed —
   signing in on one device must never sign out the other.
 - **Reps:** email + password on first use, then **PIN or fingerprint** to reopen.
-  Device-bound session.
+  Device-bound session. — **The password half is superseded; see §32.** A rep now signs in
+  with their PIN and nothing else, and the boss issues it. The device binding, the
+  shift-length unlock and the admin's own path above are unchanged.
 
 ## 22. Notifications
 - **Admin:** exceptions — damage flagged, car not returned, eligibility override.
@@ -486,3 +488,105 @@ of it, and a second, independent hand-over can be made without disturbing the fi
 
 See `supabase/migrations/20260901093000_cash_confirmation.sql`,
 `public.my_cash_ready_to_hand_over()`, and `public.admin_pending_cash_handovers()`.
+
+## 32. A rep's PIN is their whole credential, and the boss can take an account away
+
+The owner decided (1 Sep 2026) that reps should use a PIN as their only credential, with no
+password step: a rep never sees or types a password, the boss issues the PIN when he creates
+the account, and he can issue a new one whenever it is lost or overheard. He also asked to be
+able to **remove** a rep's account, and for each rep to be placed at a specific hotel — the
+second of which already existed (A8's home-hotel control, §8's isolation boundary) and was
+verified rather than rebuilt.
+
+The tradeoffs were put to him before this was built. What he chose costs the account a
+high-entropy secret and gains it one credential a rep can actually hold in their head; the
+things that make a six-digit PIN safe enough to be that credential are listed below, and none
+of them are new — they were already carrying the PIN in its old role as the unlock gate.
+
+### What was actually broken about the old shape
+
+Nothing was insecure. It was that first use took two credentials and two screens to get one
+rep into the app: a password long enough to be safe to generate (nineteen characters, read
+aloud across a desk), typed once, only to be replaced immediately by a PIN the rep chose on
+the next screen — after which the password was never used again but never stopped working.
+The account therefore had two live credentials for the rest of its life, one of which
+everybody had forgotten, and the weaker-looking one was the only one anybody used.
+
+Collapsing that to one is not a weakening as long as the PIN keeps the protections the
+password had. It does, and they are all pre-existing: argon2id at OWASP cost
+(`src/lib/auth/pin.ts`), a rate limit of 8 attempts per 15 minutes **per address** on the
+login action, and every failure written to the security log. That bucket caps one account at
+roughly 768 guesses a day against a keyspace of a million — years to walk a meaningful
+fraction of it, in the open, with the boss able to re-issue the moment anything looks wrong.
+
+### The three decisions, and who made them
+
+**1 · The PIN is minted by the server at account creation, never chosen.**
+> `createRepAccount()` generates six digits from `crypto.randomInt` — not `Math.random`, not
+> a birthday, not a pattern the boss would pick for a person he knows — hashes them and
+> stores the hash through `public.set_pin_hash()`, which 0027 already made the only writer of
+> that column. The plaintext is returned exactly once, to the screen that asked for it, and
+> exists nowhere else afterwards. Re-issue (`reissueRepPin()`) is the same act, and is the
+> only way a rep's PIN ever changes: rep-side self-service was taken away at the owner's own
+> ask in 0027 and is not coming back through this door.
+>
+> The GoTrue account still gets a password, because `auth.admin.createUser()` requires one and
+> there is no passwordless shape in the Admin API. It is CSPRNG junk that is never returned,
+> logged or displayed, and re-issuing a PIN rotates it — otherwise "the old credential stops
+> working" would be false for the accounts created before this decision, which were handed a
+> real one.
+
+**2 · One login field, and it accepts either credential.**
+> *Asked:* whether to give reps their own PIN-shaped login screen, separate from the password
+> one.
+>
+> *Chosen:* one field, tried as a password first and as a PIN second, labelled "PIN".
+>
+> *Why:* the accounts that predate this decision have real passwords, and the login screen is
+> the last place to introduce a second door — §21's no-enumeration rule means the screen must
+> answer identically for every address, and two doors is a way of asking which one an address
+> belongs to. So the server tries both and says the same sentence either way: unknown address,
+> wrong password, wrong PIN, deactivated account and "that address is the manager's" are one
+> message. The `active` flag is examined only *after* a PIN verifies, for the same reason.
+>
+> A verified PIN also skips `/unlock`. It is the same PIN that screen would ask for, and
+> asking for it twice in one sign-in is ceremony, not a second factor. `SetPinForm` stays as a
+> fallback for a row whose `pin_hash` is somehow null, and should now never be reached.
+
+**3 · "Remove this account" is deactivation, and the dialog says so.**
+> *Asked:* the boss asked to delete a rep. A real `DELETE` is not available: `bookings.created_by`
+> is `not null` with no cascade, so a rep with any history cannot leave the table — and the
+> history is exactly what §8's cover-shift rule reads.
+>
+> *Chosen:* the button is named for what he wants ("Remove this account"), and the confirm
+> dialog is where the screen is honest — access is suspended, the PIN stops working, the
+> bookings stay, and he can give it back from the same page. Naming the button "Deactivate"
+> would have answered a question he did not ask; letting the dialog imply a permanent deletion
+> would have been a lie about what the button does.
+>
+> It gets `SignOutButton`'s confirm pattern — `alertdialog`, Escape and click-outside to
+> close, and a confirm button that stays dead for three seconds — rather than the bare
+> `confirm()` popup used for cancelling a booking or archiving a car. A rep at a hotel desk
+> stops being able to work the moment this lands. Reactivating is the same server action with
+> `active: 'true'` and gets no ceremony at all: it takes nothing away.
+
+### The part that was genuinely hard to get right
+
+A PIN sign-in calls no `supabase.auth.*` sign-in method, and the gate cookie is not a session
+— `src/lib/auth/gate.ts` has always said so. `currentStaff()` asks `supabase.auth.getUser()`
+through the caller's own cookies and then reads `profiles` through that same session so RLS
+can see who is asking. Without a real Supabase session a rep would leave the login screen
+holding a valid gate cookie, a bound device and no identity: `getUser()` returns null,
+`requireStaff()` sends them back to `/login`, and the loop never breaks.
+
+So the session is minted rather than presented. `mintSessionForEmail()` asks the GoTrue Admin
+API for a magic-link token (`generateLink`, which issues one **without sending mail** — there
+is still no SMTP on this project, client item 8) and redeems its `hashed_token` on the
+request-scoped client, which writes the session cookies exactly as any other sign-in would.
+The token is issued and spent inside one request, never travels and is never displayed, and
+the whole path is unreachable without the service-role key — which was already the only key
+that could read the PIN hash it is standing behind.
+
+See `supabase/migrations/20260901120000_pin_only_signin.sql`,
+`public.credential_lookup_for_email()`, `src/lib/auth/signin.ts` and
+`src/app/(public)/login/actions.ts`.

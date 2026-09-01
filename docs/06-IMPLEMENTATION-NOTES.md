@@ -218,7 +218,7 @@ the booking tables is not inert against the pricing engine.
 | `mailer_otp_length` | 8 | **6** | the app validates `/^\d{6}$/` and the input is `maxLength={6}`; the boss would have received a code he could not type |
 | `mailer_otp_exp` | 3600 | **900** | `docs/03-SECURITY.md` already says fifteen minutes for a reset link; an hour-long sign-in code is looser than the standard the file sets |
 | `jwt_exp` | 3600 | **1800** | the deactivation window. `profiles.active` is authoritative in Postgres so a dismissed rep's live token can do nothing, but the token still exists until it expires and halving that costs nothing with refresh-token rotation on |
-| `password_min_length` | 6 | **12** | nothing chooses a password today — `generateTempPassword()` produces nineteen characters — but rep-side password change is on the hardening list and six would be the floor it inherited |
+| `password_min_length` | 6 | **12** | nothing chooses a password today, and since §32 nothing types one either — the value GoTrue insists on for a rep account is generated junk nineteen characters long — but the floor is what any future password-shaped feature would inherit, and six is not it |
 
 `site_url` is still `http://localhost:3000` and `uri_allow_list` is still
 empty, deliberately: there is no domain (client item 8) and inventing one would
@@ -234,8 +234,9 @@ custom SMTP is client item 8, the same missing domain that has kept
 `src/lib/email/mailer.ts` from ever sending. Compounding it, the built-in
 sender is capped at two messages an hour and is documented as being for
 testing, so even with a correct template the boss would get two sign-in
-attempts an hour. **Reps are unaffected** — they sign in with a password and
-need no mail — so the pilot is not blocked outright, but the boss's own sign-in
+attempts an hour. **Reps are unaffected** — they sign in with a PIN the boss
+hands them (§32) and need no mail — so the pilot is not blocked outright, but
+the boss's own sign-in
 is, and it resolves the moment SMTP credentials exist. That makes client item 8
 a harder blocker than "the domain would be nice", and it should be said to the
 client in those terms.
@@ -266,23 +267,29 @@ inert: `app.handle_new_user()` forces role `'rep'`, and a rep with no
 needs `admin_set_user_role()` and its IR113 self-check. And every account event
 is logged with the address hashed and never the password.
 
-**A temporary password rather than an invite link, and the loser is named.**
-§21 says a rep signs in with email and password on first use. Supabase offers
-both shapes, and `inviteUserByEmail()` needs email delivery — client item 8,
-the same missing domain and SMTP account that has kept `src/lib/email/mailer.ts`
-from ever sending anything. Supabase's built-in sender exists but is rate
-limited to a couple of messages an hour and documented as being for testing. An
-invite that does not arrive is a rep who cannot sign in, at a hotel desk,
-during the fortnight the whole October date exists for. So: a password
-generated server-side from `crypto.randomInt` over an alphabet with no 0/O and
-no 1/l/I because it gets read aloud, shown once, recoverable never, with a
-re-issue action for when it is lost, and `email_confirm` set so the account
-works immediately rather than waiting on a mail that cannot be sent. The cost,
-stated in the file rather than left implicit: the boss knows the initial
-password until the rep changes it. He is the owner, he already has admin rights
-over every row, and the audit log records the actor — but it is real, and
-rep-side password change belongs with WebAuthn on the hardening list. When the
-domain arrives, the invite becomes a choice rather than the only door.
+**A credential handed over rather than an invite link, and the loser is named.**
+Supabase offers both shapes, and `inviteUserByEmail()` needs email delivery —
+client item 8, the same missing domain and SMTP account that has kept
+`src/lib/email/mailer.ts` from ever sending anything. Supabase's built-in sender
+exists but is rate limited to a couple of messages an hour and documented as
+being for testing. An invite that does not arrive is a rep who cannot sign in,
+at a hotel desk, during the fortnight the whole October date exists for. So the
+credential is generated server-side from `crypto.randomInt`, shown once,
+recoverable never, with a re-issue action for when it is lost, and
+`email_confirm` set so the account works immediately rather than waiting on a
+mail that cannot be sent.
+
+**Since §32 that credential is a six-digit PIN, not a password.** The rep has
+one credential and it is the one they were already typing every morning; the
+password GoTrue still requires is generated junk that is never returned, logged
+or displayed, and re-issuing a PIN rotates it so an old, real password from
+before §32 cannot outlive the re-issue. The cost, stated in the file rather than
+left implicit: the boss knows the initial PIN, and 0027 removed rep-side
+self-service at his own ask, so it stays known until he re-issues. He is the
+owner, he already has admin rights over every row, and the audit log records the
+actor — but it is real, and the answer to a PIN somebody else has seen is the
+same instant re-issue as the answer to a lost one. When the domain arrives, the
+invite becomes a choice rather than the only door.
 
 **A8 is the isolation boundary, so its headline test is withdrawal and not
 grant.** `hotel_reps` is what `app.my_hotel_ids()` reads and that is the whole
@@ -494,7 +501,7 @@ on any future project:
    blocked** — see "What the real project confirmed" above: the Management API
    refuses template edits on the Free plan with the default email provider, so
    this waits on custom SMTP (client item 8) or a paid plan. Until then the
-   boss cannot complete a sign-in; reps can, because they use a password.
+   boss cannot complete a sign-in; reps can, because they use a PIN (§32).
 
 Confirmed working on the real project, in this order: the trigger fires and
 writes a profile at role `rep` with the name and language out of the user
@@ -503,8 +510,14 @@ metadata; promotion to admin by hand; a real sign-in with
 PostgREST, which is A8's page load; `createRepAccount()` minting a rep with a
 real temporary password; that rep signing in with it; and the new account
 proving inert — role `rep`, seeing nothing but its own profile row, and IR001
-from any admin RPC. The accounts and the scratch fixture were deleted
-afterwards.
+from any admin RPC. **That walk-through predates §32**: the same sequence today
+mints a PIN rather than a password and the rep signs in with that, through the
+`credential_lookup_for_email()` + `mintSessionForEmail()` path. It has not been
+re-run end to end against the real project since the change; the DB half is
+covered by `tests/db/server-api.test.ts` and the walk-through is worth repeating
+when the project is next reachable. The rest of what it proved — the trigger,
+the promotion, A8's page load, the account being inert — is untouched by §32.
+The accounts and the scratch fixture were deleted afterwards.
 
 Two things worth knowing before they surprise somebody. `auth.users` INSERT is
 refused with 42501 for `service_role` as well as for `authenticated`, so the
@@ -994,10 +1007,11 @@ first.
   none should be started without the domain, because the TWA's asset-links
   verification is bound to it. `src/proxy.ts` already excludes the manifest
   path from its matcher, so adding one is a file and not a change.
-- **WebAuthn / fingerprint unlock**, and **rep-side password change**. §21
-  offers "PIN or fingerprint"; the PIN is built. The password change belongs
-  beside it: A8 issues a temporary password the boss knows, and the rep should
-  be able to replace it. Neither changes a data model.
+- **WebAuthn / fingerprint unlock.** §21 offers "PIN or fingerprint"; the PIN is
+  built. Rep-side password change has left this list rather than been done:
+  §32 removed the password entirely, and the PIN it replaced it with is the
+  boss's to issue by his own decision (0027), so there is nothing left here for
+  a rep to change themselves. Fingerprint remains, and changes no data model.
 - **A true token revocation on deactivation.** `profiles.active` is now
   authoritative in Postgres as well as in the app
   (`supabase/migrations/20260830150000_deactivation.sql`), so a deactivated

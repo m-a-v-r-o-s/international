@@ -11,9 +11,16 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * The PIN gate. A rep signs in with a password once and then reopens the app
- * with a PIN (docs/01-DECISIONS.md §21) — so this screen is both "choose one"
- * and "enter it", depending on whether they have one yet.
+ * The PIN gate: what a rep meets when a shift-length unlock has run out and
+ * they reopen the app.
+ *
+ * Since §32 the PIN is also what they SIGN IN with, and the login screen opens
+ * the unlock window itself when it verifies one — so a rep arriving here has
+ * had a session for hours and is simply being asked again. The "choose a PIN"
+ * half (SetPinForm) is now a fallback rather than a step in first use: the boss
+ * issues the PIN when he creates the account, so `hasPin` is true from the
+ * first sign-in onwards, and this only renders for a row whose `pin_hash` is
+ * somehow null. It costs nothing to keep and is the only way back for that row.
  */
 export default async function UnlockPage() {
   const staff = await requireStaff()

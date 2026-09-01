@@ -1,12 +1,12 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect, useId, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
 import { SubmitButton } from '@/components/SubmitButton'
 import type { HotelRow } from '@/lib/supabase/database.types'
 import {
-  createRep, reissuePassword, setActive, setCover, setHomeHotel, setRole,
+  createRep, reissuePin, setActive, setCover, setHomeHotel, setRole,
   updateStaffDetails, type UserFormState,
 } from './actions'
 
@@ -35,23 +35,28 @@ function Notice({ state }: { state: UserFormState }) {
 }
 
 /**
- * The password panel. It is `role="alert"` and not dismissible on purpose:
- * this string exists nowhere else — not in a row, not in a log, not in
- * anything the server can be asked for again — so the one thing the screen
- * must not do is let it scroll past unnoticed.
+ * The PIN panel, shared by the two actions that mint one: creating the account
+ * and re-issuing the credential afterwards. It is `role="alert"` and not
+ * dismissible on purpose: this string exists nowhere else — not in a row, not
+ * in a log, not in anything the server can be asked for again — so the one
+ * thing the screen must not do is let it scroll past unnoticed.
+ *
+ * The digits are spaced out and large because the boss reads them aloud across
+ * a desk, and `select-all` because sometimes he sends them instead.
  */
-function PasswordPanel({ password, name }: { password: string; name?: string }) {
+function PinPanel({ pin, name }: { pin: string; name?: string }) {
   const t = useTranslations('admin.users')
+  const labelId = useId()
   return (
     <div className="ir-notice border-warn bg-warn-tint text-warn" role="alert">
-      <p className="font-semibold">{t('passwordTitle', { name: name ?? '' })}</p>
-      <p className="mt-1">{t('passwordBody')}</p>
-      <p className="ir-label mt-3" id="temp-password-label">{t('passwordLabel')}</p>
+      <p className="font-semibold">{t('pinTitle', { name: name ?? '' })}</p>
+      <p className="mt-1">{t('pinBody')}</p>
+      <p className="ir-label mt-3" id={labelId}>{t('pinLabel')}</p>
       <p
-        className="select-all font-mono text-[1.25rem] font-bold tracking-wide text-ink"
-        aria-labelledby="temp-password-label"
+        className="select-all font-mono text-[1.5rem] font-bold tracking-[0.25em] text-ink"
+        aria-labelledby={labelId}
       >
-        {password}
+        {pin}
       </p>
     </div>
   )
@@ -65,9 +70,7 @@ export function CreateRepForm() {
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <Notice state={state} />
-      {state?.password ? (
-        <PasswordPanel password={state.password} name={state.createdName} />
-      ) : null}
+      {state?.pin ? <PinPanel pin={state.pin} name={state.createdName} /> : null}
 
       <p className="text-[0.9375rem] text-ink-soft">{t('addIntro')}</p>
 
@@ -255,10 +258,132 @@ export function RoleForm({
   )
 }
 
-export function ActiveForm({
+/** How long the confirm button stays out of reach, as in SignOutButton. */
+const CONFIRM_SECONDS = 3
+
+/**
+ * Removing somebody's access — the action the boss thinks of as deleting a rep.
+ *
+ * What it actually calls is setActive({ active: 'false' }), because nothing here
+ * ever deletes a staff row: `bookings.created_by` is `not null` with no cascade,
+ * so a rep with any history behind them cannot be removed from the table at all,
+ * and the history is the point of keeping them (actions.ts, and A8). The BUTTON
+ * is therefore named for what the boss wants, and the DIALOG is where the screen
+ * is honest about the mechanism — including that it is reversible, which a boss
+ * who thinks he has just deleted somebody permanently would otherwise never
+ * discover.
+ *
+ * The ceremony is SignOutButton's, for the same reason and one more. Same
+ * reason: a stray tap on a phone should not be able to confirm the dialog it
+ * just opened, so the confirm button is dead for three seconds. One more: this
+ * is a bigger action than signing out — a rep at a hotel desk stops being able
+ * to work the moment it lands — and the bare `confirm()` popup used for
+ * cancelling a booking or archiving a car is not enough weight for it.
+ */
+export function RemoveAccessForm({
   person,
 }: {
-  person: { id: string; active: boolean }
+  person: { id: string; full_name: string }
+}) {
+  const t = useTranslations('admin.users')
+  const tc = useTranslations('common')
+  const [state, formAction] = useActionState<UserFormState, FormData>(setActive, undefined)
+  const [open, setOpen] = useState(false)
+  const [secondsLeft, setSecondsLeft] = useState(CONFIRM_SECONDS)
+  const titleId = useId()
+  const bodyId = useId()
+
+  useEffect(() => {
+    if (!open) return
+    setSecondsLeft(CONFIRM_SECONDS)
+    const id = setInterval(() => setSecondsLeft((s) => (s > 0 ? s - 1 : 0)), 1000)
+    return () => clearInterval(id)
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
+
+  // Close on ANY answer, not just a successful one. The Notice below the
+  // trigger is what reports back either way — including IR113, which the
+  // database raises if this is ever aimed at the caller's own row, and which
+  // would otherwise be announced inside a dialog nobody is looking at any more.
+  useEffect(() => {
+    if (state) setOpen(false)
+  }, [state])
+
+  const ready = secondsLeft === 0
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Notice state={state} />
+      <p className="text-[0.9375rem] text-ink-soft">{t('accessHint')}</p>
+
+      <button type="button" onClick={() => setOpen(true)} className="ir-btn-quiet">
+        {t('removeAccess')}
+      </button>
+
+      {open && (
+        <div
+          role="presentation"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            aria-describedby={bodyId}
+            className="ir-card w-full max-w-sm bg-surface p-5 shadow-[0_12px_32px_rgba(11,20,32,0.18)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id={titleId} className="text-[1.0625rem] font-semibold text-ink">
+              {t('removeConfirmTitle', { name: person.full_name })}
+            </h2>
+            <p id={bodyId} className="mt-2 text-[0.9375rem] text-ink-soft">
+              {t('removeConfirmBody')}
+            </p>
+
+            <form action={formAction} className="mt-5 flex gap-3">
+              <input type="hidden" name="id" value={person.id} />
+              <input type="hidden" name="active" value="false" />
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="ir-btn-quiet !w-auto flex-1"
+              >
+                {tc('cancel')}
+              </button>
+              <div className="flex-1">
+                <SubmitButton
+                  label={ready ? t('removeConfirm') : t('removeConfirmWait', { seconds: secondsLeft })}
+                  variant="quiet"
+                  disabled={!ready}
+                />
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/**
+ * The other direction, and deliberately plain. Giving somebody their access
+ * back takes nothing away and undoes nothing, so it gets no dialog, no delay
+ * and no warning — the ceremony above exists because of what deactivating
+ * costs, not because the toggle is important.
+ */
+export function RestoreAccessForm({
+  person,
+}: {
+  person: { id: string }
 }) {
   const t = useTranslations('admin.users')
   const [state, formAction] = useActionState<UserFormState, FormData>(setActive, undefined)
@@ -267,30 +392,25 @@ export function ActiveForm({
     <form action={formAction} className="flex flex-col gap-3">
       <Notice state={state} />
       <input type="hidden" name="id" value={person.id} />
-      <input type="hidden" name="active" value={person.active ? 'false' : 'true'} />
-      <p className="text-[0.9375rem] text-ink-soft">{t('accessHint')}</p>
-      <SubmitButton
-        label={person.active ? t('deactivate') : t('reactivate')}
-        variant="quiet"
-      />
+      <input type="hidden" name="active" value="true" />
+      <p className="text-[0.9375rem] text-ink-soft">{t('restoreHint')}</p>
+      <SubmitButton label={t('reactivate')} variant="quiet" />
     </form>
   )
 }
 
-export function ReissuePasswordForm({
+export function ReissuePinForm({
   person,
 }: {
   person: { id: string; full_name: string }
 }) {
   const t = useTranslations('admin.users')
-  const [state, formAction] = useActionState<UserFormState, FormData>(reissuePassword, undefined)
+  const [state, formAction] = useActionState<UserFormState, FormData>(reissuePin, undefined)
 
   return (
     <form action={formAction} className="flex flex-col gap-3">
       <Notice state={state} />
-      {state?.password ? (
-        <PasswordPanel password={state.password} name={person.full_name} />
-      ) : null}
+      {state?.pin ? <PinPanel pin={state.pin} name={person.full_name} /> : null}
       <input type="hidden" name="id" value={person.id} />
       <p className="text-[0.9375rem] text-ink-soft">{t('reissueHint')}</p>
       <SubmitButton label={t('reissue')} variant="quiet" />

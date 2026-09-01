@@ -115,13 +115,13 @@ Run this before the first rep of the new season needs to sign in.
 3. **Re-activate returning reps, create new ones.** Admin → Users. A
    returning rep gets `active = true` again — existing row, same history. A
    genuinely new rep goes through the normal `createRepAccount` flow
-   (temp password shown once, handed over in person per
+   (PIN shown once, handed over in person per
    `src/lib/users/accounts.ts`).
-4. **Reissue temp passwords for every returning rep**, don't reuse whatever
-   they had in October. `resetRepPassword()` already exists for this — it's
-   the same action used when a rep loses their password, just applied to
-   everyone coming back. Cheap, and it means a password that's been sitting
-   unused and unrotated for 6 months is never the one still open.
+4. **Reissue a PIN for every returning rep**, don't reuse whatever they had in
+   October. "Issue a new PIN" on the person's page (`reissueRepPin()`) already
+   exists for this — it's the same action used when a rep loses their PIN, just
+   applied to everyone coming back. Cheap, and it means a credential that's been
+   sitting unused and unrotated for 6 months is never the one still open.
 5. **Confirm hotel assignments still match reality** (`hotel_reps`) — hotels
    change reps between seasons more often than the schema changes.
 6. **Set up this year's pricing periods** in `admin/pricing` before the first
@@ -142,7 +142,7 @@ Run this before the first rep of the new season needs to sign in.
 ## Scope note
 
 This is deliberately a checklist, not a feature. Nothing above needed new
-code — `profiles.active`, `resetRepPassword()`, the retention purge, and
+code — `profiles.active`, `reissueRepPin()`, the retention purge, and
 `admin/pricing`'s per-`season_year` model already do everything this routine
 asks of them. If a future off-season surfaces a real gap (e.g. re-activating
 12 reps one row at a time turns out to be too slow to bother doing), that's a

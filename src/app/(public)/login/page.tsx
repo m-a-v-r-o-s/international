@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { HeritageSlideshow } from '@/components/HeritageSlideshow'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
-import { CodeForm, PasswordForm } from './LoginForm'
+import { CodeForm, CredentialForm } from './LoginForm'
 
 const HERITAGE_IMAGES = [
   { src: '/heritage-shopfront.webp', alt: '', width: 480, height: 443 },
@@ -64,7 +64,7 @@ export default async function LoginPage({
           surface below it untouched. */}
       <div className="ir-card overflow-hidden">
         <HeritageSlideshow images={HERITAGE_IMAGES} decorative />
-        <div className="p-5">{manager ? <CodeForm /> : <PasswordForm />}</div>
+        <div className="p-5">{manager ? <CodeForm /> : <CredentialForm />}</div>
       </div>
 
       <LanguageSwitcher />

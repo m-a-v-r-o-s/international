@@ -6,8 +6,8 @@ import { requireAdmin } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
 import { loadStaffWithHotels } from '@/lib/users/load'
 import {
-  ActiveForm, CoverForm, HomeHotelForm, ReissuePasswordForm, RemoveCoverForm, RoleForm,
-  StaffDetailsForm,
+  CoverForm, HomeHotelForm, ReissuePinForm, RemoveAccessForm, RemoveCoverForm, RestoreAccessForm,
+  RoleForm, StaffDetailsForm,
 } from '../StaffForms'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -155,9 +155,24 @@ export default async function AdminUserPage({
             <h2 id="access-heading" className="text-[1.0625rem] font-semibold">
               {t('accessTitle')}
             </h2>
-            <ReissuePasswordForm person={{ id: person.id, full_name: person.full_name }} />
-            <hr className="border-line" />
-            <ActiveForm person={{ id: person.id, active: person.active }} />
+            {/* Only a rep has a PIN. The boss signs in with a one-time code
+                and has none by design (§21), so there is nothing here to
+                re-issue for an admin row — and reissueRepPin() refuses one
+                anyway rather than trusting this to be the only guard. */}
+            {person.role === 'rep' ? (
+              <>
+                <ReissuePinForm person={{ id: person.id, full_name: person.full_name }} />
+                <hr className="border-line" />
+              </>
+            ) : null}
+
+            {person.active ? (
+              <RemoveAccessForm
+                person={{ id: person.id, full_name: person.full_name || person.email || '' }}
+              />
+            ) : (
+              <RestoreAccessForm person={{ id: person.id }} />
+            )}
           </section>
         </>
       )}

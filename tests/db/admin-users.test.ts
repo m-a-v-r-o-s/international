@@ -250,14 +250,20 @@ describe('the PIN belongs to the rep whose device it unlocks', () => {
     expect(after.pin_hash).toBe('argon2-the-rep-set-this')
   })
 
-  test('a rep sets their own, and the server still can through set_pin_hash()', async () => {
+  test('a rep cannot set their own PIN directly — only set_pin_hash() through the service role can', async () => {
+    // A baseline, planted the only way anyone can plant one: through the RPC.
+    await db.as({ kind: 'service' }, () => db.sql(
+      `select public.set_pin_hash($1, 'baseline')`, [f.repB]))
+
+    // 0027 closed the raw-PostgREST gap: the guard restores pin_hash whenever
+    // auth.uid() is not null, so the rep's own direct write is a no-op.
     await db.asUser(f.repB, () => db.sql(
       `update public.profiles set pin_hash = 'mine' where id = $1`, [f.repB]))
     expect((await db.one<{ pin_hash: string }>(
-      `select pin_hash from public.profiles where id = $1`, [f.repB])).pin_hash).toBe('mine')
+      `select pin_hash from public.profiles where id = $1`, [f.repB])).pin_hash).toBe('baseline')
 
-    // The unlock screen hashes in Node and stores through this RPC on the
-    // service role, where auth.uid() is null and the guard steps aside.
+    // The unlock/reissue path hashes in Node and stores through this RPC on
+    // the service role, where auth.uid() is null and the guard steps aside.
     await db.as({ kind: 'service' }, () => db.sql(
       `select public.set_pin_hash($1, 'set-by-the-server')`, [f.repB]))
     expect((await db.one<{ pin_hash: string }>(

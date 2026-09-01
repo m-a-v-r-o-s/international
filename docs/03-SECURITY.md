@@ -73,8 +73,10 @@ range). Client validation is UX only. All user text escaped on output; nothing r
 raw HTML. Every query parameterised. Upload endpoints: whitelist image MIME types by
 sniffing content, cap size, store in a bucket with its own policy.
 
-**Auth & sessions** — admin OTP; rep password (argon2id) + device PIN (argon2id, separate
-hash). Sessions reset on password change. Reset links expire in 15 minutes and are rate
+**Auth & sessions** — admin OTP; rep PIN (argon2id), which since §32 is both the sign-in
+credential and the device unlock, issued and re-issued by the boss alone. A re-issue rotates
+the account's GoTrue password with it, so nothing older keeps working. Reset links for the
+admin's own path expire in 15 minutes and are rate
 limited. Account lockout after repeated failures. **No user enumeration** — login and reset
 give the same response whether or not the email exists. Cookies `HttpOnly` / `Secure` /
 `SameSite=Lax`. CSRF tokens on every state-changing request.

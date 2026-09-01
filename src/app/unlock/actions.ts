@@ -6,8 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 import { allow, logSecurityEvent } from '@/lib/rate-limit'
 import { hashPin, isWellFormedPin, verifyPin, PIN_MAX, PIN_MIN } from '@/lib/auth/pin'
 import { requireStaff } from '@/lib/auth/session'
-import { requestIpHash, writeGate } from '@/lib/auth/signin'
-import { UNLOCK_TTL_SECONDS } from '@/lib/auth/gate'
+import { openUnlockWindow, requestIpHash } from '@/lib/auth/signin'
 
 export type UnlockState = {
   error?: 'wrong' | 'rateLimited' | 'tooShort' | 'mismatch' | 'digitsOnly' | 'unknown'
@@ -16,11 +15,13 @@ export type UnlockState = {
 const pinSchema = z.string().trim().max(32)
 
 /**
- * First use only: the rep chooses the PIN they will reopen the app with.
+ * The fallback, not a step: since §32 the boss issues the PIN when he creates
+ * the account, so a rep reaches this only if their `pin_hash` is somehow null.
+ *
  * Refuses once a PIN already exists — only the boss reissues one after that
- * (docs/01-DECISIONS.md §21 update), so this cannot become a rep's own
- * self-service "change PIN" if called directly instead of through the UI,
- * which never renders SetPinForm once staff.hasPin is true.
+ * (docs/01-DECISIONS.md §32) — so this cannot become a rep's own self-service
+ * "change PIN" if called directly instead of through the UI, which never
+ * renders SetPinForm once staff.hasPin is true.
  */
 export async function setPin(_prev: UnlockState, formData: FormData): Promise<UnlockState> {
   const staff = await requireStaff()
@@ -41,7 +42,7 @@ export async function setPin(_prev: UnlockState, formData: FormData): Promise<Un
   if (error) return { error: 'unknown' }
 
   await logSecurityEvent({ kind: 'pin_set', profileId: staff.id, ipHash: await requestIpHash() })
-  await unlockFor(staff.id, staff.role)
+  await openUnlockWindow(staff.id, staff.role)
   redirect('/')
 }
 
@@ -69,14 +70,6 @@ export async function unlock(_prev: UnlockState, formData: FormData): Promise<Un
     return { error: 'wrong' }
   }
 
-  await unlockFor(staff.id, staff.role)
+  await openUnlockWindow(staff.id, staff.role)
   redirect('/')
-}
-
-async function unlockFor(id: string, role: 'admin' | 'rep'): Promise<void> {
-  await writeGate({
-    sub: id,
-    role,
-    unlockedUntil: Math.floor(Date.now() / 1000) + UNLOCK_TTL_SECONDS,
-  })
 }

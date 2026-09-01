@@ -75,12 +75,19 @@ describe('who gets told what', () => {
     expect(await targets('exceptions')).toHaveLength(0)
   })
 
-  test('turning a kind off removes that person from that query and no other', async () => {
+  test('a rep cannot opt out of morning or evening — 0027 clamps both regardless of who writes', async () => {
     await subscribe(f.repA, 'https://push.example/a')
+
+    // The rep's own write is silently reverted...
     await db.asUser(f.repA, () => db.sql(
       `update public.profiles set notify_morning = false where id = $1`, [f.repA]))
+    expect((await targets('morning')).map((r) => r.profile_id)).toEqual([f.repA])
 
-    expect(await targets('morning')).toHaveLength(0)
+    // ...and so is the server's, on their behalf: for a 'rep' row the clamp in
+    // app.profiles_before_write() does not check auth.uid() at all. There is
+    // no writer left, direct or server, that can turn either kind off.
+    await db.as({ kind: 'service' }, () => db.sql(
+      `update public.profiles set notify_evening = false where id = $1`, [f.repA]))
     expect((await targets('evening')).map((r) => r.profile_id)).toEqual([f.repA])
   })
 

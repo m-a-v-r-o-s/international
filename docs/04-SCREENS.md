@@ -133,8 +133,10 @@ Revenue by day / month / rep / category. Booking counts. Simple fleet utilisatio
 CSV export for any date range. Kept deliberately plain.
 
 ### A8 · Users & hotels
-Create reps, assign hotels (primary and cover), deactivate — never delete, so history stays
-intact. Manage hotels.
+Create reps, assign hotels (primary and cover), issue and re-issue a rep's PIN (§32 — it is
+their whole credential, shown once and never recoverable), and remove an account. "Remove"
+is deactivation under a name the boss recognises — never a delete, so history stays intact —
+behind a confirm dialog that says so, and it is reversible from the same page. Manage hotels.
 
 ### A9 · Audit log
 Filterable by actor, entity and date. Read-only. Permanent.

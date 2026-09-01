@@ -9,7 +9,8 @@ import { isProduction } from '../env'
 import { serverEnv } from '../env'
 import { LOCALE_COOKIE, isLocale } from '@/i18n/locale'
 import {
-  ADMIN_GATE_TTL_SECONDS, DEVICE_COOKIE, GATE_COOKIE, newDeviceId, signGate, type Gate,
+  ADMIN_GATE_TTL_SECONDS, DEVICE_COOKIE, GATE_COOKIE, UNLOCK_TTL_SECONDS, newDeviceId, signGate,
+  type Gate,
 } from './gate'
 
 /** The caller's IP, hashed — for rate limiting and the security log, not for storage. */
@@ -99,6 +100,79 @@ export async function establishSession(profileId: string): Promise<{
   })
 
   return { role: profile.role, hasPin: typeof profile.pin_hash === 'string', active: true }
+}
+
+/**
+ * Opens the shift-length unlock window on the gate cookie.
+ *
+ * It lives here rather than in src/app/unlock/actions.ts, where it was a
+ * private helper, because two callers now need it: the unlock screen after a
+ * PIN is typed, and the login screen after a PIN is typed there instead
+ * (docs/01-DECISIONS.md §32). It could NOT simply be exported from that file —
+ * every export of a 'use server' module is a callable endpoint, and an endpoint
+ * taking an id and a role as arguments is an endpoint that unlocks anybody.
+ */
+export async function openUnlockWindow(id: string, role: 'admin' | 'rep'): Promise<void> {
+  await writeGate({
+    sub: id,
+    role,
+    unlockedUntil: Math.floor(Date.now() / 1000) + UNLOCK_TTL_SECONDS,
+  })
+}
+
+/**
+ * A real Supabase Auth session for somebody the SERVER has already
+ * authenticated — the rep whose PIN was just verified against the argon2 hash.
+ *
+ * WHY THIS IS NEEDED AT ALL, because it is the least obvious part of §32. The
+ * gate cookie is not a session and never was (src/lib/auth/gate.ts says so
+ * itself): currentStaff() calls supabase.auth.getUser() through the caller's
+ * OWN cookies and then queries `profiles` through that same session, so RLS can
+ * see who is asking. On the password path it is signInWithPassword() — running
+ * on the request-scoped client — that sets those cookies as a side effect. The
+ * PIN path calls no supabase.auth.* sign-in method whatsoever, so without this
+ * a rep would leave the login screen holding a valid gate cookie, a bound
+ * device, and no session: getUser() returns null, requireStaff() redirects
+ * straight back to /login, and the loop never breaks.
+ *
+ * So the credential is minted rather than presented. generateLink() is the
+ * GoTrue Admin API's "make me a verification token for this user without
+ * sending any email" — which is also the only shape that works here, since
+ * email delivery does not exist on this project at all (client item 8). The
+ * hashed_token it returns is then redeemed on the request-scoped client, and
+ * THAT call writes the session cookies exactly as any other sign-in would.
+ *
+ * Two things keep this from being a way in:
+ *
+ *   · It is unreachable without the service-role key, and it is called from
+ *     exactly one place — after verifyPin() has returned true against a hash
+ *     only the service role can read.
+ *   · The token is redeemed in the same request it was issued in, so it never
+ *     travels, is never displayed, and is spent before it could be replayed.
+ *
+ * `type: 'magiclink'` on both halves is not interchangeable with the OTP path's
+ * `type: 'email'` — it has to be the verification type the link was generated
+ * as, and generateLink({ type: 'magiclink' }) issues a magiclink token.
+ */
+export async function mintSessionForEmail(
+  email: string,
+): Promise<{ userId: string } | null> {
+  const { data: link, error: linkError } = await supabaseAdmin().auth.admin.generateLink({
+    type: 'magiclink',
+    email,
+  })
+
+  const hashedToken = link?.properties?.hashed_token
+  if (linkError || !hashedToken) return null
+
+  const supabase = await supabaseServer()
+  const { data, error } = await supabase.auth.verifyOtp({
+    type: 'magiclink',
+    token_hash: hashedToken,
+  })
+
+  if (error || !data.user) return null
+  return { userId: data.user.id }
 }
 
 export async function writeGate(gate: Gate): Promise<void> {
