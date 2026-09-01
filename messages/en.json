@@ -142,6 +142,9 @@
     "lastName": "Last name",
     "phone": "Phone",
     "dob": "Date of birth",
+    "email": "Email",
+    "emailHint": "Checked before the booking can be confirmed — the confirmation with pickup time, cost and licence requirements goes here.",
+    "emailWaivedHint": "Not required on an exception booking. No confirmation email goes out until the manager approves it and the address is added.",
     "extrasTitle": "Extras",
     "extrasHint": "Free of charge. Lets the rep know what to have ready at pickup.",
     "seat": {
@@ -156,8 +159,13 @@
     "pickupTime": "Pick-up time",
     "dropoffTime": "Drop-off time",
     "windowHint": "Usually {from}–{to}",
+    "pickupWindowLocked": "Pick-ups are {from}–{to}. For anything outside that, use the exception below.",
+    "exceptionBooking": "Exception booking — pick-up outside the usual window",
+    "exceptionReasonLabel": "Reason for the exception",
+    "exceptionApprovalHint": "An exception booking is not live until the manager approves it: the car is held, but it will not appear on Today, the movements sheet or pickup until then. Nothing else on this form is required when this box is ticked.",
     "phoneHint": "With the country code where you have it — +30 for a Greek number. A number we already know fills the guest in.",
-    "returningGuest": "We have rented to this number before ({name}). The fields below were filled in from that rental — check them with the guest and correct anything that has changed."
+    "returningGuest": "We have rented to this number before ({name}). The fields below were filled in from that rental — check them with the guest and correct anything that has changed.",
+    "nameOptional": "Optional. If the guest gave a name, it saves writing it on the day sheet — either way it is filled in properly at pickup."
   },
   "quickBooking": {
     "title": "Booking confirmation",
@@ -188,6 +196,7 @@
     },
     "editTitle": "Edit",
     "saved": "Saved.",
+    "pendingApproval": "Awaiting the manager's approval — the car is held, but this booking will not appear on Today or the movements sheet, and cannot be picked up, until then.",
     "cancelTitle": "Cancel this booking",
     "cancelAction": "Cancel booking",
     "cancelConfirm": "Cancel this booking? The guest will need a new booking if they still want the car.",
@@ -359,6 +368,7 @@
     "confirmPrompt": "Hand the car over now?",
     "alreadyOut": "This car has already been handed over.",
     "notPickable": "This booking is not open for pickup.",
+    "awaitingApproval": "This is an exception booking and is waiting on the manager's approval. It cannot be picked up until they approve it.",
     "licenceCaptureTitle": "Licence photos",
     "licenceCaptureIntro": "Photograph the licence and the app will fill in what it can read. Check every field afterwards — it is often wrong on a worn card.",
     "licenceFront": "Front of the licence",
@@ -440,6 +450,7 @@
       "pricing": "Pricing",
       "bookings": "Bookings",
       "exceptions": "Exceptions",
+      "exceptionBookings": "Exception bookings",
       "cash": "Cash",
       "settings": "Settings",
       "users": "Staff",
@@ -659,6 +670,21 @@
       "updateAction": "Update this item",
       "saved": "Saved."
     },
+    "exceptionBookings": {
+      "title": "Exception bookings",
+      "subtitle": "Bookings a rep flagged as an exception — an out-of-window pick-up, or one made without a checked email. The car is already held; nothing else about the booking happens until you approve or deny it here.",
+      "empty": "Nothing waiting.",
+      "guest": "Guest",
+      "car": "Car",
+      "hotelRoom": "Hotel & room",
+      "pickup": "Pick-up",
+      "reason": "Reason given",
+      "approve": "Approve",
+      "deny": "Deny",
+      "denyConfirm": "Deny this booking? It is cancelled immediately and the car becomes free for those dates again.",
+      "approved": "Approved.",
+      "denied": "Denied and cancelled."
+    },
     "cash": {
       "title": "Cash",
       "subtitle": "What every rep has handed over and you have not confirmed yet. Confirming is what clears it from their own screen — nothing else does.",
@@ -820,6 +846,7 @@
     "IR120": "A driver on this booking does not meet the rules. The manager can override it.",
     "IR121": "Add the driver and their licence before starting the pickup.",
     "IR114": "There is no cash to hand over right now.",
+    "IR116": "Pick-up is outside the manager's window. Tick \"exception booking\" and give a reason to book it anyway.",
     "fileType": "That file is not a photo the app can read. Take the photo again, or choose a JPEG or PNG.",
     "fileTooLarge": "That photo is too large. Take it again at a smaller size.",
     "rateLimited": "Too many attempts just now. Wait a moment, then try again.",
@@ -832,7 +859,10 @@
     "IR115": "That is already the rep’s home hotel.",
     "emailInUse": "A staff account already uses that email address.",
     "accountFailed": "The account could not be created. Nothing was saved — try again.",
-    "IR122": "Too many customer lookups in a short time. Type the details in by hand and try the lookup again later."
+    "IR122": "Too many customer lookups in a short time. Type the details in by hand and try the lookup again later.",
+    "IR123": "This is an exception booking and the manager has not approved it yet. It cannot be picked up until they do.",
+    "emailInvalid": "That does not look like a real email address.",
+    "emailUndeliverable": "That email's domain cannot receive mail — check it for a typo, or tick \"exception booking\" and give a reason to book without it."
   },
   "eligibility": {
     "title": "Eligibility",
@@ -954,6 +984,7 @@
     "termsIntro": "Paste the terms from your paper rental agreement, in both languages. They are printed on the agreement exactly as typed here — the app does not reword, shorten or translate them.",
     "termsEl": "Terms — Greek",
     "termsEn": "Terms — English",
+    "termsDe": "Terms — German",
     "termsHint": "Plain text. Blank lines separate paragraphs.",
     "saved": "Saved.",
     "field": {
@@ -966,7 +997,7 @@
       "terms_en": "Terms — English"
     },
     "windowsTitle": "Pick-up and drop-off windows",
-    "windowsHint": "The hours a new booking is pre-filled with. They are defaults, not rules — a rep can set any time, and a time outside these hours is recorded on the booking as an override.",
+    "windowsHint": "Pick-up is enforced: a rep can only book within these hours unless the booking is flagged as an exception with a reason. Drop-off stays a default — a rep can set any time, and a time outside these hours is recorded on the booking as an override.",
     "pickupWindow": "Pick-ups",
     "dropoffWindow": "Drop-offs",
     "windowFrom": "From",
@@ -986,7 +1017,6 @@
     "purgeNothingDue": "Nothing is due for deletion. The scheduled job runs on its own; this button is only for running it early.",
     "purgeDone": "Deleted {images, plural, one {# licence photo} other {# licence photos}} across {bookings, plural, one {# booking} other {# bookings}}.",
     "purgeRefused": "{n, plural, one {# file was skipped because its name did not look like a licence photo} other {# files were skipped because their names did not look like licence photos}}. Report this.",
-    "ledgerMoved": "The digital customer ledger now has a screen of its own. Its records have no expiry date at all — read that beside the licence retention window above, because the two behave completely differently.",
     "dangerZoneTitle": "Danger zone"
   },
   "contractStep": {

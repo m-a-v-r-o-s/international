@@ -252,6 +252,22 @@ export function ContractDocument({ data, labels }: { data: ContractData; labels:
           </Text>
         </View>
 
+        {/*
+          German terms are supplementary, not part of the required bilingual
+          agreement (contractReadiness() never checks terms_de) — so unlike
+          the two blocks above, this prints only when the boss has actually
+          pasted something in, with no "pending" placeholder for an empty one.
+          The heading is the literal word "Deutsch" rather than routed through
+          Bilingual/both(), which is hard-coded to an EL/EN pair throughout
+          labels.ts.
+        */}
+        {data.company.terms_de ? (
+          <View style={styles.section} break={false}>
+            <Text style={styles.sectionTitle}>Deutsch</Text>
+            <Text style={styles.terms}>{data.company.terms_de}</Text>
+          </View>
+        ) : null}
+
         <Footer labels={labels} />
       </Page>
     </Document>

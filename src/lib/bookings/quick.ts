@@ -55,8 +55,20 @@ export const quickBookingSchema = z.object({
   cust_phone: z.string().trim().min(4).max(32),
   cust_first: optionalText(80),
   cust_last: optionalText(80),
+  // Required so the confirmation (pickup time, cost, licence requirements)
+  // always has somewhere to go — UNLESS this is an exception booking, in
+  // which case nothing on the form is mandatory (docs/01-DECISIONS.md,
+  // "Exception bookings wait for the boss"). Format and MX-record checking
+  // happen in the action, not here — this schema only shapes the field.
+  cust_email: optionalText(254),
   pickup_time: time,
   dropoff_time: time,
+  // The exception path (docs/01-DECISIONS.md §5): checking the box is the
+  // rep's claim, but the actual gate is app.bookings_enforce_pickup_window()
+  // — an unflagged out-of-window pick-up is refused by the database
+  // regardless of what this schema lets through.
+  pickup_exception: z.boolean().optional().default(false),
+  pickup_exception_reason: optionalText(300),
   seats: z.array(z.enum(SEAT_TYPES)).optional().default([]),
   next: z.enum(QUICK_BOOKING_NEXT).optional().default('detail'),
 }).refine((v) => v.end_date >= v.start_date, { path: ['end_date'] })
@@ -81,8 +93,11 @@ export function parseQuickBooking(formData: FormData):
     cust_phone: formData.get('cust_phone'),
     cust_first: formData.get('cust_first') || undefined,
     cust_last: formData.get('cust_last') || undefined,
+    cust_email: formData.get('cust_email') || undefined,
     pickup_time: formData.get('pickup_time') || undefined,
     dropoff_time: formData.get('dropoff_time') || undefined,
+    pickup_exception: formData.get('pickup_exception') === 'on',
+    pickup_exception_reason: formData.get('pickup_exception_reason') || undefined,
     seats: formData.getAll('seat'),
     next: formData.get('next') || undefined,
   })

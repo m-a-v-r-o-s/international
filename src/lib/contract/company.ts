@@ -31,6 +31,13 @@ export const companySchema = z.object({
   /** The agreement's terms, verbatim, in each language. Rendered as typed. */
   terms_el: z.string().trim().max(20_000).default(''),
   terms_en: z.string().trim().max(20_000).default(''),
+  /**
+   * An optional third, German-language terms block. Unlike terms_el/terms_en
+   * it is not part of the required bilingual agreement (§16/§24) — it prints
+   * as a supplementary page only when the boss has actually pasted something
+   * in, and its absence never blocks contractReadiness() below.
+   */
+  terms_de: z.string().trim().max(20_000).default(''),
 })
 
 export type Company = z.infer<typeof companySchema>

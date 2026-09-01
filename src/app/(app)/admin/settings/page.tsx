@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { getTranslations, getFormatter } from 'next-intl/server'
 import { requireAdmin } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
@@ -40,6 +39,8 @@ export async function generateMetadata(): Promise<Metadata> {
  * A11 Customers. It is the one irreversible, whole-table action in the admin
  * area, so it gets its own red-accented section below every other control on
  * the page rather than sitting on the ledger screen a rep might also open.
+ * The ledger's own screen lives at /admin/customers; there is no pointer to
+ * it here any more, only this danger-zone action.
  */
 export default async function AdminSettingsPage() {
   await requireAdmin()
@@ -154,25 +155,6 @@ export default async function AdminSettingsPage() {
             <PurgeForm dueCount={status.due_count} />
           </>
         ) : null}
-      </section>
-
-      {/*
-        Ψηφιακό πελατολόγιο (docs/01-DECISIONS.md §25a) moved to its own screen
-        in §30. What stays here is the pointer, and it stays for the reason the
-        section was put here in the first place: these are the two stores of
-        guest personal data this system holds, one with a window that empties
-        itself and one with neither, and the boss should not be able to read
-        about the first without being told the second exists.
-      */}
-      <section className="ir-card flex flex-col gap-3 p-4" aria-labelledby="ledger-heading">
-        <h2 id="ledger-heading" className="text-[1.0625rem] font-semibold">
-          {tl('title')}
-        </h2>
-        <p className="text-[0.9375rem] text-ink-soft">{t('ledgerMoved')}</p>
-        <p className="ir-notice border-warn bg-warn-tint text-warn">{tl('noWindow')}</p>
-        <Link href="/admin/customers" className="ir-btn-quiet sm:!w-auto sm:self-start">
-          {tl('title')}
-        </Link>
       </section>
 
       <section

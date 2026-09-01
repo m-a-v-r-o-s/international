@@ -50,6 +50,7 @@ export function QuickBookingForm({
   const [start, setStart] = useState(defaultFrom ?? '')
   const [end, setEnd] = useState(defaultTo ?? '')
   const [seats, setSeats] = useState<Set<typeof SEAT_TYPES[number]>>(new Set())
+  const [pickupException, setPickupException] = useState(false)
 
   const selectedCar = cars.find((c) => c.id === carId) ?? null
   const validDates = Boolean(start && end && end >= start)
@@ -147,6 +148,13 @@ export function QuickBookingForm({
           />
         </div>
         <p className="ir-hint mt-1">{t('nameOptional')}</p>
+        <div className="mt-3">
+          <Field
+            id="cust_email" name="cust_email" type="email" label={tn('email')} maxLength={254}
+            required={!pickupException}
+            hint={pickupException ? tn('emailWaivedHint') : tn('emailHint')}
+          />
+        </div>
       </section>
 
       <section className="ir-card p-4">
@@ -201,7 +209,8 @@ export function QuickBookingForm({
           visible rather than posted invisibly. A phone booking that recorded
           nothing would sort as a blank on the boss's morning sheet, and a
           hidden field that silently sets data is worse than a shown one the
-          rep can correct.
+          rep can correct. Pick-up is bounded to the window unless flagged as
+          an exception (same rule as R3's NewBookingForm); drop-off stays free.
         */}
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div>
@@ -210,9 +219,13 @@ export function QuickBookingForm({
               id="pickup_time" name="pickup_time" type="time" className="ir-field"
               defaultValue={pickupTimeDefault ?? windows.pickupFrom}
               aria-describedby="pickup_time_hint"
+              min={pickupException ? undefined : windows.pickupFrom}
+              max={pickupException ? undefined : windows.pickupTo}
             />
             <p className="ir-hint" id="pickup_time_hint">
-              {tn('windowHint', { from: windows.pickupFrom, to: windows.pickupTo })}
+              {pickupException
+                ? tn('exceptionBooking')
+                : tn('pickupWindowLocked', { from: windows.pickupFrom, to: windows.pickupTo })}
             </p>
           </div>
           <div>
@@ -225,6 +238,29 @@ export function QuickBookingForm({
               {tn('windowHint', { from: windows.dropoffFrom, to: windows.dropoffTo })}
             </p>
           </div>
+        </div>
+
+        <div className="mt-3">
+          <label className="flex min-h-11 items-center gap-2.5 text-[1.0625rem] text-ink">
+            <input
+              type="checkbox" name="pickup_exception" checked={pickupException}
+              onChange={(e) => setPickupException(e.target.checked)}
+              className="size-5 rounded border-control"
+            />
+            {tn('exceptionBooking')}
+          </label>
+          {pickupException ? (
+            <div className="mt-2">
+              <label className="ir-label" htmlFor="pickup_exception_reason">
+                {tn('exceptionReasonLabel')}
+              </label>
+              <input
+                id="pickup_exception_reason" name="pickup_exception_reason"
+                type="text" className="ir-field" maxLength={300} required
+              />
+              <p className="ir-hint mt-2">{tn('exceptionApprovalHint')}</p>
+            </div>
+          ) : null}
         </div>
         {!validDates && start && end ? (
           <p className="ir-error mt-2" role="alert">

@@ -32,6 +32,7 @@ export function NewBookingForm({
   const [start, setStart] = useState(defaultFrom ?? '')
   const [end, setEnd] = useState(defaultTo ?? '')
   const [seats, setSeats] = useState<Set<typeof SEAT_TYPES[number]>>(new Set())
+  const [pickupException, setPickupException] = useState(false)
 
   const selectedCar = cars.find((c) => c.id === carId) ?? null
 
@@ -123,13 +124,11 @@ export function NewBookingForm({
         </div>
         {/*
           * docs/04-SCREENS.md R3 step 1: "pickup time (default 08:30-11:30),
-          * drop-off time (default 18:00-21:00)". The window is a HINT and the
-          * input is a plain time field, because §5 says the windows are
-          * defaults and are overridable — a <select> of allowed slots would
-          * make them a rule, which they are not. Whether the chosen time falls
-          * outside is not decided here either: the database derives
-          * `window_override` from these two values and the admin's settings,
-          * so a rep cannot record a 03:00 pick-up as an ordinary one.
+          * drop-off time (default 18:00-21:00)". §5: pick-up is now ENFORCED
+          * — the input is bounded to the admin's window unless the rep flags
+          * this as an exception booking, in which case the bound lifts and a
+          * reason is required. Drop-off is untouched: still a plain field, no
+          * bound, the database only records whether it fell outside (§5).
           */}
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div>
@@ -137,9 +136,13 @@ export function NewBookingForm({
             <input
               id="pickup_time" name="pickup_time" type="time" className="ir-field"
               defaultValue={windows.pickupFrom} aria-describedby="pickup_time_hint"
+              min={pickupException ? undefined : windows.pickupFrom}
+              max={pickupException ? undefined : windows.pickupTo}
             />
             <p className="ir-hint" id="pickup_time_hint">
-              {t('windowHint', { from: windows.pickupFrom, to: windows.pickupTo })}
+              {pickupException
+                ? t('exceptionBooking')
+                : t('pickupWindowLocked', { from: windows.pickupFrom, to: windows.pickupTo })}
             </p>
           </div>
           <div>
@@ -152,6 +155,29 @@ export function NewBookingForm({
               {t('windowHint', { from: windows.dropoffFrom, to: windows.dropoffTo })}
             </p>
           </div>
+        </div>
+
+        <div className="mt-3">
+          <label className="flex min-h-11 items-center gap-2.5 text-[1.0625rem] text-ink">
+            <input
+              type="checkbox" name="pickup_exception" checked={pickupException}
+              onChange={(e) => setPickupException(e.target.checked)}
+              className="size-5 rounded border-control"
+            />
+            {t('exceptionBooking')}
+          </label>
+          {pickupException ? (
+            <div className="mt-2">
+              <label className="ir-label" htmlFor="pickup_exception_reason">
+                {t('exceptionReasonLabel')}
+              </label>
+              <input
+                id="pickup_exception_reason" name="pickup_exception_reason"
+                type="text" className="ir-field" maxLength={300} required
+              />
+              <p className="ir-hint mt-2">{t('exceptionApprovalHint')}</p>
+            </div>
+          ) : null}
         </div>
         {!validDates && start && end ? (
           <p className="ir-error mt-2" role="alert">
@@ -230,18 +256,26 @@ export function NewBookingForm({
 
         <div className="grid grid-cols-2 gap-3">
           <Field
-            id="cust_first" name="cust_first" label={t('firstName')} required maxLength={80}
+            id="cust_first" name="cust_first" label={t('firstName')} maxLength={80}
             value={first} onChange={(e) => setFirst(e.target.value)}
           />
           <Field
-            id="cust_last" name="cust_last" label={t('lastName')} required maxLength={80}
+            id="cust_last" name="cust_last" label={t('lastName')} maxLength={80}
             value={last} onChange={(e) => setLast(e.target.value)}
           />
         </div>
+        <p className="ir-hint mt-1">{t('nameOptional')}</p>
         <div className="mt-3">
           <Field
             id="cust_dob" name="cust_dob" type="date" label={t('dob')} required
             value={dob} onChange={(e) => setDob(e.target.value)}
+          />
+        </div>
+        <div className="mt-3">
+          <Field
+            id="cust_email" name="cust_email" type="email" label={t('email')} maxLength={254}
+            required={!pickupException}
+            hint={pickupException ? t('emailWaivedHint') : t('emailHint')}
           />
         </div>
       </section>

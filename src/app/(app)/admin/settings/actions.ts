@@ -46,6 +46,7 @@ export async function saveCompanySettings(
     insurance_policy: formData.get('insurance_policy') ?? '',
     terms_el: formData.get('terms_el') ?? '',
     terms_en: formData.get('terms_en') ?? '',
+    terms_de: formData.get('terms_de') ?? '',
   })
   if (!parsed.success) return { error: 'IR104' }
 

@@ -42,7 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   )
 
   /**
-   * The admin's list is his eleven screens with the rep's appended under their
+   * The admin's list is his twelve screens with the rep's appended under their
    * own heading — additive, never a mode to be in the wrong one of
    * (docs/01-DECISIONS.md §30 decision 4). Before this the admin branch linked
    * to none of them, which is why "even the boss makes bookings sometimes" was
@@ -62,6 +62,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: '/admin/pricing', label: ta('nav.pricing') },
         { href: '/admin/bookings', label: ta('nav.bookings') },
         { href: '/admin/exceptions', label: ta('nav.exceptions') },
+        { href: '/admin/exception-bookings', label: ta('nav.exceptionBookings') },
+        { href: '/admin/cash', label: ta('nav.cash') },
         { href: '/admin/users', label: ta('nav.users') },
         { href: '/admin/hotels', label: ta('nav.hotels') },
         { href: '/admin/customers', label: ta('nav.customers') },

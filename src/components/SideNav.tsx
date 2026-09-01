@@ -9,7 +9,7 @@ export type NavItem = {
   label: string
   /**
    * Starts a new labelled group at this item. The admin's list is his own
-   * eleven screens followed by the rep screens he gained in §30, and running
+   * twelve screens followed by the rep screens he gained in §30, and running
    * the two together as one undifferentiated column would lose which is which
    * (docs/01-DECISIONS.md §30 decision 4).
    */
@@ -23,8 +23,8 @@ export type NavItem = {
  * the nav never decides who may see what, it only draws what it was handed.
  *
  * Only one of the two is ever in the accessibility tree: each is display:none
- * at the breakpoint the other owns, so a screen reader is not read eleven
- * links twice over.
+ * at the breakpoint the other owns, so a screen reader is not read the whole
+ * list twice over.
  */
 
 /**

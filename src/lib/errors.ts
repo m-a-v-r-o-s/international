@@ -11,14 +11,14 @@
  */
 const KNOWN_CODES = new Set([
   'IR001', 'IR100', 'IR101', 'IR102', 'IR103', 'IR104', 'IR105', 'IR106',
-  'IR107', 'IR108', 'IR109', 'IR110', 'IR111', 'IR112', 'IR113', 'IR114', 'IR115',
-  'IR120', 'IR121', 'IR122',
+  'IR107', 'IR108', 'IR109', 'IR110', 'IR111', 'IR112', 'IR113', 'IR114', 'IR115', 'IR116',
+  'IR120', 'IR121', 'IR122', 'IR123',
 ])
 
 export type ErrorKey =
   | 'IR001' | 'IR100' | 'IR101' | 'IR102' | 'IR103' | 'IR104' | 'IR105' | 'IR106'
-  | 'IR107' | 'IR108' | 'IR109' | 'IR110' | 'IR111' | 'IR112' | 'IR113' | 'IR114' | 'IR115'
-  | 'IR120' | 'IR121' | 'IR122'
+  | 'IR107' | 'IR108' | 'IR109' | 'IR110' | 'IR111' | 'IR112' | 'IR113' | 'IR114' | 'IR115' | 'IR116'
+  | 'IR120' | 'IR121' | 'IR122' | 'IR123'
   | 'forbidden' | 'conflict' | 'unknown' | 'inUse' | 'duplicate'
   // Raised by the app rather than by Postgres: a file the upload path refused
   // before it ever reached the bucket, and the caps around the OCR call.
@@ -26,6 +26,10 @@ export type ErrorKey =
   | 'companyMissing' | 'contractFailed' | 'signatureMissing'
   // A8: the GoTrue Admin API's own refusals, which never reach Postgres.
   | 'emailInUse' | 'accountFailed'
+  // The booking-time email check (docs/01-DECISIONS.md, "Exception bookings
+  // wait for the boss"): format and deliverability are both checked before a
+  // rep can finish an ordinary booking, and neither ever reaches Postgres.
+  | 'emailInvalid' | 'emailUndeliverable'
 
 /** The Postgres exclusion constraint on `bookings` — the double-booking guarantee. */
 const EXCLUSION_VIOLATION = '23P01'

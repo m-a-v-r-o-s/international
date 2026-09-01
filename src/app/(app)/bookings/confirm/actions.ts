@@ -7,6 +7,8 @@ import type { BookingInsert, Database } from '@/lib/supabase/database.types'
 import { errorKey, type ErrorKey } from '@/lib/errors'
 import { athensInstant } from '@/lib/dates'
 import { parseQuickBooking } from '@/lib/bookings/quick'
+import { verifyEmail } from '@/lib/email/validate'
+import { sendNewBookingConfirmation } from '@/lib/bookings/confirmation'
 
 export type QuickBookingState = { error?: ErrorKey } | undefined
 
@@ -36,6 +38,19 @@ export async function createQuickBooking(
   if (!parsed.ok) return { error: 'IR104' }
   const input = parsed.data
 
+  // Same gate as R3 (docs/01-DECISIONS.md, "Exception bookings wait for the
+  // boss"): required and checked on an ordinary call-in, waived entirely once
+  // the rep has ticked the exception box.
+  let email: string | null = null
+  if (!input.pickup_exception) {
+    if (!input.cust_email) return { error: 'emailInvalid' }
+    const check = await verifyEmail(input.cust_email)
+    if (!check.ok) return { error: check.reason }
+    email = check.email
+  } else if (input.cust_email) {
+    email = input.cust_email
+  }
+
   const supabase = await supabaseServer()
   const newBooking: BookingInsert = {
     car_id: input.car_id,
@@ -49,8 +64,11 @@ export async function createQuickBooking(
     cust_last: input.cust_last,
     cust_phone: input.cust_phone,
     cust_dob: null,
+    cust_email: email,
     pickup_at: athensInstant(input.start_date, input.pickup_time),
     dropoff_at: athensInstant(input.end_date, input.dropoff_time),
+    pickup_exception: input.pickup_exception,
+    pickup_exception_reason: input.pickup_exception_reason,
   }
 
   const { data: booking, error } = await supabase.from('bookings')
@@ -64,6 +82,12 @@ export async function createQuickBooking(
     // failure here does not throw away a car that is now held.
     await supabase.from('booking_extras').insert(
       input.seats.map((seat) => ({ booking_id: booking.id, seat })))
+  }
+
+  // As in R3: an exception booking is not live yet, so its confirmation waits
+  // for the manager's approval rather than going out now.
+  if (!input.pickup_exception) {
+    await sendNewBookingConfirmation(supabase, { bookingId: booking.id, email })
   }
 
   redirect(input.next === 'pickup'

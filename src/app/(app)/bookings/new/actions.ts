@@ -8,6 +8,8 @@ import type { BookingInsert, Database } from '@/lib/supabase/database.types'
 import { errorKey, type ErrorKey } from '@/lib/errors'
 import { findCustomerByPhone } from '@/lib/customers/lookup'
 import { athensInstant } from '@/lib/dates'
+import { verifyEmail } from '@/lib/email/validate'
+import { sendNewBookingConfirmation } from '@/lib/bookings/confirmation'
 
 const uuidSchema = z.string().uuid()
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -108,7 +110,7 @@ export async function lookupCustomer(
 export type CreateBookingState = { error?: ErrorKey; fieldErrors?: Record<string, string> } | undefined
 
 const phoneSchema = z.string().trim().min(4).max(32)
-const nameSchema = z.string().trim().min(1).max(80)
+const optionalName = z.string().trim().max(80).optional().transform((v) => v || null)
 const timeSchema = z.string().trim().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional()
 
 /**
@@ -128,12 +130,24 @@ export async function createBooking(
     room_number: z.string().trim().max(16).optional().transform((v) => v || null),
     start_date: dateSchema,
     end_date: dateSchema,
-    cust_first: nameSchema,
-    cust_last: nameSchema,
+    // Never required (docs/01-DECISIONS.md §9 amended): a rep who was not
+    // given a name is not held up by it, the same as R3b already treats it.
+    cust_first: optionalName,
+    cust_last: optionalName,
     cust_phone: phoneSchema,
     cust_dob: dateSchema,
+    // Format/MX-checked below, not here — a raw string is all this schema
+    // shapes, since an exception booking may legitimately carry an
+    // unverified or absent one.
+    cust_email: z.string().trim().max(254).optional().transform((v) => v || null),
     pickup_time: timeSchema,
     dropoff_time: timeSchema,
+    // The exception path (docs/01-DECISIONS.md §5): checking the box is the
+    // rep's claim, but the actual gate is app.bookings_enforce_pickup_window()
+    // — an unflagged out-of-window pick-up is refused by the database
+    // regardless of what this schema lets through.
+    pickup_exception: z.boolean().optional().default(false),
+    pickup_exception_reason: z.string().trim().max(300).optional().transform((v) => v || null),
     seats: z.array(z.enum(['infant', 'child', 'booster'])).optional().default([]),
   }).safeParse({
     car_id: formData.get('car_id'),
@@ -145,13 +159,30 @@ export async function createBooking(
     cust_last: formData.get('cust_last'),
     cust_phone: formData.get('cust_phone'),
     cust_dob: formData.get('cust_dob'),
+    cust_email: formData.get('cust_email'),
     pickup_time: formData.get('pickup_time'),
     dropoff_time: formData.get('dropoff_time'),
+    pickup_exception: formData.get('pickup_exception') === 'on',
+    pickup_exception_reason: formData.get('pickup_exception_reason'),
     seats: formData.getAll('seat'),
   })
 
   if (!parsed.success) return { error: 'IR104' }
   if (parsed.data.end_date < parsed.data.start_date) return { error: 'IR104' }
+
+  // §9's email gate: required and checked for an ordinary booking, waived
+  // entirely for an exception one (docs/01-DECISIONS.md, "Exception bookings
+  // wait for the boss") — a rep who ticked the box is not blocked by anything
+  // else on this form, email included.
+  let email: string | null = null
+  if (!parsed.data.pickup_exception) {
+    if (!parsed.data.cust_email) return { error: 'emailInvalid' }
+    const check = await verifyEmail(parsed.data.cust_email)
+    if (!check.ok) return { error: check.reason }
+    email = check.email
+  } else if (parsed.data.cust_email) {
+    email = parsed.data.cust_email
+  }
 
   const supabase = await supabaseServer()
   // `ref` and `created_by` are absent on purpose: 0011's insert grant does not
@@ -168,8 +199,11 @@ export async function createBooking(
     cust_last: parsed.data.cust_last,
     cust_phone: parsed.data.cust_phone,
     cust_dob: parsed.data.cust_dob,
+    cust_email: email,
     pickup_at: athensInstant(parsed.data.start_date, parsed.data.pickup_time),
     dropoff_at: athensInstant(parsed.data.end_date, parsed.data.dropoff_time),
+    pickup_exception: parsed.data.pickup_exception,
+    pickup_exception_reason: parsed.data.pickup_exception_reason,
   }
   const { data: booking, error } = await supabase.from('bookings')
     .insert(newBooking as Database['public']['Tables']['bookings']['Insert'])
@@ -183,6 +217,14 @@ export async function createBooking(
     // already booked. The booking detail page lets them add a seat afterwards.
     await supabase.from('booking_extras').insert(
       parsed.data.seats.map((seat) => ({ booking_id: booking.id, seat })))
+  }
+
+  // An exception booking is not live yet — the confirmation goes out when the
+  // manager approves it (src/app/(app)/admin/exception-bookings/actions.ts),
+  // not now, or the guest would be told about a rental the boss might still
+  // refuse.
+  if (!parsed.data.pickup_exception) {
+    await sendNewBookingConfirmation(supabase, { bookingId: booking.id, email })
   }
 
   redirect(`/bookings/${booking.id}`)

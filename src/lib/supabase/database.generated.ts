@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
       app_settings: {
@@ -71,6 +76,7 @@ export type Database = {
           {
             foreignKeyName: "audit_log_actor_id_fkey"
             columns: ["actor_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -135,6 +141,7 @@ export type Database = {
           {
             foreignKeyName: "booking_drivers_booking_id_fkey"
             columns: ["booking_id"]
+            isOneToOne: false
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
@@ -163,6 +170,7 @@ export type Database = {
           {
             foreignKeyName: "booking_extras_booking_id_fkey"
             columns: ["booking_id"]
+            isOneToOne: false
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
@@ -195,6 +203,8 @@ export type Database = {
           pay_method: Database["public"]["Enums"]["pay_method"] | null
           period_id: string | null
           pickup_at: string | null
+          pickup_exception: boolean
+          pickup_exception_reason: string | null
           ref: string
           returned_at: string | null
           room_number: string | null
@@ -230,6 +240,8 @@ export type Database = {
           pay_method?: Database["public"]["Enums"]["pay_method"] | null
           period_id?: string | null
           pickup_at?: string | null
+          pickup_exception?: boolean
+          pickup_exception_reason?: string | null
           ref: string
           returned_at?: string | null
           room_number?: string | null
@@ -265,6 +277,8 @@ export type Database = {
           pay_method?: Database["public"]["Enums"]["pay_method"] | null
           period_id?: string | null
           pickup_at?: string | null
+          pickup_exception?: boolean
+          pickup_exception_reason?: string | null
           ref?: string
           returned_at?: string | null
           room_number?: string | null
@@ -278,42 +292,49 @@ export type Database = {
           {
             foreignKeyName: "bookings_car_id_fkey"
             columns: ["car_id"]
+            isOneToOne: false
             referencedRelation: "cars"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "bookings_cash_handover_fk"
             columns: ["cash_handover_id"]
+            isOneToOne: false
             referencedRelation: "cash_handovers"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "bookings_category_id_fkey"
             columns: ["category_id"]
+            isOneToOne: false
             referencedRelation: "categories"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "bookings_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "bookings_eligibility_override_by_fkey"
             columns: ["eligibility_override_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "bookings_hotel_id_fkey"
             columns: ["hotel_id"]
+            isOneToOne: false
             referencedRelation: "hotels"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "bookings_period_id_fkey"
             columns: ["period_id"]
+            isOneToOne: false
             referencedRelation: "pricing_periods"
             referencedColumns: ["id"]
           },
@@ -363,6 +384,7 @@ export type Database = {
           {
             foreignKeyName: "car_models_category_id_fkey"
             columns: ["category_id"]
+            isOneToOne: false
             referencedRelation: "categories"
             referencedColumns: ["id"]
           },
@@ -409,6 +431,7 @@ export type Database = {
           {
             foreignKeyName: "cars_model_id_fkey"
             columns: ["model_id"]
+            isOneToOne: false
             referencedRelation: "car_models"
             referencedColumns: ["id"]
           },
@@ -440,12 +463,14 @@ export type Database = {
           {
             foreignKeyName: "cash_handovers_confirmed_by_fkey"
             columns: ["confirmed_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "cash_handovers_rep_id_fkey"
             columns: ["rep_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -519,6 +544,7 @@ export type Database = {
           {
             foreignKeyName: "contracts_booking_id_fkey"
             columns: ["booking_id"]
+            isOneToOne: false
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
@@ -550,18 +576,21 @@ export type Database = {
           {
             foreignKeyName: "customer_bookings_booking_id_fkey"
             columns: ["booking_id"]
+            isOneToOne: true
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "customer_bookings_consent_by_fkey"
             columns: ["consent_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "customer_bookings_customer_id_fkey"
             columns: ["customer_id"]
+            isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
@@ -623,6 +652,7 @@ export type Database = {
           {
             foreignKeyName: "customers_licence_booking_id_fkey"
             columns: ["licence_booking_id"]
+            isOneToOne: false
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
@@ -672,12 +702,14 @@ export type Database = {
           {
             foreignKeyName: "damage_marks_car_id_fkey"
             columns: ["car_id"]
+            isOneToOne: false
             referencedRelation: "cars"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "damage_marks_handover_id_fkey"
             columns: ["handover_id"]
+            isOneToOne: false
             referencedRelation: "handovers"
             referencedColumns: ["id"]
           },
@@ -727,18 +759,21 @@ export type Database = {
           {
             foreignKeyName: "exceptions_booking_id_fkey"
             columns: ["booking_id"]
+            isOneToOne: false
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "exceptions_raised_by_fkey"
             columns: ["raised_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "exceptions_resolved_by_fkey"
             columns: ["resolved_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -776,12 +811,14 @@ export type Database = {
           {
             foreignKeyName: "handovers_booking_id_fkey"
             columns: ["booking_id"]
+            isOneToOne: false
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "handovers_by_profile_fkey"
             columns: ["by_profile"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -807,12 +844,14 @@ export type Database = {
           {
             foreignKeyName: "hotel_reps_hotel_id_fkey"
             columns: ["hotel_id"]
+            isOneToOne: false
             referencedRelation: "hotels"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "hotel_reps_profile_id_fkey"
             columns: ["profile_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -865,12 +904,14 @@ export type Database = {
           {
             foreignKeyName: "price_extra_day_category_id_fkey"
             columns: ["category_id"]
+            isOneToOne: false
             referencedRelation: "categories"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "price_extra_day_period_id_fkey"
             columns: ["period_id"]
+            isOneToOne: false
             referencedRelation: "pricing_periods"
             referencedColumns: ["id"]
           },
@@ -899,12 +940,14 @@ export type Database = {
           {
             foreignKeyName: "price_rows_category_id_fkey"
             columns: ["category_id"]
+            isOneToOne: false
             referencedRelation: "categories"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "price_rows_period_id_fkey"
             columns: ["period_id"]
+            isOneToOne: false
             referencedRelation: "pricing_periods"
             referencedColumns: ["id"]
           },
@@ -1008,6 +1051,7 @@ export type Database = {
           {
             foreignKeyName: "push_subscriptions_profile_id_fkey"
             columns: ["profile_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1039,6 +1083,7 @@ export type Database = {
           {
             foreignKeyName: "rep_devices_profile_id_fkey"
             columns: ["profile_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1288,11 +1333,7 @@ export type Database = {
           source_booking_id: string
         }[]
       }
-      dearmor: { Args: { "": string }; Returns: string }
       drop_push_subscription: { Args: { p_endpoint: string }; Returns: number }
-      fips_mode: { Args: never; Returns: boolean }
-      gen_random_uuid: { Args: never; Returns: string }
-      gen_salt: { Args: { "": string }; Returns: string }
       licence_images_due_for_purge: {
         Args: { p_limit?: number }
         Returns: {
@@ -1334,10 +1375,6 @@ export type Database = {
           raised_at: string
           type: Database["public"]["Enums"]["exception_type"]
         }[]
-      }
-      pgp_armor_headers: {
-        Args: { "": string }
-        Returns: Record<string, unknown>[]
       }
       push_targets: {
         Args: { p_kind: string }
@@ -1435,12 +1472,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1464,11 +1501,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1489,11 +1526,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1514,11 +1551,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1531,11 +1568,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never) = never,
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1570,4 +1607,3 @@ export const Constants = {
     },
   },
 } as const
-

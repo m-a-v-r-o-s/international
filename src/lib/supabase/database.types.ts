@@ -27,9 +27,41 @@
  */
 export * from './database.generated'
 
-import type { Database } from './database.generated'
+import type { Database as GeneratedDatabase } from './database.generated'
 
-type Tbl = Database['public']['Tables']
+/**
+ * Three RPCs from 20260901150000_booking_exception_approval.sql, not yet in
+ * database.generated.ts for the same reason `pickup_exception` isn't (see the
+ * BookingRow note below): the migration hasn't been applied to the project
+ * this file was last generated from. A local export of `Database` shadows the
+ * one `export *` above re-exports from the generated file — every caller that
+ * imports `Database` from here (which is all of them; nothing imports
+ * `database.generated` directly) sees the three added below. Delete this
+ * intersection once `supabase gen types` picks the functions up.
+ */
+export type Database = Omit<GeneratedDatabase, 'public'> & {
+  public: Omit<GeneratedDatabase['public'], 'Functions'> & {
+    Functions: GeneratedDatabase['public']['Functions'] & {
+      admin_approve_exception_booking: { Args: { p_booking_id: string }; Returns: void }
+      admin_deny_exception_booking: { Args: { p_booking_id: string }; Returns: void }
+      admin_pending_exception_bookings: {
+        Args: Record<string, never>
+        Returns: {
+          booking_id: string
+          ref: string
+          plate: string
+          hotel_name: string | null
+          room_number: string | null
+          guest: string | null
+          pickup_at: string | null
+          reason: string | null
+        }[]
+      }
+    }
+  }
+}
+
+type Tbl = GeneratedDatabase['public']['Tables']
 type Row<T extends keyof Tbl> = Tbl[T]['Row']
 
 // ── Enums, straight from the generated ones ─────────────────────────────────
@@ -64,7 +96,18 @@ export type CarRow = Row<'cars'>
 export type PricingPeriodRow = Row<'pricing_periods'>
 export type PriceRowRow = Row<'price_rows'>
 export type PriceExtraDayRow = Row<'price_extra_day'>
-export type BookingRow = Row<'bookings'>
+/**
+ * `exception_status`: added by 20260901150000_booking_exception_approval.sql,
+ * not yet in database.generated.ts because that migration has not been
+ * applied to the project this file was last generated from (`pickup_exception`
+ * / `pickup_exception_reason` from 20260901130000 landed and are folded into
+ * the generator's own `Row<'bookings'>` now — that half of this intersection
+ * is gone). Fold `exception_status` in too and delete this intersection once
+ * `supabase gen types` picks the column up.
+ */
+export type BookingRow = Row<'bookings'> & {
+  exception_status: 'pending' | 'approved' | 'denied' | null
+}
 export type BookingExtraRow = Row<'booking_extras'>
 export type BookingDriverRow = Row<'booking_drivers'>
 export type ContractRow = Row<'contracts'>
@@ -109,5 +152,6 @@ export type BookingInsert = Pick<
   Tbl['bookings']['Insert'],
   'car_id' | 'hotel_id' | 'room_number' | 'start_date' | 'end_date'
   | 'pickup_at' | 'dropoff_at' | 'cust_first' | 'cust_last' | 'cust_phone'
-  | 'cust_dob' | 'cust_email'
+  | 'cust_dob' | 'cust_email' | 'pickup_exception' | 'pickup_exception_reason'
 >
+

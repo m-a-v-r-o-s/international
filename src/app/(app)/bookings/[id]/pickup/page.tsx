@@ -87,6 +87,20 @@ export default async function PickupPage({
     )
   }
 
+  // The database enforces this too (IR123) — this is only the friendly stop
+  // before a rep works through five steps to be refused at the last one
+  // (docs/01-DECISIONS.md, "Exception bookings wait for the boss").
+  if (booking.exception_status === 'pending') {
+    return (
+      <FlowNotice
+        title={t('title')}
+        body={t('awaitingApproval')}
+        href={`/bookings/${booking.id}`}
+        linkLabel={tb('title')}
+      />
+    )
+  }
+
   const eligibility = booking.category_id
     ? await checkDriverEligibility(supabase, booking.category_id, drivers, booking.start_date, booking.end_date)
     : []

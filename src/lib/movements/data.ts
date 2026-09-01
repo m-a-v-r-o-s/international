@@ -3,11 +3,12 @@ import type { BookingRow } from '@/lib/supabase/database.types'
 
 const COLUMNS =
   'id, ref, status, car_id, hotel_id, room_number, start_date, end_date, ' +
-  'pickup_at, dropoff_at, cust_first, cust_last'
+  'pickup_at, dropoff_at, cust_first, cust_last, exception_status'
 
 export type Movement = Pick<BookingRow,
   'id' | 'ref' | 'status' | 'car_id' | 'hotel_id' | 'room_number'
-  | 'start_date' | 'end_date' | 'pickup_at' | 'dropoff_at' | 'cust_first' | 'cust_last'>
+  | 'start_date' | 'end_date' | 'pickup_at' | 'dropoff_at' | 'cust_first' | 'cust_last'
+  | 'exception_status'>
 
 export type DayMovements = {
   pickups: Movement[]
@@ -31,11 +32,22 @@ export async function loadDayMovements(
   supabase: Awaited<ReturnType<typeof supabaseServer>>,
   today: string,
 ): Promise<DayMovements> {
+  // A pending exception booking is not live yet (docs/01-DECISIONS.md,
+  // "Exception bookings wait for the boss") — it holds the car but stays off
+  // both the Today screen and the movements sheet until the manager approves
+  // it. Spelled as "null or approved" rather than "not pending": a denied
+  // booking is cancelled in the same move (already excluded by the status
+  // filter), so those are the only two values a live row can carry, and a
+  // plain `neq` would wrongly drop every ordinary booking too — SQL's `<>`
+  // is never true against a null column.
+  const LIVE_EXCEPTION_STATUS = 'exception_status.is.null,exception_status.eq.approved'
   const [{ data: pickupRows }, { data: returnRows }] = await Promise.all([
     supabase.from('bookings').select(COLUMNS)
-      .eq('kind', 'rental').eq('start_date', today).in('status', ['booked', 'out', 'returned']),
+      .eq('kind', 'rental').eq('start_date', today).in('status', ['booked', 'out', 'returned'])
+      .or(LIVE_EXCEPTION_STATUS),
     supabase.from('bookings').select(COLUMNS)
-      .eq('kind', 'rental').eq('end_date', today).in('status', ['out', 'returned']),
+      .eq('kind', 'rental').eq('end_date', today).in('status', ['out', 'returned'])
+      .or(LIVE_EXCEPTION_STATUS),
   ])
 
   const pickups = ((pickupRows ?? []) as unknown as Movement[])

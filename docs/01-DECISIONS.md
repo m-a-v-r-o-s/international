@@ -39,8 +39,19 @@ The fleet is **one shared pool** — any rep can book any free car in the compan
 - **No turnaround gap.** A car returned Wed 19:00 is bookable Thu 08:30.
 
 ## 5. Operating windows
-- Pickups **08:30–11:30**, drop-offs **18:00–21:00**.
-- These are **defaults, overridable** per booking. The override is recorded.
+- Pickups **08:30–11:30**, drop-offs **18:00–21:00**, both admin-configurable.
+- **Pick-up is enforced.** A rep cannot record a pick-up outside the window
+  unless the booking is flagged as an **exception booking** with a reason —
+  the flag and reason are required together, and only then is the
+  out-of-window pick-up accepted.
+- **Drop-off stays a default, freely overridable** per booking, exactly as
+  before. No exception flag is needed for it.
+- Either time falling outside its window is still recorded on the booking via
+  `window_override`, a fact the database derives — never a claim a rep or the
+  admin can hand-set. The exception flag governs whether the write is
+  *accepted*; `window_override` governs whether it is *remembered* as
+  out-of-hours. A pick-up let through by the exception flag still stamps
+  `window_override = true`.
 - No out-of-hours fee.
 
 ## 6. Pricing
@@ -76,11 +87,15 @@ to the **hotel** it belongs to. (Reps cover for each other; both need it in thei
 
 ## 9. Customer & driver data
 Captured per booking:
-- First name, last name
+- First name, last name — **never required**. See §33: neither blocks a booking on either
+  creation screen, the same treatment R3b already gave them.
 - **Hotel room number**
 - **Phone**
 - **Date of birth**
-- Email — **optional**, asked only at the signing step to send the contract copy
+- Email — ~~optional, asked only at the signing step to send the contract copy~~ **superseded
+  by §33 (1 Sep 2026): required at booking time, checked, and used to send the guest a
+  confirmation immediately.** The signing-step field still exists and still works exactly as
+  before — it now usually finds the address already filled in.
 - Driving licence: **photo of front and back**, plus number / country / issue date / expiry
 - **Additional drivers: free of charge**, but their licence is captured identically
 
@@ -590,3 +605,62 @@ that could read the PIN hash it is standing behind.
 See `supabase/migrations/20260901120000_pin_only_signin.sql`,
 `public.credential_lookup_for_email()`, `src/lib/auth/signin.ts` and
 `src/app/(public)/login/actions.ts`.
+
+## 33. Booking-time email, and exception bookings wait for the boss
+
+1 Sep 2026. Two changes, made together because the second exists to cover the door the first
+one needed to open.
+
+**1. Email moves to booking time and becomes required.** §9 used to ask for it only at the
+signing step, optionally, to send a copy of the agreement. The owner now wants it collected by
+whichever rep takes the booking — over the desk or over the phone — checked before the booking
+can be confirmed, and used to send the guest a confirmation there and then: pickup time, return
+date, cost and the licence the category requires (age and years held, from `categories`). This
+supersedes that half of §9; §16's signing-step field is untouched and now usually finds the
+address already on the booking.
+
+"Checked" is two things, both server-side, before the write: the address is a real shape
+(`zod .email()`), and its domain can actually receive mail (`resolveMx`, `src/lib/email/
+validate.ts`) — the failure a phone booking actually produces is a well-formed typo like
+`@gmial.com`, not a malformed string, so format alone was not enough. Neither check runs on
+every keystroke; both run once, at submit, the same posture as the returning-guest lookup's
+own on-blur throttling (§25a).
+
+**2. First and last name are never required**, on either creation screen. R3b (§30) already
+made this call for the phone-booking screen: a rep given no name is not held up by it. R3's
+form required them; that inconsistency is now closed the other way, toward the screen with the
+guest actually optional.
+
+**3. Exception bookings wait for the boss.** Requiring email creates the same problem §5 already
+solved for the pick-up window: sometimes the normal rule cannot be met and the booking still
+has to happen. The existing "exception booking" checkbox is the answer to both — ticking it
+already waives the pick-up window; it now also waives every other requirement on the form,
+email included. Nothing on either creation screen is mandatory once it is checked.
+
+What is new is what ticking it now costs. An exception booking used to go live immediately,
+identical to an ordinary one, the moment it was written. The owner does not want that: a
+half-checked booking — an unverified email, or a guest arriving well outside the pick-up window
+— should not act like an ordinary one anywhere else in the app until someone has actually looked
+at it. So it now starts in `bookings.exception_status = 'pending'` and stays there until the boss
+acts on it, in a new queue at `/admin/exception-bookings`:
+
+- **The car is still held.** `pending` sits inside the same `status = 'booked'` the exclusion
+  constraint and `availability()` already key off — nothing about how the car is reserved
+  changes. This was the one non-negotiable part of the design: two reps racing for the same car
+  is a worse failure mode than a rep waiting on approval.
+- **It is invisible to the rest of the day.** Filtered out of Today, the movements sheet and the
+  push digests (`rep_day_movements()`) — a rep is not told to go pick up a car the boss has not
+  looked at yet.
+- **It cannot be picked up.** A hard block on the booked → out transition, in the database,
+  beside the eligibility one it now sits next to — no UI path around it, admin included.
+- **It only leaves 'pending' through the boss.** Two admin-only RPCs,
+  `admin_approve_exception_booking()` and `admin_deny_exception_booking()`. Approving clears it
+  to run exactly like an ordinary booking — including sending the confirmation email that was
+  withheld at creation, now that there is something to confirm. Denying cancels it outright,
+  which is what actually frees the car: `pending` never held it on its own, `status = 'booked'`
+  did, and cancelling is the one existing state every rep already reads as "this did not
+  happen."
+
+See `supabase/migrations/20260901150000_booking_exception_approval.sql`,
+`src/lib/email/validate.ts`, `src/lib/email/booking-confirmation.ts`,
+`src/lib/bookings/confirmation.ts` and `src/app/(app)/admin/exception-bookings/`.

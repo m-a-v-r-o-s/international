@@ -107,6 +107,16 @@ export function CompanyForm({ company }: { company: Company }) {
           />
           <p className="ir-hint" id="terms_en_hint">{t('termsHint')}</p>
         </div>
+
+        <div>
+          <label className="ir-label" htmlFor="terms_de">{t('termsDe')}</label>
+          <textarea
+            id="terms_de" name="terms_de" className="ir-field font-mono text-[0.875rem]"
+            rows={12} maxLength={20000} defaultValue={company.terms_de}
+            aria-describedby="terms_de_hint" spellCheck={false}
+          />
+          <p className="ir-hint" id="terms_de_hint">{t('termsHint')}</p>
+        </div>
       </section>
 
       <SubmitButton label={tc('save')} />

@@ -32,19 +32,24 @@ async function book(opts: {
   pickup?: string | null
   dropoff?: string | null
   claimOverride?: boolean
+  pickupException?: boolean
+  pickupExceptionReason?: string | null
 } = {}) {
   return db.asUser(f.repA, () => db.one<{ id: string; window_override: boolean }>(
     `insert into public.bookings
        (car_id, hotel_id, room_number, start_date, end_date,
-        cust_first, cust_last, cust_phone, cust_dob, pickup_at, dropoff_at, window_override)
+        cust_first, cust_last, cust_phone, cust_dob, pickup_at, dropoff_at, window_override,
+        pickup_exception, pickup_exception_reason)
      values ($1, $2, '101', '2026-07-06', '2026-07-08', 'Anna', 'Visitor',
-             '+306900000000', '1990-01-01', $3, $4, $5)
+             '+306900000000', '1990-01-01', $3, $4, $5, $6, $7)
      returning id, window_override`,
     [
       f.car1, f.hotelA,
       opts.pickup === undefined ? '2026-07-06 09:00:00 Europe/Athens' : opts.pickup,
       opts.dropoff === undefined ? '2026-07-08 19:00:00 Europe/Athens' : opts.dropoff,
       opts.claimOverride ?? false,
+      opts.pickupException ?? false,
+      opts.pickupExceptionReason ?? null,
     ]))
 }
 
@@ -54,7 +59,14 @@ describe('the times a booking carries', () => {
   })
 
   test('a pick-up before the window opens is', async () => {
-    const b = await book({ pickup: '2026-07-06 07:15:00 Europe/Athens' })
+    // Flagged as an exception: an unflagged out-of-window pick-up is refused
+    // outright since 0027, tested in its own describe block below. This test
+    // is only about window_override still being derived once the exception
+    // lets the write through.
+    const b = await book({
+      pickup: '2026-07-06 07:15:00 Europe/Athens',
+      pickupException: true, pickupExceptionReason: 'testing the derivation',
+    })
     expect(b.window_override).toBe(true)
   })
 
@@ -85,9 +97,9 @@ describe('the override is derived, never accepted', () => {
     expect(b.window_override).toBe(false)
   })
 
-  test('a rep claiming NO override on a 03:00 pick-up still gets one', async () => {
+  test('a drop-off claiming NO override still gets one — the drop-off half is untouched by 0027', async () => {
     const b = await book({
-      pickup: '2026-07-06 03:00:00 Europe/Athens', claimOverride: false,
+      dropoff: '2026-07-08 23:30:00 Europe/Athens', claimOverride: false,
     })
     expect(b.window_override).toBe(true)
   })
@@ -106,9 +118,14 @@ describe('the override is derived, never accepted', () => {
     const b = await book()
     expect(b.window_override).toBe(false)
 
+    // Dropoff, not pickup: pickup is now enforced (0027), so moving it
+    // out-of-window on an update without the exception flag would be
+    // refused rather than silently re-derived — that behaviour has its own
+    // describe block below. This test is about the derivation re-running on
+    // an update, which drop-off still demonstrates untouched.
     await db.asUser(f.repA, () => db.sql(
-      `update public.bookings set pickup_at = $2 where id = $1`,
-      [b.id, '2026-07-06 06:00:00 Europe/Athens']))
+      `update public.bookings set dropoff_at = $2 where id = $1`,
+      [b.id, '2026-07-08 23:30:00 Europe/Athens']))
 
     const after = await db.one<{ window_override: boolean }>(
       `select window_override from public.bookings where id = $1`, [b.id])
@@ -116,9 +133,63 @@ describe('the override is derived, never accepted', () => {
   })
 })
 
+// 0027: pick-up became a rule, drop-off stayed a default. This is the block
+// that tests the actual gate — everything above is still the pre-existing
+// derivation behaviour, untouched for drop-off and now also true for pick-up
+// whenever it is inside the window or let through by the exception flag.
+describe('pick-up is enforced; drop-off is not (0027)', () => {
+  test('a pick-up outside the window is refused without the exception flag', async () => {
+    expect(await errcode(() => book({ pickup: '2026-07-06 03:00:00 Europe/Athens' })))
+      .toBe('IR116')
+  })
+
+  test('the same pick-up succeeds when flagged as an exception with a reason', async () => {
+    const b = await book({
+      pickup: '2026-07-06 03:00:00 Europe/Athens',
+      pickupException: true, pickupExceptionReason: 'guest landing on a red-eye',
+    })
+    // The exception permits the write; it does not hide that it happened.
+    expect(b.window_override).toBe(true)
+  })
+
+  test('checking the exception flag with no reason is refused by the column', async () => {
+    expect(await errcode(() => book({
+      pickup: '2026-07-06 03:00:00 Europe/Athens', pickupException: true,
+    }))).toBe('23514')
+  })
+
+  test('checking the exception flag with a blank reason is refused too', async () => {
+    expect(await errcode(() => book({
+      pickup: '2026-07-06 03:00:00 Europe/Athens',
+      pickupException: true, pickupExceptionReason: '   ',
+    }))).toBe('23514')
+  })
+
+  test('a drop-off outside the window needs no exception at all', async () => {
+    const b = await book({ dropoff: '2026-07-08 23:30:00 Europe/Athens' })
+    expect(b.window_override).toBe(true)
+  })
+
+  test('moving an existing booking\'s pick-up out of the window without the flag is refused', async () => {
+    const b = await book()
+    expect(await errcode(() => db.asUser(f.repA, () => db.sql(
+      `update public.bookings set pickup_at = $2 where id = $1`,
+      [b.id, '2026-07-06 06:00:00 Europe/Athens'])))).toBe('IR116')
+  })
+
+  test('a block is exempt — it has no times to enforce', async () => {
+    await db.asUser(f.admin, () => db.sql(
+      `select public.admin_create_block($1, '2026-08-01', '2026-08-02', 'maintenance')`,
+      [f.car1]))
+  })
+})
+
 describe('the windows are the admin\'s', () => {
   test('widening them makes a previously out-of-hours time ordinary', async () => {
-    const early = await book({ pickup: '2026-07-06 07:15:00 Europe/Athens' })
+    const early = await book({
+      pickup: '2026-07-06 07:15:00 Europe/Athens',
+      pickupException: true, pickupExceptionReason: 'early flight, guest confirmed by phone',
+    })
     expect(early.window_override).toBe(true)
 
     await db.asUser(f.admin, () => db.sql(
