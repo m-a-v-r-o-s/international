@@ -8,6 +8,7 @@ import {
 } from '@/lib/contract/company'
 import { CompanyForm } from './CompanyForm'
 import { PurgeForm, RetentionForm, WindowsForm } from './RetentionForms'
+import { ClearLedgerForm } from '../customers/LedgerForms'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('adminSettings')
@@ -33,6 +34,12 @@ export async function generateMetadata(): Promise<Metadata> {
  * (the paper agreement and its terms, both languages) and 7 (company legal
  * details) have not arrived, so until the boss pastes them in, every contract
  * the app produces is stamped DRAFT.
+ *
+ * The danger zone at the very bottom holds the customer ledger's
+ * three-confirmation clear-everything button (§25a, §30), moved here from
+ * A11 Customers. It is the one irreversible, whole-table action in the admin
+ * area, so it gets its own red-accented section below every other control on
+ * the page rather than sitting on the ledger screen a rep might also open.
  */
 export default async function AdminSettingsPage() {
   await requireAdmin()
@@ -41,11 +48,12 @@ export default async function AdminSettingsPage() {
   const format = await getFormatter()
   const supabase = await supabaseServer()
 
-  const [{ data }, { data: retention }] = await Promise.all([
+  const [{ data }, { data: retention }, { data: ledger }] = await Promise.all([
     supabase.from('app_settings')
       .select('id, company, licence_retention_months, pickup_window, dropoff_window')
       .eq('id', 1).maybeSingle(),
     supabase.rpc('admin_licence_retention_status'),
+    supabase.rpc('admin_customer_ledger_status'),
   ])
 
   const company = parseCompany(data?.company)
@@ -58,6 +66,7 @@ export default async function AdminSettingsPage() {
     retention_months: number; cutoff: string; due_count: number; orphan_count: number
     oldest_due: string | null; purged_drivers: number; last_purge_at: string | null
   }[])[0]
+  const ledgerTotal = ((ledger ?? []) as { total: number }[])[0]?.total ?? 0
 
   const [pickupFrom = '08:30', pickupTo = '11:30'] = (settings?.pickup_window ?? '').split('-')
   const [dropoffFrom = '18:00', dropoffTo = '21:00'] = (settings?.dropoff_window ?? '').split('-')
@@ -164,6 +173,20 @@ export default async function AdminSettingsPage() {
         <Link href="/admin/customers" className="ir-btn-quiet sm:!w-auto sm:self-start">
           {tl('title')}
         </Link>
+      </section>
+
+      <section
+        className="ir-card flex flex-col gap-4 border-danger p-4"
+        aria-labelledby="danger-zone-heading"
+      >
+        <h2 id="danger-zone-heading" className="text-[1.0625rem] font-semibold text-danger">
+          {t('dangerZoneTitle')}
+        </h2>
+        <div className="flex flex-col gap-3">
+          <h3 className="text-[0.9375rem] font-semibold">{tl('clearTitle')}</h3>
+          <p className="text-[0.9375rem] text-ink-soft">{tl('clearIntro')}</p>
+          <ClearLedgerForm total={ledgerTotal} />
+        </div>
       </section>
     </div>
   )

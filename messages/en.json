@@ -983,7 +983,8 @@
     "purgeNothingDue": "Nothing is due for deletion. The scheduled job runs on its own; this button is only for running it early.",
     "purgeDone": "Deleted {images, plural, one {# licence photo} other {# licence photos}} across {bookings, plural, one {# booking} other {# bookings}}.",
     "purgeRefused": "{n, plural, one {# file was skipped because its name did not look like a licence photo} other {# files were skipped because their names did not look like licence photos}}. Report this.",
-    "ledgerMoved": "The digital customer ledger now has a screen of its own. Its records have no expiry date at all — read that beside the licence retention window above, because the two behave completely differently."
+    "ledgerMoved": "The digital customer ledger now has a screen of its own. Its records have no expiry date at all — read that beside the licence retention window above, because the two behave completely differently.",
+    "dangerZoneTitle": "Danger zone"
   },
   "contractStep": {
     "agreementTitle": "Rental agreement",
