@@ -29,8 +29,6 @@ export function CredentialForm() {
 
   return (
     <form action={action} className="flex flex-col gap-4" noValidate>
-      <p className="text-[0.9375rem] text-ink-soft">{t('staffIntro')}</p>
-
       <Field
         id="email"
         label={t('email')}
@@ -76,7 +74,6 @@ export function CodeForm() {
   if (!sent) {
     return (
       <form action={requestAction} className="flex flex-col gap-4" noValidate>
-        <p className="text-[0.9375rem] text-ink-soft">{t('managerIntro')}</p>
         <Field
           id="manager-email"
           name="email"

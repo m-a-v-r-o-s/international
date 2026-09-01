@@ -46,8 +46,6 @@
     "title": "Sign in",
     "staffTab": "Rep",
     "managerTab": "Manager",
-    "staffIntro": "Sign in with your email and the PIN the manager gave you. There is nothing else to enter.",
-    "managerIntro": "We will email you a six-digit code. It is valid for a few minutes.",
     "email": "Email",
     "pin": "PIN",
     "showPin": "Show PIN",
