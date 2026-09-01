@@ -134,7 +134,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             decision 1). Navy like the rail it stands in for.
           */}
           <header className="bg-brand-strong lg:hidden print:hidden">
-            <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+            <div className="flex items-center justify-between gap-2 px-4 py-2.5">
               <div className="flex items-center gap-2">
                 <NavDrawer
                   items={items}
@@ -143,17 +143,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                   closeLabel={tn('close')}
                   dark
                 />
-                <Link href="/" className="flex items-center rounded-field bg-surface px-3 py-2">
+                <Link href="/" className="flex items-center rounded-field bg-surface px-2.5 py-1.5">
                   <img
                     src="/logo-sm.webp"
                     width={300}
                     height={100}
                     alt={tapp('logoAlt')}
-                    className="h-11 w-auto"
+                    className="h-12 w-auto"
                   />
                 </Link>
               </div>
-              <div className="flex items-center gap-3 text-[0.8125rem] text-brand-tint">
+              <div className="flex items-center gap-2 text-[0.8125rem] text-brand-tint">
                 <Link href="/settings" className="flex items-center gap-1 underline underline-offset-2 hover:text-brand-ink">
                   {globeIcon}
                   {t('language')}
