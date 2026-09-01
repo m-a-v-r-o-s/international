@@ -68,7 +68,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: '/admin/audit', label: ta('nav.audit') },
         { href: '/admin/settings', label: ta('nav.settings') },
         { href: '/availability', label: tn('availability'), section: ta('nav.deskSection') },
-        { href: '/bookings/new', label: tn('newBooking') },
         { href: '/bookings', label: tn('myBookings') },
       ]
     : [
@@ -76,7 +75,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: '/pickups', label: tn('pickups') },
         { href: '/returns', label: tn('dropoffs') },
         { href: '/availability', label: tn('availability') },
-        { href: '/bookings/new', label: tn('newBooking') },
         { href: '/bookings', label: tn('myBookings') },
         { href: '/settings', label: tn('settings') },
       ]

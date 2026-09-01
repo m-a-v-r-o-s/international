@@ -32,7 +32,7 @@
     "primary": "Main sections",
     "open": "Menu",
     "close": "Close menu",
-    "today": "Today",
+    "today": "Overview",
     "availability": "Availability",
     "newBooking": "New booking",
     "myBookings": "My bookings",
@@ -833,7 +833,6 @@
     "title": "That page is not here",
     "body": "The link may be out of date, or the record may have been removed.",
     "home": "Back to the app",
-    "galleryCaption": "International Rentals, in the early days.",
     "altShopfront": "Two of International Rentals' first staff outside the original shop counter, under the old shopfront sign.",
     "altOutside": "Two early International Rentals staff sitting outside the shop entrance.",
     "altReception": "An early International Rentals staff member at the reception desk, phone in hand."

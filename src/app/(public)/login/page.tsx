@@ -1,8 +1,15 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
+import { HeritageSlideshow } from '@/components/HeritageSlideshow'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { CodeForm, PasswordForm } from './LoginForm'
+
+const HERITAGE_IMAGES = [
+  { src: '/heritage-shopfront.webp', alt: '', width: 480, height: 443 },
+  { src: '/heritage-outside-shop.webp', alt: '', width: 480, height: 430 },
+  { src: '/heritage-reception.webp', alt: '', width: 480, height: 443 },
+]
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('login')
@@ -56,14 +63,7 @@ export default async function LoginPage({
           top of the card, and the fields keep the plain, already-tested
           surface below it untouched. */}
       <div className="ir-card overflow-hidden">
-        <img
-          src="/heritage-shopfront.webp"
-          width={480}
-          height={443}
-          alt=""
-          aria-hidden="true"
-          className="h-auto w-full"
-        />
+        <HeritageSlideshow images={HERITAGE_IMAGES} decorative />
         <div className="p-5">{manager ? <CodeForm /> : <PasswordForm />}</div>
       </div>
 

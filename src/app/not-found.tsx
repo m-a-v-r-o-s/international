@@ -1,10 +1,17 @@
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { Footer } from '@/components/Footer'
+import { HeritageSlideshow } from '@/components/HeritageSlideshow'
 
 /** Branded, in the reader's language, and never the framework default. */
 export default async function NotFound() {
   const t = await getTranslations('notFound')
+
+  const images = [
+    { src: '/heritage-shopfront.webp', alt: t('altShopfront'), width: 480, height: 443 },
+    { src: '/heritage-outside-shop.webp', alt: t('altOutside'), width: 480, height: 430 },
+    { src: '/heritage-reception.webp', alt: t('altReception'), width: 480, height: 443 },
+  ]
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -14,23 +21,10 @@ export default async function NotFound() {
         <p className="text-ink-soft">{t('body')}</p>
         <Link href="/" className="ir-btn-primary mt-2">{t('home')}</Link>
 
-        <figure className="mt-6 flex flex-col items-center gap-2">
-          <div className="flex gap-2">
-            <img
-              src="/heritage-shopfront.webp" width={480} height={443}
-              alt={t('altShopfront')} className="w-20 rounded-card border border-line shadow-sm"
-            />
-            <img
-              src="/heritage-outside-shop.webp" width={480} height={430}
-              alt={t('altOutside')} className="w-20 rounded-card border border-line shadow-sm"
-            />
-            <img
-              src="/heritage-reception.webp" width={480} height={443}
-              alt={t('altReception')} className="w-20 rounded-card border border-line shadow-sm"
-            />
-          </div>
-          <figcaption className="text-[0.8125rem] text-ink-soft">{t('galleryCaption')}</figcaption>
-        </figure>
+        <HeritageSlideshow
+          images={images}
+          className="mt-6 w-40 self-center rounded-card border border-line shadow-sm"
+        />
       </main>
       <Footer />
     </div>
