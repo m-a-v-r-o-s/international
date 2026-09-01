@@ -22,7 +22,7 @@ export type Gate = {
 }
 
 /** Long enough for a shift, short enough that a mislaid phone is not a session. */
-export const UNLOCK_TTL_SECONDS = 12 * 60 * 60
+export const UNLOCK_TTL_SECONDS = 6 * 60 * 60
 
 /**
  * The admin has no PIN (docs/01-DECISIONS.md §21) and signs in on desktop and
