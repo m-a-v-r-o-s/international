@@ -806,6 +806,21 @@ Clearing it, re-pointing it or claiming another rep's is reverted, and the
 column grant still refuses any direct client write, so the RPC remains the only
 door. New error code: `IR114`, nothing to hand over.
 
+**1 Sep 2026 — superseded in part.** This RPC still does exactly the two writes
+described above and nothing changes about it here. What changed is which
+predicate `my_cash_in_hand()` reports on: the owner's ask (docs/01-DECISIONS.md
+§31) was that only HIS confirmation should clear a rep's figure, and until this
+point `admin_confirm_cash_handover()` stamped `confirmed_by` for
+record-keeping while `my_cash_in_hand()` never looked at it — so a rep's own
+tap above cleared their own figure in full, and the boss's confirmation
+gated nothing. `supabase/migrations/20260901093000_cash_confirmation.sql`
+makes a booking leave the figure only once its handover is confirmed, adds
+`my_cash_ready_to_hand_over()` so R1 can tell "still sitting with me" apart
+from "handed over, awaiting the boss" without a second look at
+`my_cash_in_hand()`, and adds the admin screen (A12 · Cash) that was simply
+missing before — `admin_confirm_cash_handover()` had no caller anywhere in the
+app.
+
 **Open question for the client, unchanged and now visible on a screen:** if a
 rep forgets to hand over, yesterday's cash disappears from R1's strip, because
 §7 says "today's". That may be the intended pressure or it may be a gap. Still

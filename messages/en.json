@@ -240,6 +240,7 @@
     "cashInHand": "Cash in hand today",
     "handOver": "Hand over",
     "handedOver": "€{amount} handed over. The manager confirms it at his end.",
+    "awaitingConfirmation": "Already handed over — waiting on the manager to confirm.",
     "goToAvailability": "Check availability",
     "goToMyBookings": "My bookings",
     "goToMovements": "Movements sheet",
@@ -441,6 +442,7 @@
       "pricing": "Pricing",
       "bookings": "Bookings",
       "exceptions": "Exceptions",
+      "cash": "Cash",
       "settings": "Settings",
       "users": "Staff",
       "hotels": "Hotels",
@@ -658,6 +660,15 @@
       "closeAction": "Close this item",
       "updateAction": "Update this item",
       "saved": "Saved."
+    },
+    "cash": {
+      "title": "Cash",
+      "subtitle": "What every rep has handed over and you have not confirmed yet. Confirming is what clears it from their own screen — nothing else does.",
+      "empty": "Nothing waiting. Every hand-over has been confirmed.",
+      "rep": "Rep",
+      "amount": "Amount",
+      "handedAt": "Handed over",
+      "confirm": "Confirm received"
     },
     "users": {
       "title": "Staff",

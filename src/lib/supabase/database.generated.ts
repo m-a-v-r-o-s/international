@@ -1223,6 +1223,16 @@ export type Database = {
         Args: { p_booking_id: string; p_note: string }
         Returns: undefined
       }
+      admin_pending_cash_handovers: {
+        Args: never
+        Returns: {
+          amount_cents: number
+          handed_at: string
+          id: string
+          rep_id: string
+          rep_name: string
+        }[]
+      }
       admin_resolve_exception: {
         Args: { p_charge_cents: number; p_id: string; p_resolution: string }
         Returns: undefined
@@ -1344,6 +1354,7 @@ export type Database = {
         Returns: number
       }
       my_cash_in_hand: { Args: never; Returns: number }
+      my_cash_ready_to_hand_over: { Args: never; Returns: number }
       my_hand_over_cash: {
         Args: never
         Returns: {

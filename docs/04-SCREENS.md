@@ -158,6 +158,15 @@ that in as many words, and links back to A10 for the licence window it is not.
 **Admin only**, and not merely by hiding a link: reps hold no `SELECT` on `public.customers`,
 and erasure and clearing are admin RPCs that refuse them.
 
+### A12 · Cash
+The boss's queue of cash hand-over receipts nobody has confirmed yet, oldest first: rep,
+amount, when. `Confirm received` is the **only** action that clears a rep's own cash-in-hand
+figure on R1 (docs/01-DECISIONS.md §31) — a rep's own "hand over" tap records the claim but no
+longer zeroes anything by itself. Almost always at most one row per rep, the usual single
+hand-over at the end of the morning shift; a second row for the same rep the same day is the
+rare, legitimate case — a night-shift pickup or a delayed payment, handed over again before
+the first is confirmed.
+
 ---
 
 ## Public pages

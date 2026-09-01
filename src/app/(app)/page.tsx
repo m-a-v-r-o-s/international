@@ -47,9 +47,10 @@ export default async function HomePage() {
   const today = todayAthens()
   const supabase = await supabaseServer()
 
-  const [{ pickups, returns, carById, modelById, hotelById }, { data: cash }] = await Promise.all([
+  const [{ pickups, returns, carById, modelById, hotelById }, { data: cash }, { data: ready }] = await Promise.all([
     loadDayMovements(supabase, today),
     supabase.rpc('my_cash_in_hand'),
+    supabase.rpc('my_cash_ready_to_hand_over'),
   ])
 
   const card = (booking: (typeof pickups)[number], kind: 'pickup' | 'return') => {
@@ -104,7 +105,10 @@ export default async function HomePage() {
         <Link href="/bookings" className="ir-btn-quiet">{t('goToMyBookings')}</Link>
       </div>
 
-      <CashStrip cents={typeof cash === 'number' ? cash : 0} />
+      <CashStrip
+        cents={typeof cash === 'number' ? cash : 0}
+        readyCents={typeof ready === 'number' ? ready : 0}
+      />
     </div>
   )
 }

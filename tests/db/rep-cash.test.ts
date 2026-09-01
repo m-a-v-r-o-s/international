@@ -62,6 +62,9 @@ async function pickedUpAndPaid(
 const cashOf = (rep: string) =>
   db.asUser(rep, () => db.one<{ v: number }>(`select public.my_cash_in_hand() as v`)).then((r) => r.v)
 
+const readyOf = (rep: string) =>
+  db.asUser(rep, () => db.one<{ v: number }>(`select public.my_cash_ready_to_hand_over() as v`)).then((r) => r.v)
+
 describe('the one aggregate a rep may see', () => {
   test('cash collected today on their own pickups, and nothing else', async () => {
     await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { cents: 9000, method: 'cash' })
@@ -99,7 +102,7 @@ describe('the one aggregate a rep may see', () => {
 })
 
 describe('handing it over', () => {
-  test('my_hand_over_cash() records the receipt AND clears the figure', async () => {
+  test('my_hand_over_cash() records the receipt but leaves the figure until the boss confirms it', async () => {
     await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { cents: 9000, method: 'cash' })
     await pickedUpAndPaid(f.repA, f.car2, f.hotelA, { cents: 3500, method: 'cash' })
     expect(await cashOf(f.repA)).toBe(12500)
@@ -108,7 +111,11 @@ describe('handing it over', () => {
       `select handover_id, amount_cents from public.my_hand_over_cash()`))
     expect(handed.amount_cents).toBe(12500)
 
-    expect(await cashOf(f.repA)).toBe(0)
+    // docs/01-DECISIONS.md §31: only the boss's confirmation clears this, so
+    // a rep's own tap leaves their own figure exactly where it was — what
+    // changes is that there is nothing left for a second tap to grab.
+    expect(await cashOf(f.repA)).toBe(12500)
+    expect(await readyOf(f.repA)).toBe(0)
 
     const receipt = await db.one<{ rep_id: string; amount_cents: number; confirmed_by: string | null }>(
       `select rep_id, amount_cents, confirmed_by from public.cash_handovers where id = $1`,
@@ -121,15 +128,30 @@ describe('handing it over', () => {
     const covered = await db.sql<{ n: string }>(
       `select count(*) as n from public.bookings where cash_handover_id = $1`, [handed.handover_id])
     expect(Number(covered[0]?.n)).toBe(2)
+
+    // And it is the boss, not the rep, whose action finally zeroes it.
+    await db.asUser(f.admin, () => db.sql(
+      `select public.admin_confirm_cash_handover($1)`, [handed.handover_id]))
+    expect(await cashOf(f.repA)).toBe(0)
   })
 
-  test('cash taken AFTER a hand-over starts the figure again', async () => {
+  test('cash taken AFTER a hand-over adds to the figure, on top of what is still awaiting confirmation', async () => {
     await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { cents: 9000, method: 'cash' })
     await db.asUser(f.repA, () => db.sql(`select public.my_hand_over_cash()`))
-    expect(await cashOf(f.repA)).toBe(0)
+    expect(await cashOf(f.repA)).toBe(9000)     // handed over, not yet confirmed
+    expect(await readyOf(f.repA)).toBe(0)       // nothing left for a second tap
 
+    // The rare case docs/01-DECISIONS.md §31 exists for: a night-shift pickup
+    // or a delayed payment, after the usual end-of-morning hand-over.
     await pickedUpAndPaid(f.repA, f.car2, f.hotelA, { cents: 4000, method: 'cash' })
-    expect(await cashOf(f.repA)).toBe(4000)
+    expect(await cashOf(f.repA)).toBe(13000)
+    expect(await readyOf(f.repA)).toBe(4000)
+
+    const handedAgain = await db.asUser(f.repA, () => db.one<{ amount_cents: number }>(
+      `select amount_cents from public.my_hand_over_cash()`))
+    expect(handedAgain.amount_cents).toBe(4000)   // only the new cash — the first batch is a separate receipt
+    expect(await cashOf(f.repA)).toBe(13000)      // still owed until the boss confirms either one
+    expect(await readyOf(f.repA)).toBe(0)
   })
 
   test('handing over nothing is refused (IR114), not recorded as an empty receipt', async () => {
@@ -149,6 +171,7 @@ describe('handing it over', () => {
 
     const receipts = await db.sql(`select id from public.cash_handovers`)
     expect(receipts).toHaveLength(1)
+    expect(await readyOf(f.repA)).toBe(0)
   })
 
   test('a rep can only ever hand over their OWN cash — the RPC takes no arguments', async () => {
@@ -181,9 +204,11 @@ describe('handing it over', () => {
     await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { cents: 9000, method: 'cash' })
     const handed = await db.asUser(f.repA, () => db.one<{ handover_id: string }>(
       `select handover_id from public.my_hand_over_cash()`))
+    expect(await cashOf(f.repA)).toBe(9000)   // a rep confirming their own would zero it early — see below
 
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
       `select public.admin_confirm_cash_handover($1)`, [handed.handover_id])))).toBe('IR001')
+    expect(await cashOf(f.repA)).toBe(9000)   // the refused attempt moved nothing
 
     await db.asUser(f.admin, () => db.sql(
       `select public.admin_confirm_cash_handover($1)`, [handed.handover_id]))
@@ -191,6 +216,30 @@ describe('handing it over', () => {
     const after = await db.one<{ confirmed_by: string }>(
       `select confirmed_by from public.cash_handovers where id = $1`, [handed.handover_id])
     expect(after.confirmed_by).toBe(f.admin)
+    expect(await cashOf(f.repA)).toBe(0)   // only the boss's confirmation clears it (docs/01-DECISIONS.md §31)
+  })
+
+  test('admin_pending_cash_handovers() lists what nobody has confirmed yet, and only for the admin', async () => {
+    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { cents: 9000, method: 'cash' })
+    await pickedUpAndPaid(f.repB, f.car3, f.hotelB, { cents: 4000, method: 'cash' })
+    const handedA = await db.asUser(f.repA, () => db.one<{ handover_id: string }>(
+      `select handover_id from public.my_hand_over_cash()`))
+    await db.asUser(f.repB, () => db.sql(`select public.my_hand_over_cash()`))
+
+    expect(await errcode(() => db.asUser(f.repA, () =>
+      db.sql(`select * from public.admin_pending_cash_handovers()`)))).toBe('IR001')
+
+    const pending = await db.asUser(f.admin, () => db.sql<{ id: string; rep_name: string; amount_cents: number }>(
+      `select id, rep_name, amount_cents from public.admin_pending_cash_handovers()`))
+    expect(pending).toHaveLength(2)
+    expect(pending.map((r) => r.amount_cents).sort()).toEqual([4000, 9000])
+
+    // Confirming one receipt drops only that one off the queue.
+    await db.asUser(f.admin, () => db.sql(
+      `select public.admin_confirm_cash_handover($1)`, [handedA.handover_id]))
+    const remaining = await db.asUser(f.admin, () => db.sql<{ amount_cents: number }>(
+      `select amount_cents from public.admin_pending_cash_handovers()`))
+    expect(remaining.map((r) => r.amount_cents)).toEqual([4000])
   })
 })
 
@@ -234,6 +283,10 @@ describe('the stamp the hand-over leaves is one-way, and only through the RPC', 
       `select cash_handover_id from public.bookings where id = $1`, [bookingId])
     expect(repointed.cash_handover_id).toBe(stamped.cash_handover_id)
 
-    expect(await cashOf(f.repA)).toBe(0)   // and the figure stays handed over
+    // The stamp survived every bypass attempt, so there is still nothing for
+    // a second tap to grab — even though the boss has not confirmed it yet,
+    // which is why the whole figure, not just the ready slice, is still 9000.
+    expect(await readyOf(f.repA)).toBe(0)
+    expect(await cashOf(f.repA)).toBe(9000)
   })
 })

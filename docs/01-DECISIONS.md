@@ -58,7 +58,7 @@ The fleet is **one shared pool** — any rep can book any free car in the compan
 ## 7. What a rep sees about money
 - The price on **their own** bookings. Nothing else.
 - **One** aggregate only: **today's own cash in hand** — cash they have collected today and
-  not yet handed over, with a "handed over" action.
+  not yet **confirmed received by the boss** (see §31), with a "hand over" action.
 - No revenue history, no monthly totals, no averages, no company figures, no other rep's
   anything. **Not even indirectly** (no totals row, no counts that imply revenue, no
   "cars rented today" company-wide).
@@ -454,3 +454,35 @@ Neither new screen is a second way to write a booking. Both go through the same 
 insert, the same guard trigger and the same exclusion constraint as R3, so a phone booking
 that double-books a car is refused with the same 23P01 as any other, and the price still
 comes from the engine rather than from anything either form sends.
+
+## 31. Cash hand-over: the boss's confirmation is what clears the figure
+
+The owner's ask, in his words (1 Sep 2026): almost always the cash in hand gets delivered to
+the boss by the rep at the end of the morning shift, but sometimes there is extra money to be
+returned at the end of the night shift too — a rare night-shift pickup, or a delayed payment —
+and **only the boss should be able to zero what a rep is shown as still owing.**
+
+That was not what `public.my_hand_over_cash()` did before this decision. It is
+`SECURITY DEFINER` and callable by the rep alone, and the moment a rep called it, the
+bookings it covered were stamped with a `cash_handover_id` — the one thing
+`public.my_cash_in_hand()` (§7) excluded. So a rep's own tap cleared their own figure in full,
+on the spot. `admin_confirm_cash_handover()` already existed and stamped `confirmed_by`, but
+nothing downstream ever read that column, and no screen called the function at all.
+
+**Fixed by changing what `my_cash_in_hand()` reports on, not by taking anything away from the
+rep's side.** A rep's tap still records the claim, still cannot name an amount or a booking
+set, and still stops that same cash from being grabbed by a second tap — but the money now
+stays on the rep's own screen, visibly still theirs, until the boss confirms it through the
+new **A12 · Cash** admin screen. Reported today's cash therefore splits into two amounts a rep
+needs to tell apart, both still the rep's own money and neither a new category of aggregate
+under §7:
+- **what is still sitting with them** — `cash_handover_id is null` — grabbable by another tap;
+- **what they already handed over but the boss has not yet confirmed.**
+
+Almost always these are the same tap, once, at the end of the morning shift. They part ways
+for the rare case this decision exists for: the morning batch sits with the boss awaiting
+confirmation, then a night-shift pickup or a delayed payment reopens the first amount on top
+of it, and a second, independent hand-over can be made without disturbing the first.
+
+See `supabase/migrations/20260901093000_cash_confirmation.sql`,
+`public.my_cash_ready_to_hand_over()`, and `public.admin_pending_cash_handovers()`.
