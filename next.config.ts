@@ -16,6 +16,21 @@ const config: NextConfig = {
   // nonce/strict-dynamic `script-src` with no unsafe-eval (src/proxy.ts) would
   // break it in production while `next dev` looked fine.
   serverExternalPackages: ['@react-pdf/renderer'],
+  // Every photo this app takes arrives through a Server Action — a licence,
+  // the mark on a damage diagram, the guest's signature, the pictures on an
+  // incident — and Next caps a Server Action body at 1 MB by default, above
+  // which it throws a 413 before any of our code runs. A photo off a rep's
+  // phone is 2–5 MB, so that default refused every real one.
+  //
+  // 12 MB is deliberately just ABOVE `MAX_UPLOAD_BYTES` (10 MB, in
+  // src/lib/storage/booking-files.ts), not equal to it: the app's own cap
+  // should be the thing that refuses an oversized file, because it refuses it
+  // with a message in the rep's language and keeps whatever else they had
+  // typed. A framework 413 is a dead page. The two numbers are a pair — moving
+  // one without the other puts the wrong one in charge.
+  experimental: {
+    serverActions: { bodySizeLimit: '12mb' },
+  },
   // Security headers that never vary per request live here; the ones that do
   // (the CSP nonce) are set in middleware.
   async headers() {
