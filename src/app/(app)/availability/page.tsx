@@ -4,7 +4,7 @@ import { getTranslations } from 'next-intl/server'
 import { requireUnlocked } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
 import { loadCarsWithSpecs, loadAvailability } from '@/lib/availability/load'
-import { isFreeForRange } from '@/lib/availability/types'
+import { isFreeForRange, isSeatChoice, matchesSeatChoice } from '@/lib/availability/types'
 import { FilterForm } from './FilterForm'
 import type { CategoryRow } from '@/lib/supabase/database.types'
 
@@ -52,10 +52,11 @@ export default async function AvailabilityPage({
     : [[], new Map<string, string[]>()]
 
   let filtered = cars
-  if (params.category) filtered = filtered.filter((c) => c.category_id === params.category)
   if (params.transmission) filtered = filtered.filter((c) => c.transmission === params.transmission)
-  if (params.seats) filtered = filtered.filter((c) => c.seats >= Number(params.seats))
-  if (params.aircon === '1') filtered = filtered.filter((c) => c.aircon)
+  if (isSeatChoice(params.seats)) {
+    const choice = params.seats
+    filtered = filtered.filter((c) => matchesSeatChoice(c.seats, choice))
+  }
 
   const byCategory = new Map<string, typeof filtered>()
   for (const car of filtered) {
@@ -66,7 +67,7 @@ export default async function AvailabilityPage({
     <div className="flex flex-col gap-5">
       <h1 className="text-[1.75rem] font-bold tracking-tight">{t('title')}</h1>
 
-      <FilterForm categories={cats} from={from} to={to} searchParams={params} />
+      <FilterForm from={from} to={to} searchParams={params} />
 
       {!validRange ? (
         <p className="ir-notice border-danger bg-danger-tint text-danger" role="alert">{t('invalidRange')}</p>
@@ -89,7 +90,6 @@ export default async function AvailabilityPage({
                         <p className="truncate font-medium">{car.make} {car.model}</p>
                         <p className="truncate text-[0.8125rem] text-ink-soft">
                           {car.plate} · {t(`transmission.${car.transmission}`)} · {t('seatsCount', { n: car.seats })}
-                          {car.aircon ? ` · ${t('aircon')}` : ''}
                         </p>
                       </div>
                       {free ? (

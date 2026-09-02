@@ -351,7 +351,6 @@ export type Database = {
       }
       car_models: {
         Row: {
-          aircon: boolean
           category_id: string
           doors: number
           fuel_type: string
@@ -364,7 +363,6 @@ export type Database = {
           transmission: string
         }
         Insert: {
-          aircon?: boolean
           category_id: string
           doors: number
           fuel_type: string
@@ -377,7 +375,6 @@ export type Database = {
           transmission: string
         }
         Update: {
-          aircon?: boolean
           category_id?: string
           doors?: number
           fuel_type?: string

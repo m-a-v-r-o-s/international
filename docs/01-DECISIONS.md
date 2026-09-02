@@ -173,7 +173,7 @@ The app **generates the agreement as a PDF** and the customer **signs on screen*
 - Admin can **block a date range** on a car (reason is admin-only text). Blocks are how
   service, repair and write-offs leave availability.
 - Car record: photo, plate, make, model, category, year, colour, transmission, fuel type,
-  seats, doors, A/C, tank size.
+  seats, doors, tank size. **No A/C field** — every car has it (§36).
 - **No insurance / ΚΤΕΟ / road-tax expiry tracking.** Out of scope.
 
 ## 18. Rep booking rights
@@ -792,3 +792,35 @@ exist would be building it twice.
 
 See `supabase/migrations/20260902110000_fuel_payment.sql`,
 `src/app/(app)/bookings/[id]/return/` and `tests/db/rep-cash.test.ts`.
+
+## 36. The availability filters ask the two questions a guest actually asks
+
+R2 shipped with four filters — category, transmission, seats, A/C — which was the fleet's
+data model handed to the rep as a form. The owner cut it to two (2 Sep 2026), and each cut
+is a different kind of decision.
+
+**A/C is gone because it was never a question.** `car_models.aircon` had been `not null
+default true` since 0003 and no row ever said otherwise: every car in this fleet has air
+conditioning. A checkbox whose only effect is to narrow the fleet to itself teaches a rep
+that ticking boxes does nothing. The column is dropped rather than left defaulted — a column
+that exists invites a false row, and if a car without A/C is ever bought this comes back as
+a deliberate migration with the screens behind it (0032).
+
+**Category is gone from the FORM, not from the screen.** The results are still grouped under
+their category headings, because category is what drives price and the age/licence gate and
+the rep needs to see it. But nobody walks up to the desk and asks for a Category D. They ask
+for something small, or something automatic, or something that fits seven people; the rep
+translating that into a letter before they can search is the app making them do its work.
+
+**Seats became three buttons, and `7` means seven or more.** "Minimum seats" as a number
+field asked the rep for a number nobody says out loud, and answered `4` with the entire
+fleet. The three choices are the three real ones — 4, 5, 7+ — and the last of them is a
+range on purpose: the vans here seat eight and nine, and a guest asking for seven seats
+means any of them. `4` and `5` stay exact. Offering a five-seater to someone who asked for
+four is a bigger car at a bigger price, and that is the rep's offer to make out loud, not
+the filter's to make silently.
+
+See `supabase/migrations/20260902120000_no_aircon_flag.sql`,
+`src/lib/availability/types.ts` (`SEAT_CHOICES`, `matchesSeatChoice`),
+`src/app/(app)/availability/` and `tests/unit/availability-filters.test.ts`.
+

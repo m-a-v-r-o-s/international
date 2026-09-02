@@ -20,7 +20,7 @@ export async function loadCarsWithSpecs(
       .select('id, plate, model_id, photo_path, archived_at')
       .is('archived_at', null),
     supabase.from('car_models')
-      .select('id, make, model, category_id, transmission, fuel_type, seats, doors, aircon'),
+      .select('id, make, model, category_id, transmission, fuel_type, seats, doors'),
     supabase.from('categories').select('id, code, sort_order').order('sort_order'),
   ])
 
@@ -48,7 +48,6 @@ export async function loadCarsWithSpecs(
       fuel_type: model.fuel_type as FuelType,
       seats: model.seats,
       doors: model.doors,
-      aircon: model.aircon,
     })
   }
   return out

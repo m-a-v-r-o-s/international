@@ -57,7 +57,6 @@ create table car_models (
   fuel_type     text not null check (fuel_type in ('petrol','diesel','hybrid','electric')),
   seats         smallint not null,
   doors         smallint not null,
-  aircon        boolean not null default true,
   tank_litres   numeric(5,1),
   photo_path    text
 );

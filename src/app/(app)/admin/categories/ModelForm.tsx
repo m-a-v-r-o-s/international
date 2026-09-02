@@ -78,19 +78,10 @@ export function ModelForm({
         <Field id="doors" name="doors" type="number" label={t('doors')} defaultValue={model?.doors ?? 5} required min={1} max={6} />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 items-end">
-        <Field
-          id="tank_litres" name="tank_litres" type="number" step="0.1" label={t('tankLitres')}
-          hint={t('tankLitresHint')} defaultValue={model?.tank_litres ?? undefined} min={0.1} max={999.9}
-        />
-        <label className="flex min-h-12 items-center gap-2.5 text-[1.0625rem] text-ink">
-          <input
-            type="checkbox" name="aircon" defaultChecked={model?.aircon ?? true}
-            className="size-5 rounded border-control"
-          />
-          {t('aircon')}
-        </label>
-      </div>
+      <Field
+        id="tank_litres" name="tank_litres" type="number" step="0.1" label={t('tankLitres')}
+        hint={t('tankLitresHint')} defaultValue={model?.tank_litres ?? undefined} min={0.1} max={999.9}
+      />
 
       <FormActions
         label={model ? tc('save') : t('add')}

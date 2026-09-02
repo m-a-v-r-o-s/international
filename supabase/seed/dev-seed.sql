@@ -32,8 +32,8 @@ values
 on conflict (code) do nothing;
 
 -- Two models per category, placeholder specs.
-insert into public.car_models (make, model, category_id, transmission, fuel_type, seats, doors, aircon, tank_litres)
-select m.make, m.model, c.id, m.transmission, m.fuel_type, m.seats, m.doors, true, m.tank
+insert into public.car_models (make, model, category_id, transmission, fuel_type, seats, doors, tank_litres)
+select m.make, m.model, c.id, m.transmission, m.fuel_type, m.seats, m.doors, m.tank
 from public.categories c
 join (values
   ('A', 'Fiat',    'Panda',      'manual',    'petrol', 4, 5, 37.0),

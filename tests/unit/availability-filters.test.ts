@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import { isFreeForRange, swapCandidates, currentCarFreeThrough } from '../../src/lib/availability/types'
+import {
+  isFreeForRange, swapCandidates, currentCarFreeThrough, isSeatChoice, matchesSeatChoice,
+} from '../../src/lib/availability/types'
 
 // This is a filter over dates the server already computed via availability()
 // — string comparison on YYYY-MM-DD, not a reimplementation of the inclusive-
@@ -84,5 +86,33 @@ describe('is the current car free through the new date? (R7)', () => {
 
   test('a hold beyond the new return date is not this extension\'s problem', () => {
     expect(currentCarFreeThrough(['2026-07-14'], '2026-07-08', '2026-07-10')).toBe(true)
+  })
+})
+
+describe('the three seat choices (R2)', () => {
+  test('4 and 5 are exact — a bigger car is the rep\'s offer to make, not the filter\'s', () => {
+    expect(matchesSeatChoice(4, '4')).toBe(true)
+    expect(matchesSeatChoice(5, '4')).toBe(false)
+    expect(matchesSeatChoice(5, '5')).toBe(true)
+    expect(matchesSeatChoice(4, '5')).toBe(false)
+  })
+
+  test('7 means seven OR MORE, so the 8- and 9-seat vans are found', () => {
+    // The trap: the fleet's vans seat 8 and 9 (Tourneo, Proace). Matching 7
+    // exactly answers "I need seven seats" with an empty list while a
+    // nine-seater sits free on the lot.
+    expect(matchesSeatChoice(7, '7')).toBe(true)
+    expect(matchesSeatChoice(8, '7')).toBe(true)
+    expect(matchesSeatChoice(9, '7')).toBe(true)
+    expect(matchesSeatChoice(6, '7')).toBe(false)
+  })
+
+  test('only the three choices come off the URL — anything else means no filter', () => {
+    expect(isSeatChoice('4')).toBe(true)
+    expect(isSeatChoice('7')).toBe(true)
+    expect(isSeatChoice('')).toBe(false)
+    expect(isSeatChoice(undefined)).toBe(false)
+    expect(isSeatChoice('6')).toBe(false)
+    expect(isSeatChoice('9')).toBe(false)
   })
 })

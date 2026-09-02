@@ -29,7 +29,7 @@ Footer strip: **cash in hand today** + `Hand over` action. *(The only aggregate 
 The core lookup. Pick a date range → the fleet, grouped by category.
 Each car: photo thumb, plate, model, spec chips, and a free/occupied bar across the range.
 Occupied is a **flat neutral block with no label** — no rep, no reason, no times, ever.
-Filters: category, transmission, seats, A/C.
+Filters: **seats (4 / 5 / 7+) and transmission** — nothing else (docs/01-DECISIONS.md §36).
 `Book this car` on any car free for the whole range.
 
 ### R3 · New booking

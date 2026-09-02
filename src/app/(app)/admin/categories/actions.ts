@@ -95,7 +95,6 @@ export async function createModel(_prev: FormState, formData: FormData): Promise
     fuel_type: fuelSchema,
     seats: seatsSchema,
     doors: doorsSchema,
-    aircon: z.coerce.boolean(),
     tank_litres: tankSchema,
   }).safeParse({
     make: formData.get('make'),
@@ -105,7 +104,6 @@ export async function createModel(_prev: FormState, formData: FormData): Promise
     fuel_type: formData.get('fuel_type'),
     seats: formData.get('seats'),
     doors: formData.get('doors'),
-    aircon: formData.get('aircon') === 'on',
     tank_litres: formData.get('tank_litres') || null,
   })
   if (!parsed.success) return { error: 'IR104' }
@@ -132,7 +130,6 @@ export async function updateModel(_prev: FormState, formData: FormData): Promise
     fuel_type: fuelSchema,
     seats: seatsSchema,
     doors: doorsSchema,
-    aircon: z.coerce.boolean(),
     tank_litres: tankSchema,
   }).safeParse({
     id: formData.get('id'),
@@ -143,7 +140,6 @@ export async function updateModel(_prev: FormState, formData: FormData): Promise
     fuel_type: formData.get('fuel_type'),
     seats: formData.get('seats'),
     doors: formData.get('doors'),
-    aircon: formData.get('aircon') === 'on',
     tank_litres: formData.get('tank_litres') || null,
   })
   if (!parsed.success) return { error: 'IR104' }

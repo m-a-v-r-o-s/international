@@ -110,16 +110,19 @@
     "from": "From",
     "to": "To",
     "invalidRange": "The end date is before the start date.",
-    "category": "Category",
-    "anyCategory": "Any category",
     "any": "Any",
     "transmissionLabel": "Transmission",
     "transmission": {
       "manual": "Manual",
       "automatic": "Automatic"
     },
-    "minSeats": "Minimum seats",
-    "aircon": "Air conditioning",
+    "seatsLabel": "Seats",
+    "seatsAny": "Any",
+    "seatsChoice": {
+      "4": "4 seats",
+      "5": "5 seats",
+      "7": "7+ seats"
+    },
     "seatsCount": "{n} seats",
     "noneMatch": "No cars match. Try widening the dates or filters.",
     "bookThisCar": "Book this car",
@@ -599,7 +602,6 @@
       "seats": "Seats",
       "seatsShort": "seats",
       "doors": "Doors",
-      "aircon": "Air conditioning",
       "tankLitres": "Tank size (litres)",
       "tankLitresHint": "Needed for the fuel policy at pickup and return."
     },

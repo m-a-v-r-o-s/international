@@ -29,7 +29,7 @@ export default async function CategoriesPage() {
       .select('id, code, name_el, name_en, min_driver_age, min_licence_years, sort_order')
       .order('sort_order'),
     supabase.from('car_models')
-      .select('id, make, model, category_id, transmission, fuel_type, seats, doors, aircon, tank_litres, photo_path')
+      .select('id, make, model, category_id, transmission, fuel_type, seats, doors, tank_litres, photo_path')
       .order('make'),
   ])
 

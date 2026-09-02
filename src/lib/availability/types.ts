@@ -11,16 +11,35 @@ export type CarWithSpecs = {
   fuel_type: 'petrol' | 'diesel' | 'hybrid' | 'electric'
   seats: number
   doors: number
-  aircon: boolean
 }
 
 export type AvailabilityFilters = {
   from: string
   to: string
-  categoryId?: string
   transmission?: 'manual' | 'automatic'
-  seats?: number
-  aircon?: boolean
+  seats?: SeatChoice
+}
+
+/**
+ * The three seat counts a guest actually asks for at the desk — "a small one",
+ * "a family car", "a van" — rather than a number the rep has to translate.
+ *
+ * `'7'` means seven OR MORE. The vans in this fleet seat eight and nine, and a
+ * guest asking for seven seats means all of them; an exact match would answer
+ * that question with an empty list while a nine-seater sat free on the lot.
+ * `'4'` and `'5'` are exact: a five-seater offered to someone who asked for
+ * four is a bigger car at a bigger price, which is the rep's call to make out
+ * loud, not the filter's to make silently.
+ */
+export const SEAT_CHOICES = ['4', '5', '7'] as const
+export type SeatChoice = (typeof SEAT_CHOICES)[number]
+
+export function isSeatChoice(value: string | undefined): value is SeatChoice {
+  return SEAT_CHOICES.includes(value as SeatChoice)
+}
+
+export function matchesSeatChoice(seats: number, choice: SeatChoice): boolean {
+  return choice === '7' ? seats >= 7 : seats === Number(choice)
 }
 
 /** A car is free for the whole range only if none of its occupied dates fall in it. */
