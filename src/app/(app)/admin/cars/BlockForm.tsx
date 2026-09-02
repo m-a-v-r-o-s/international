@@ -4,6 +4,7 @@ import { useActionState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
 import { SubmitButton } from '@/components/SubmitButton'
+import { FormActions } from '@/components/FormActions'
 import { createBlock, updateBlock, deleteBlock, type FormState } from './actions'
 
 export type BlockRow = { id: string; car_id: string; start_date: string; end_date: string; block_reason: string | null }
@@ -45,12 +46,12 @@ export function BlockForm({ carId, block, onDone }: { carId: string; block?: Blo
           <p className="ir-hint">{t('reasonHint')}</p>
         </div>
 
-        <div className="flex gap-3">
-          <SubmitButton label={block ? tc('save') : t('add')} />
-          {onDone ? (
-            <button type="button" onClick={onDone} className="ir-btn-quiet">{tc('cancel')}</button>
-          ) : null}
-        </div>
+        <FormActions
+          label={block ? tc('save') : t('add')}
+          requireChanges={Boolean(block)}
+          saved={state && !state.error}
+          onCancel={onDone}
+        />
       </form>
 
       {block ? (

@@ -3,7 +3,7 @@
 import { useActionState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
-import { SubmitButton } from '@/components/SubmitButton'
+import { FormActions } from '@/components/FormActions'
 import { createCar, updateCar, type FormState } from './actions'
 import type { CarModelRow, CarRow } from '@/lib/supabase/database.types'
 
@@ -50,12 +50,12 @@ export function CarForm({
         <Field id="colour" name="colour" label={t('colour')} defaultValue={car?.colour ?? undefined} maxLength={40} />
       </div>
 
-      <div className="flex gap-3">
-        <SubmitButton label={car ? tc('save') : t('add')} />
-        {onDone ? (
-          <button type="button" onClick={onDone} className="ir-btn-quiet">{tc('cancel')}</button>
-        ) : null}
-      </div>
+      <FormActions
+        label={car ? tc('save') : t('add')}
+        requireChanges={Boolean(car)}
+        saved={state && !state.error}
+        onCancel={onDone}
+      />
     </form>
   )
 }

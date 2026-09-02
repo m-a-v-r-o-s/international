@@ -3,7 +3,7 @@
 import { useActionState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
-import { SubmitButton } from '@/components/SubmitButton'
+import { FormActions } from '@/components/FormActions'
 import { resolveIncident, type FormState } from '../actions'
 
 /**
@@ -49,7 +49,11 @@ export function ResolveForm({
         <p className="ir-hint">{t('resolutionHint')}</p>
       </div>
 
-      <SubmitButton label={resolvedAt ? t('updateAction') : t('closeAction')} />
+      <FormActions
+        label={resolvedAt ? t('updateAction') : t('closeAction')}
+        requireChanges={Boolean(resolvedAt)}
+        saved={state?.saved}
+      />
       {state?.saved ? <p className="text-[0.875rem] text-ok" role="status">{t('saved')}</p> : null}
     </form>
   )

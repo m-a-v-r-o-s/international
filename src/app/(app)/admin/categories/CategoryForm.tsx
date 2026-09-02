@@ -3,7 +3,7 @@
 import { useActionState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
-import { SubmitButton } from '@/components/SubmitButton'
+import { FormActions } from '@/components/FormActions'
 import { createCategory, updateCategory, type FormState } from './actions'
 import type { CategoryRow } from '@/lib/supabase/database.types'
 
@@ -46,12 +46,12 @@ export function CategoryForm({ category, onDone }: { category?: CategoryRow; onD
         />
       </div>
 
-      <div className="flex gap-3">
-        <SubmitButton label={category ? tc('save') : t('add')} />
-        {onDone ? (
-          <button type="button" onClick={onDone} className="ir-btn-quiet">{tc('cancel')}</button>
-        ) : null}
-      </div>
+      <FormActions
+        label={category ? tc('save') : t('add')}
+        requireChanges={Boolean(category)}
+        saved={state && !state.error}
+        onCancel={onDone}
+      />
     </form>
   )
 }

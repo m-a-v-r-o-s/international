@@ -9,6 +9,7 @@
     "loading": "Working…",
     "save": "Save",
     "cancel": "Cancel",
+    "noChanges": "No changes to save yet.",
     "back": "Back",
     "continue": "Continue",
     "signOut": "Sign out",

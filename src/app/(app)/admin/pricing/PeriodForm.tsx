@@ -4,6 +4,7 @@ import { useActionState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
 import { SubmitButton } from '@/components/SubmitButton'
+import { FormActions } from '@/components/FormActions'
 import { createPeriod, updatePeriod, deletePeriod, type FormState } from './actions'
 import type { Database } from '@/lib/supabase/database.types'
 
@@ -39,12 +40,12 @@ export function PeriodForm({ period, onDone }: { period?: PeriodRow; onDone?: ()
           <Field id="end_date" name="end_date" type="date" label={t('end')} defaultValue={period?.end_date} required />
         </div>
 
-        <div className="flex gap-3">
-          <SubmitButton label={period ? tc('save') : t('addPeriod')} />
-          {onDone ? (
-            <button type="button" onClick={onDone} className="ir-btn-quiet">{tc('cancel')}</button>
-          ) : null}
-        </div>
+        <FormActions
+          label={period ? tc('save') : t('addPeriod')}
+          requireChanges={Boolean(period)}
+          saved={state && !state.error}
+          onCancel={onDone}
+        />
       </form>
 
       {period ? (

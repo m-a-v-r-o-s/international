@@ -7,6 +7,14 @@ same codebase, wider layouts on desktop.
 Motion is deliberately **restrained** here — this is an operational tool used 20 times a day,
 not a showcase site. Transitions exist to explain state changes, nothing more.
 
+Every form that edits something already saved carries **Save and Cancel together**
+(`src/components/FormActions.tsx`). Save is dead until a field actually differs from what
+the server rendered, so a tap that would write nothing cannot be made; Cancel puts every
+field back to that same starting point. Forms that create a row keep Save live — their
+opening values are the thing being saved — but still offer the way out. The disabled
+attribute is a hint to the person, never the control: every action re-checks its own
+preconditions server-side.
+
 ---
 
 ## REP APP

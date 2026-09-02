@@ -4,6 +4,7 @@ import { useActionState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { SubmitButton } from '@/components/SubmitButton'
+import { FormActions } from '@/components/FormActions'
 import { archiveCar, unarchiveCar, deleteCar, setCarNotes, type FormState } from './actions'
 
 export function ArchiveToggle({ id, archived }: { id: string; archived: boolean }) {
@@ -64,7 +65,7 @@ export function NotesForm({ id, notes }: { id: string; notes: string | null }) {
         <textarea id="notes" name="notes" className="ir-field min-h-24" maxLength={2000} defaultValue={notes ?? ''} />
         <p className="ir-hint">{t('notesHint')}</p>
       </div>
-      <SubmitButton label={tc('save')} variant="quiet" />
+      <FormActions label={tc('save')} variant="quiet" saved={state && !state.error} />
     </form>
   )
 }

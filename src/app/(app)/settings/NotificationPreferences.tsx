@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react'
 import { useTranslations } from 'next-intl'
-import { SubmitButton } from '@/components/SubmitButton'
+import { FormActions } from '@/components/FormActions'
 import { saveNotificationPreferences, type NotifyState } from './actions'
 
 /**
@@ -45,7 +45,7 @@ export function NotificationPreferences({ incidents }: { incidents: boolean }) {
         </li>
       </ul>
 
-      <SubmitButton label={tc('save')} variant="quiet" />
+      <FormActions label={tc('save')} variant="quiet" saved={state?.saved} />
     </form>
   )
 }

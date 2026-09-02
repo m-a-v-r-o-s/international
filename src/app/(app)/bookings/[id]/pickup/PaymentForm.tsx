@@ -3,7 +3,7 @@
 import { useActionState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
-import { SubmitButton } from '@/components/SubmitButton'
+import { FormActions } from '@/components/FormActions'
 import { formatEuros } from '@/lib/money'
 import { savePayment, type PickupState } from './actions'
 
@@ -68,7 +68,7 @@ export function PaymentForm({
         <label htmlFor="paid" className="text-[1.0625rem]">{t('paidInFull')}</label>
       </div>
 
-      <SubmitButton label={tc('save')} variant="quiet" />
+      <FormActions label={tc('save')} variant="quiet" saved={state?.saved} />
       {state?.saved ? <p className="text-[0.875rem] text-ok" role="status">{t('paymentSaved')}</p> : null}
     </form>
   )

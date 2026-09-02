@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { SubmitButton } from '@/components/SubmitButton'
+import { FormActions } from '@/components/FormActions'
 import type { HandoverState } from '@/lib/handover/fuel'
 
 /**
@@ -79,7 +79,13 @@ export function FuelSlider({
         <input id="fuel_notes" name="notes" className="ir-field" maxLength={2000} />
       </div>
 
-      <SubmitButton label={submitLabel} variant="quiet" />
+      <FormActions
+        label={submitLabel}
+        variant="quiet"
+        saved={state?.saved}
+        requireChanges={defaultEighths !== null}
+        onCancel={() => setEighths(defaultEighths ?? 8)}
+      />
       {state?.saved ? <p className="text-[0.875rem] text-ok" role="status">{savedLabel}</p> : null}
     </form>
   )

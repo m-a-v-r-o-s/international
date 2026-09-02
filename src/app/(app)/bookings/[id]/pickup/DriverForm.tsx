@@ -3,7 +3,7 @@
 import { useActionState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
-import { SubmitButton } from '@/components/SubmitButton'
+import { FormActions } from '@/components/FormActions'
 import { saveDriver, removeDriver, type PickupState } from './actions'
 import type { BookingDriverRow } from '@/lib/supabase/database.types'
 
@@ -125,7 +125,12 @@ export function DriverForm({
           />
         </div>
 
-        <SubmitButton label={driver ? tc('save') : t('addDriver')} variant="quiet" />
+        <FormActions
+          label={driver ? tc('save') : t('addDriver')}
+          variant="quiet"
+          requireChanges={Boolean(driver)}
+          saved={state?.saved}
+        />
         {state?.saved ? <p className="text-[0.875rem] text-ok" role="status">{tc('save')} ✓</p> : null}
       </form>
 

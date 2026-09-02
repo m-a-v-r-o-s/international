@@ -3,7 +3,7 @@
 import { useActionState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
-import { SubmitButton } from '@/components/SubmitButton'
+import { FormActions } from '@/components/FormActions'
 import type { Company } from '@/lib/contract/company'
 import { saveCompanySettings, type SettingsState } from './actions'
 
@@ -119,7 +119,7 @@ export function CompanyForm({ company }: { company: Company }) {
         </div>
       </section>
 
-      <SubmitButton label={tc('save')} />
+      <FormActions label={tc('save')} saved={state?.saved} />
     </form>
   )
 }

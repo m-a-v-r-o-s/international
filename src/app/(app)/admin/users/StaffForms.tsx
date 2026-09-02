@@ -4,6 +4,7 @@ import { useActionState, useEffect, useId, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
 import { SubmitButton } from '@/components/SubmitButton'
+import { FormActions } from '@/components/FormActions'
 import type { HotelRow } from '@/lib/supabase/database.types'
 import {
   createRep, reissuePin, setActive, setCover, setHomeHotel, setRole,
@@ -125,7 +126,7 @@ export function StaffDetailsForm({
         </select>
       </div>
 
-      <SubmitButton label={tc('save')} />
+      <FormActions label={tc('save')} saved={state?.saved} />
     </form>
   )
 }
@@ -167,7 +168,7 @@ export function HomeHotelForm({
         <p className="ir-hint" id="home-hotel-hint">{t('homeHotelHint')}</p>
       </div>
 
-      <SubmitButton label={tc('save')} variant="quiet" />
+      <FormActions label={tc('save')} variant="quiet" saved={state?.saved} />
     </form>
   )
 }
@@ -253,7 +254,7 @@ export function RoleForm({
         <p className="ir-hint" id="role-hint">{t('roleHint')}</p>
       </div>
 
-      <SubmitButton label={t('setRole')} variant="quiet" />
+      <FormActions label={t('setRole')} variant="quiet" saved={state?.saved} />
     </form>
   )
 }

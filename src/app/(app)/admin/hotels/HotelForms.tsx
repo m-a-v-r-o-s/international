@@ -4,6 +4,7 @@ import { useActionState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
 import { SubmitButton } from '@/components/SubmitButton'
+import { FormActions } from '@/components/FormActions'
 import type { HotelRow } from '@/lib/supabase/database.types'
 import {
   createHotel, deleteHotel, setHotelActive, updateHotel, type HotelFormState,
@@ -73,7 +74,7 @@ export function EditHotelForm({ hotel }: { hotel: HotelRow }) {
       <Notice state={state} />
       <input type="hidden" name="id" value={hotel.id} />
       <Fields hotel={hotel} />
-      <SubmitButton label={tc('save')} />
+      <FormActions label={tc('save')} saved={state?.saved} />
     </form>
   )
 }

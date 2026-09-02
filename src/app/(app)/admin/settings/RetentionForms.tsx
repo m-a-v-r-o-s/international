@@ -4,6 +4,7 @@ import { useActionState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
 import { SubmitButton } from '@/components/SubmitButton'
+import { FormActions } from '@/components/FormActions'
 import {
   runLicencePurge, saveFuelChargeSettings, saveRetentionSettings, saveWindowSettings,
   type SettingsState,
@@ -40,7 +41,7 @@ export function RetentionForm({ months }: { months: number }) {
         label={t('retentionMonths')} hint={t('retentionMonthsHint')}
         defaultValue={months} min={1} max={120} step={1} required inputMode="numeric"
       />
-      <SubmitButton label={tc('save')} />
+      <FormActions label={tc('save')} saved={state?.saved} />
     </form>
   )
 }
@@ -59,7 +60,7 @@ export function FuelChargeForm({ perEighth }: { perEighth: number }) {
         label={t('fuelChargeLabel')} hint={t('fuelChargeHint')}
         defaultValue={perEighth} min={0} max={1000} step={1} required inputMode="numeric"
       />
-      <SubmitButton label={tc('save')} />
+      <FormActions label={tc('save')} saved={state?.saved} />
     </form>
   )
 }
@@ -107,7 +108,7 @@ export function WindowsForm({
         </div>
       </fieldset>
 
-      <SubmitButton label={tc('save')} />
+      <FormActions label={tc('save')} saved={state?.saved} />
     </form>
   )
 }

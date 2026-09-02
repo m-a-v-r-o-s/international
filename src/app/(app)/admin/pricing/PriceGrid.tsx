@@ -4,6 +4,7 @@ import { useActionState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
 import { SubmitButton } from '@/components/SubmitButton'
+import { FormActions } from '@/components/FormActions'
 import { setPriceRow, setExtraDayRate, previewQuote, type FormState, type PreviewState } from './actions'
 import type { CategoryRow } from '@/lib/supabase/database.types'
 
@@ -89,7 +90,7 @@ export function PriceGridRow({
       </div>
 
       <div className="mt-3">
-        <SubmitButton label={t('saveRow')} variant="quiet" />
+        <FormActions label={t('saveRow')} variant="quiet" saved={state && !state.error} />
       </div>
     </form>
   )

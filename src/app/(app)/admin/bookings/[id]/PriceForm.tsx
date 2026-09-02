@@ -3,7 +3,7 @@
 import { useActionState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
-import { SubmitButton } from '@/components/SubmitButton'
+import { FormActions } from '@/components/FormActions'
 import { adminSetBookingPrice, type FormState } from '../actions'
 
 /**
@@ -33,7 +33,7 @@ export function PriceForm({ bookingId, total }: { bookingId: string; total: numb
         required
       />
 
-      <SubmitButton label={tc('save')} variant="quiet" />
+      <FormActions label={tc('save')} variant="quiet" saved={state && !state.error} />
       {state && !state.error ? <p className="text-[0.875rem] text-ok">{t('priceSaved')}</p> : null}
     </form>
   )
