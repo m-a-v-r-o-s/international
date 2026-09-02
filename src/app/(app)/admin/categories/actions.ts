@@ -114,7 +114,7 @@ export async function createModel(_prev: FormState, formData: FormData): Promise
   if (error) return { error: errorKey(error) }
 
   revalidatePath('/admin/categories')
-  revalidatePath('/admin/cars')
+  revalidatePath('/admin/fleet')
   return undefined
 }
 
@@ -151,6 +151,6 @@ export async function updateModel(_prev: FormState, formData: FormData): Promise
   if (error) return { error: errorKey(error) }
 
   revalidatePath('/admin/categories')
-  revalidatePath('/admin/cars')
+  revalidatePath('/admin/fleet')
   return undefined
 }
