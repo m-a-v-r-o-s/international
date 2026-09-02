@@ -10,6 +10,7 @@ import {
 } from '@/lib/contract/company'
 import { CompanyForm } from './CompanyForm'
 import { FuelChargeForm, PurgeForm, RetentionForm, WindowsForm } from './RetentionForms'
+import { HotelsSection } from './HotelsSection'
 import { ClearLedgerForm } from '../customers/LedgerForms'
 import { NotificationPreferences } from '../../settings/NotificationPreferences'
 import { PushToggle } from '../../settings/PushToggle'
@@ -52,6 +53,9 @@ export async function generateMetadata(): Promise<Metadata> {
  * the sidebar's own "Settings" entry landed here instead and never saw them.
  * They're folded in below so the sidebar has exactly one settings screen;
  * /settings now redirects here for an admin.
+ *
+ * A8's hotel half is folded in the same way — it used to be its own sidebar
+ * entry at /admin/hotels, which now only redirects here. See HotelsSection.tsx.
  */
 export default async function AdminSettingsPage() {
   const staff = await requireAdmin()
@@ -113,6 +117,8 @@ export default async function AdminSettingsPage() {
         <h2 id="acct-heading" className="text-[1.125rem] font-semibold">{ts('account')}</h2>
         <SignOutButton className="ir-btn-quiet">{tc('signOut')}</SignOutButton>
       </section>
+
+      <HotelsSection />
 
       {readiness.ready ? (
         <p className="ir-notice border-ok bg-ok-tint text-ok" role="status">{t('ready')}</p>

@@ -102,7 +102,7 @@ export default async function AdminUserPage({
         {hotels.length === 0 ? (
           <div>
             <p className="text-[0.9375rem] text-ink-soft">{t('noHotels')}</p>
-            <Link href="/admin/hotels" className="ir-btn-quiet mt-3">{t('goToHotels')}</Link>
+            <Link href="/admin/settings#hotels-heading" className="ir-btn-quiet mt-3">{t('goToHotels')}</Link>
           </div>
         ) : (
           <HomeHotelForm

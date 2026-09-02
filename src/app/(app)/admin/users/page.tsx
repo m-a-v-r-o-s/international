@@ -56,7 +56,10 @@ export default async function AdminUsersPage({
       {hotels.length === 0 ? (
         <div className="ir-notice border-warn bg-warn-tint text-warn" role="status">
           <p>{t('noHotels')}</p>
-          <Link href="/admin/hotels" className="mt-2 inline-block underline underline-offset-2">
+          <Link
+            href="/admin/settings#hotels-heading"
+            className="mt-2 inline-block underline underline-offset-2"
+          >
             {t('goToHotels')}
           </Link>
         </div>
@@ -136,7 +139,7 @@ export default async function AdminUsersPage({
         </ul>
       )}
 
-      <Link href="/admin/hotels" className="ir-btn-quiet">{th('title')}</Link>
+      <Link href="/admin/settings#hotels-heading" className="ir-btn-quiet">{th('title')}</Link>
     </div>
   )
 }

@@ -50,7 +50,7 @@ export async function createHotel(
   const { error } = await supabase.from('hotels').insert(parsed.data)
   if (error) return { error: errorKey(error) }
 
-  revalidatePath('/admin/hotels')
+  revalidatePath('/admin/settings')
   return { saved: true }
 }
 
@@ -68,7 +68,7 @@ export async function updateHotel(
   const { error } = await supabase.from('hotels').update(fields).eq('id', id)
   if (error) return { error: errorKey(error) }
 
-  revalidatePath('/admin/hotels')
+  revalidatePath('/admin/settings')
   return { saved: true }
 }
 
@@ -94,7 +94,7 @@ export async function setHotelActive(
     .eq('id', parsed.data.id)
   if (error) return { error: errorKey(error) }
 
-  revalidatePath('/admin/hotels')
+  revalidatePath('/admin/settings')
   return { saved: true }
 }
 
@@ -118,7 +118,7 @@ export async function deleteHotel(
   const { error } = await supabase.from('hotels').delete().eq('id', id.data)
   if (error) return { error: errorKey(error) }
 
-  revalidatePath('/admin/hotels')
+  revalidatePath('/admin/settings')
   revalidatePath('/admin/users')
   return { saved: true }
 }
