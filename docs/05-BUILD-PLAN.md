@@ -52,7 +52,7 @@ data to exist.
 ## Phase 3 — Pickup & return · ~1 week
 - Pickup flow (R4) end to end: camera capture, eligibility gate, fuel, damage diagram.
 - Return flow (R5), early-return release of remaining dates.
-- Exceptions queue (A6). Cash in hand + hand-over.
+- Incidents queue (A6). Cash in hand + hand-over.
 - Extensions with same-category car swap.
 
 **Done when:** a full rental can be run from booking to return without paper — except the
@@ -74,7 +74,7 @@ screen when it was needed, what the reps worked around.
 ## Phase 5 — Oct 2026 → Feb 2027 · refinement
 - Act on pilot feedback — this is the point of the October date, so leave real room for it.
 - Reports (A7) and CSV export, once genuine data has accumulated.
-- Push notifications: rep day reminders, admin exceptions.
+- Push notifications: rep day reminders, admin incidents.
 - TWA wrapper, Play Store listing and internal-testing track.
 - Retention purge job, privacy/terms/cookie components, 404, favicon, OG image.
 - WCAG 2.1 AA audit. Core Web Vitals verification on a real mid-range Android on 4G.
@@ -119,7 +119,7 @@ feature — do not spend it early.
 - Age 20 on category A → blocked. Age 22 on category C → blocked. Age 22 on category B → allowed.
 - Licence issued 11 months ago → blocked.
 - Licence expiring during the rental → blocked.
-- Admin override unblocks, and is recorded as an exception.
+- Admin override unblocks, and is recorded on the booking.
 
 ---
 

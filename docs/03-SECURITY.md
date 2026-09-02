@@ -30,7 +30,7 @@ category-adjacent personal data under GDPR. A breach here is a reportable incide
 | Any other post-pickup edit | ✓ | ✗ | ✗ |
 | Change a price | ✓ | ✗ | ✗ |
 | Override eligibility block | ✓ | ✗ | ✗ |
-| Resolve an exception / set a charge | ✓ | ✗ | ✗ |
+| Resolve an incident / set a charge | ✓ | ✗ | ✗ |
 | Add / archive / delete a car | ✓ | ✗ | ✗ |
 | Block a car's dates / see block reason | ✓ | ✗ | ✗ |
 | Edit price tables & pricing periods | ✓ | ✗ | ✗ |

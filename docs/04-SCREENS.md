@@ -76,10 +76,18 @@ Sequential, one thing per screen, resumable if the app is closed.
 → `Out`.
 
 ### R5 · Return flow
-1. **Fuel in** — eighths slider. A shortfall is **recorded and flagged**, never priced.
-2. **Damage** — pre-existing marks shown greyed; new marks added in a distinct colour.
-   Any new mark raises an exception for the boss.
-3. **Confirm** → `Returned`. Remaining dates reopen in availability immediately.
+1. **Fuel in** — eighths slider. A shortfall is priced by the database on confirm, at the
+   admin-set rate per missing eighth; the screen states the amount before the rep confirms.
+2. **Confirm** → `Returned`. Remaining dates reopen in availability immediately.
+
+There is no damage step. Anything wrong with the returning car is reported as an incident
+(R9), in words and photographs, which is how damage is actually described.
+
+### R9 · Incidents
+What this rep has sent to the boss, and the form that sends it: pick the contract, write what
+happened, add photographs one at a time, send. Open or dealt-with is all a rep sees of the
+outcome — never the charge, never what the boss wrote (§14).
+Reachable from the sidebar and from a booking's own screen, which pre-selects the contract.
 
 ### R6 · My bookings
 Their own history — searchable by guest name, plate or date. Price shown per booking.
@@ -123,10 +131,11 @@ Bulk paste from a spreadsheet. A preview showing what a sample rental would cost
 Every booking, every rep, every hotel. Search by guest, plate, date, rep, hotel, status.
 Full edit rights at any stage — including price. Every change audit-logged.
 
-### A6 · Exceptions queue
-The boss's inbox: fuel shortfalls, new damage with photos, late returns, no-shows,
-eligibility override requests. He sets the charge and closes the item.
-This is where every non-standard event in the business lands.
+### A6 · Incidents queue
+The boss's inbox: what the reps have sent in, each one a rep's own words and photographs
+against one contract. He sets the charge, writes what he decided, and closes the item.
+Neither figure ever reaches a rep's device — both are outside their column grant.
+Filter is open / closed / all; there is no type, because an incident does not have one.
 
 ### A7 · Reports
 Revenue by day / month / rep / category. Booking counts. Simple fleet utilisation.

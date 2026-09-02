@@ -11,7 +11,7 @@
 | OCR | **Claude vision** (`claude-sonnet-5`) server-side | Licence read; never called from the browser |
 | PDF | **@react-pdf/renderer** + Noto Sans (Greek + Latin glyphs) | Deterministic, no headless browser on Railway, handles bilingual text and the damage diagram |
 | Signature | HTML canvas → PNG → embedded in the PDF | No dependency needed |
-| Push | Web Push (VAPID) — works in a TWA on Android | Rep day reminders, admin exceptions |
+| Push | Web Push (VAPID) — works in a TWA on Android | Rep day reminders, admin incidents |
 | i18n | `next-intl` | Greek / English, per-user preference |
 
 **Escalation justified:** this is not a static site. It needs authenticated multi-user

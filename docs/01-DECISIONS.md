@@ -113,13 +113,16 @@ licences must not block a pickup.
 Plus: the licence must be valid and unexpired **through the return date**.
 
 A failing driver **cannot be picked up**. Only the **admin** can override, and the override
-is recorded on the booking and raised as an exception. Minimum ages are admin-editable per
+is recorded on the booking itself (`eligibility_override_by` / `_at`) and in the audit log.
+It raises nothing for anybody to action — see §14. Minimum ages are admin-editable per
 category — do not hard-code 21 and 23 in application logic.
 
 ## 12. Condition recording
 - **Fuel level** out and in (eighths).
-- **Damage marked on a car diagram**, tappable, with an optional photo per mark.
-  Pre-existing marks carry forward from pickup; new marks at return are distinguished.
+- **Damage marked on a car diagram at pickup**, tappable, with an optional photo per mark.
+  That diagram is the car's agreed condition and is reproduced on the signed agreement.
+  There is no diagram at return: damage found on a returning car is reported as an
+  incident, in words and photographs (§14).
 - **No odometer. No km. No mileage-based servicing.** Explicitly out of scope.
 - Fuel policy is **same-to-same**.
 
@@ -128,10 +131,25 @@ category — do not hard-code 21 and 23 in application logic.
 No quote stage. No settlement stage.
 
 ## 14. Anything non-standard goes to the boss
-Fuel shortfall, new damage, late return, no-show, eligibility override — the rep **records
-the evidence and flags it**. They never price it, never argue it, never collect it.
-Each flag creates an item in an **admin exceptions queue** where the boss decides the amount
-and closes it.
+*(Rewritten 2 Sep 2026 — see §34 for what changed and why.)*
+
+The rep **records the evidence and sends it**. They never price it, never argue it, never
+collect it. That principle is unchanged; what it applies to has narrowed to the one case
+that actually needs a person:
+
+- **Damage, and anything else a rule did not anticipate** — a **free-form incident**: the rep
+  picks the contract, writes what happened in their own words, attaches photographs, and
+  sends it. It lands in the **admin incidents queue**, where the boss sets a charge and
+  closes it. There is no type to choose.
+- **A fuel shortfall is not sent to anybody.** It is arithmetic — €10 per missing eighth by
+  default, an admin-set rate — applied by the database the moment a return is confirmed. It
+  lands on `bookings.fuel_charge`, beside the total rather than inside it, so the figure on
+  the signed agreement stays the figure that was signed.
+- **A late return and a no-show raise nothing.** A rental that has not come back is one the
+  booking's own status already says is out; a no-show is a status the boss sets on the
+  booking.
+- **An eligibility override raises nothing** (§11). Only the boss can make one, so a queue
+  item would be him asking himself to look at what he had just done.
 
 ## 15. Payment
 Amount collected + method (cash / card / transfer) + paid / partially paid / unpaid.
@@ -164,7 +182,7 @@ Instant, no approval, no notification to the rep. **Every change is audit-logged
 
 ## 20. Admin screens
 Today's movements sheet · live fleet board · full booking search · simple revenue reporting
-(by day / month / rep / category) with CSV export · exceptions queue.
+(by day / month / rep / category) with CSV export · incidents queue.
 
 ## 21. Auth
 - **Admin:** email + one-time code. Concurrent desktop and mobile sessions allowed —
@@ -175,7 +193,7 @@ Today's movements sheet · live fleet board · full booking search · simple rev
   shift-length unlock and the admin's own path above are unchanged.
 
 ## 22. Notifications
-- **Admin:** exceptions — damage flagged, car not returned, eligibility override.
+- **Admin:** incidents — whatever a rep has found and sent in.
 - **Reps:** morning summary of their pickups, evening reminder of returns due.
 
 ## 23. Platform
@@ -349,9 +367,9 @@ The data model must not *preclude* a public booking channel later, but no work g
   rate-limited and logged function, and never by browsing.
 - Is there a **minimum rental length**? *(Assumed: 1 day.)*
 - Is there a **maximum forward booking window**? *(Assumed: none.)*
-- Which fuel charge rate applies — a per-litre figure or the boss's judgement each time?
-  *(Assumed: the boss's judgement, since all fuel shortfalls route to him as exceptions.
-  The app records the shortfall in eighths and litres, and charges nothing automatically.)*
+- ~~Which fuel charge rate applies — a per-litre figure or the boss's judgement each time?~~
+  **Answered 2 Sep 2026:** a flat rate per missing eighth of a tank, €10 by default and
+  admin-editable, applied automatically at return. See §14 and §34.
 
 ## 30. The boss at the desk, and two front-desk actions that reach every screen
 
@@ -464,8 +482,7 @@ The contract picker lists `booked` rentals with no `contracts` row. A rental alr
 without a signed agreement is **not** listed, because R4 stops at "already out" and the link
 would be to a dead end. That combination is possible — the agreement is a step and not a
 gate, and nothing in the database requires a signed contract to reach `out` — so if it turns
-out to happen in practice, it wants an exceptions-queue item (§14) rather than a second
-signing path.
+out to happen in practice, it wants an incident (§14) rather than a second signing path.
 
 Neither new screen is a second way to write a booking. Both go through the same `bookings`
 insert, the same guard trigger and the same exclusion constraint as R3, so a phone booking
@@ -664,3 +681,56 @@ acts on it, in a new queue at `/admin/exception-bookings`:
 See `supabase/migrations/20260901150000_booking_exception_approval.sql`,
 `src/lib/email/validate.ts`, `src/lib/email/booking-confirmation.ts`,
 `src/lib/bookings/confirmation.ts` and `src/app/(app)/admin/exception-bookings/`.
+
+## 34. Exceptions become incidents, and fuel becomes arithmetic
+
+The owner's ask, 2 Sep 2026, prompted by nothing more than the sidebar: **Exceptions** and
+**Exception bookings** sat next to each other and read as the same thing twice. They are not
+related at all — one is a queue of problems on rentals already underway, the other the boss's
+approval gate for new bookings that broke a rule (§33) — but looking at why they were
+confusable showed that the first was mostly not earning its place.
+
+§14 had six exception types. Four of them were not doing the work:
+
+- `late_return` and `no_show` were **dead**. Nothing in the app ever created either one; they
+  existed as values in an enum and an option in a filter. A rental that has not come back is
+  one the booking's own status already reports.
+- `fuel_short` was **arithmetic wearing the clothes of a judgement**. The owner's rule is a
+  flat rate per missing eighth of a tank, so the queue item asked the boss to look at two
+  gauge readings and type in their product.
+- `eligibility_override` was **the boss logging his own act back to himself**, and then being
+  pushed a notification about it. It had also been misread — including by us — as something a
+  rep could do. A rep never could: the block is `app.assert_drivers_eligible()` on the
+  booked → out transition, and the only door around it asserts admin.
+
+What was left was damage — the one case where somebody genuinely has to look at the thing and
+decide — and it was the worst served of the six, because it was raised **automatically from
+taps on a car diagram**. A cracked wing mirror is described in a sentence and a photograph,
+not inferred from a dot on an outline.
+
+**So the taxonomy is gone.** One free-form record: pick the contract, write plain words,
+attach photographs, send. No type, no dropdown, nothing to classify. The boss reads it, sets a
+charge, writes what he decided and closes it — the half of §14 that was always right and is
+unchanged.
+
+Three consequences worth stating, because each one is a decision rather than a detail:
+
+- **The fuel charge does not touch `total`.** It lands on `bookings.fuel_charge` and is shown
+  beside the price. `total` is the number on the agreement the guest signed and reproduced in
+  the contract PDF; growing it afterwards would make the record disagree with the paper.
+- **The return flow lost its damage diagram.** Its only consumer was the flag it raised. The
+  *pickup* diagram stays and is untouched — that one is the car's agreed condition and goes
+  onto the signed agreement (§12).
+- **The rate is a setting, not a constant.** Fuel prices change without the app changing.
+  `app_settings.fuel_charge_per_eighth`, €10 by default, on A10.
+
+`/admin/exception-bookings` keeps its name and is untouched throughout, which is what makes
+the sidebar readable again: **Incidents** and **Exception bookings** are now plainly two
+different things.
+
+See `supabase/migrations/20260902100000_incidents.sql`,
+`src/app/(app)/incidents/` and `src/app/(app)/admin/incidents/`.
+
+**Operational note.** The Railway cron service that sweeps the boss's inbox now runs
+`npm run notify -- --incidents`; the old `--exceptions` flag no longer exists. See
+docs/07-SEASON-ROUTINE.md §1.

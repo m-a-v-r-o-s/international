@@ -23,7 +23,7 @@ tests.
 A1–A5.
 
 **Phase 3** — the pickup flow (R4), the return flow (R5), the exceptions queue
-(A6), R1's Today screen with cash in hand and hand-over, and end-to-end
+(A6, since replaced by incidents — docs/01-DECISIONS.md §34), R1's Today screen with cash in hand and hand-over, and end-to-end
 verification of extensions with a same-category swap. 273 tests.
 
 **Phase 4** — the private Storage bucket and signed URLs, licence capture with
@@ -152,7 +152,7 @@ because both are NOT NULL with no default, which is true of the table and wrong
 about the grant: 0011 omits both and `app.bookings_before_write()` sets them,
 so the app cannot send what the type demands and must not. Third, a parameter
 with no DEFAULT is typed non-nullable, and several RPCs take a null that means
-something — no home hotel, an exception closed with no charge, a block with no
+something — no home hotel, an incident closed with no charge, a block with no
 reason typed, and the missing-licence-date failure §11 exists to catch. Where
 the parameter has a default, `?? undefined` is right and is what is used; where
 it has none, PostgREST resolves an RPC by the keys it is given and omitting one
@@ -312,7 +312,7 @@ rep with the anon key and their own access token could go at PostgREST
 directly and read their own bookings *and every booking at the hotel they used
 to cover* — another rep's guests — along with those bookings' drivers,
 `licence_number` included, their handovers, damage marks, contracts,
-exceptions, and the licence images in the private bucket, every one of which is
+incidents, and the licence images in the private bucket, every one of which is
 gated on `app.can_read_booking()`. And they could **UPDATE a live booking**:
 verified, not theorised, the statement returned `rows=1`. A dismissed rep
 changing a guest's dates, room or status is the worst item on that list and is
@@ -394,14 +394,15 @@ characters because one edit to `app_settings.company` would otherwise print the
 entire bilingual contract terms twice, and paging is limit+1 rather than a
 count over a table that only ever grows.
 
-**Exception notifications are swept, not pushed from where they are raised.**
-Three code paths raise one today — the pickup flow, the return flow and
-`admin_override_eligibility()` — and hanging a send off each means the fourth
-path added next year notifies nobody. `exceptions.notified_at` is the stamp; it
-is in no client grant, so a rep cannot mark the boss's inbox as read, and it is
-written only after the send so a failure leaves them pending. They are stamped
-even when nobody is subscribed, or the first person to enable push would be
-greeted by every exception in the history of the business.
+**Incident notifications are swept, not pushed from where they are raised.**
+Three code paths raised one when this was written; §34 left exactly one, a rep
+sending a report from `/incidents`. The sweep is kept anyway, for the reason it
+was built: hanging a send off the raising code means the second path added next
+year notifies nobody. `incidents.notified_at` is the stamp; it is in no client
+grant, so a rep cannot mark the boss's inbox as read, and it is written only
+after the send so a failure leaves them pending. They are stamped even when
+nobody is subscribed, or the first person to enable push would be greeted by
+every incident in the history of the business.
 
 **A rep's notification lists movements and never counts them.** §7 allows a rep
 exactly one aggregate and Phase 3 already declined to put a count of today's
