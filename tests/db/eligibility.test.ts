@@ -163,7 +163,7 @@ describe('the hard block on pickup', () => {
     expect(await errcode(() => goOut(id))).toBe('IR121')
   })
 
-  test('the admin override unblocks the pickup and lands in the exceptions queue', async () => {
+  test('the admin override unblocks the pickup, and is recorded on the booking alone', async () => {
     const id = await bookingWithDriver({ dob: '2006-07-06' })
     expect(await errcode(() => goOut(id))).toBe('IR120')
 
@@ -172,17 +172,18 @@ describe('the hard block on pickup', () => {
 
     await expect(goOut(id)).resolves.toBeTruthy()
 
-    const row = await db.one<{ type: string; detail: string; raised_by: string }>(
-      `select type, detail, raised_by from public.exceptions where booking_id = $1`, [id])
-    expect(row.type).toBe('eligibility_override')
-    expect(row.detail).toBe('Boss approved at the desk')
-    expect(row.raised_by).toBe(f.admin)
-
     const booking = await db.one<{ eligibility_override_by: string; eligibility_override_at: Date }>(
       `select eligibility_override_by, eligibility_override_at
          from public.bookings where id = $1`, [id])
     expect(booking.eligibility_override_by).toBe(f.admin)
     expect(booking.eligibility_override_at).not.toBeNull()
+
+    // It does NOT raise an incident (0030). Only the boss can override, so a
+    // queue item would be him asking himself to look at what he just did — the
+    // booking's own two columns and the audit log are the record.
+    const raised = await db.sql(
+      `select id from public.incidents where booking_id = $1`, [id])
+    expect(raised).toHaveLength(0)
   })
 
   test('a rep cannot grant themselves the override', async () => {

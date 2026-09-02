@@ -57,7 +57,7 @@ function ensureVapid(): boolean {
   return configured !== null
 }
 
-export async function targetsFor(kind: 'morning' | 'evening' | 'exceptions'): Promise<Target[]> {
+export async function targetsFor(kind: 'morning' | 'evening' | 'incidents'): Promise<Target[]> {
   const { data } = await supabaseAdmin().rpc('push_targets', { p_kind: kind })
   return (data ?? []) as Target[]
 }

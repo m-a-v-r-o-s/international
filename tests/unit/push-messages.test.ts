@@ -30,8 +30,8 @@ describe('the recipient\'s own language', () => {
 describe('ICU, not string replacement', () => {
   test('the plural resolves in each language rather than printing its source', () => {
     for (const lang of ['el', 'en']) {
-      const one = translate(lang, 'push.exceptions.title', { n: 1 })
-      const many = translate(lang, 'push.exceptions.title', { n: 3 })
+      const one = translate(lang, 'push.incidents.title', { n: 1 })
+      const many = translate(lang, 'push.incidents.title', { n: 3 })
 
       expect(one).not.toContain('plural')
       expect(one).toContain('1')
@@ -42,11 +42,9 @@ describe('ICU, not string replacement', () => {
     }
   })
 
-  test('an exception type prints as the words the boss sees on A6', () => {
-    expect(translate('en', 'admin.exceptions.type.new_damage'))
-      .toBe(en.admin.exceptions.type.new_damage)
-    expect(translate('el', 'admin.exceptions.type.fuel_short'))
-      .toBe(el.admin.exceptions.type.fuel_short)
+  test('the incident title prints as the words the boss sees on A6', () => {
+    expect(translate('en', 'admin.incidents.title')).toBe(en.admin.incidents.title)
+    expect(translate('el', 'admin.incidents.title')).toBe(el.admin.incidents.title)
   })
 })
 

@@ -71,7 +71,7 @@ describe("rep A reaching for rep B's booking", () => {
     expect(rows).toHaveLength(1)
   })
 
-  test('its guest, drivers, extras, handovers, contracts and exceptions are all invisible',
+  test('its guest, drivers, extras, handovers, contracts and incidents are all invisible',
     async () => {
       await db.sql(
         `insert into public.booking_drivers
@@ -90,9 +90,13 @@ describe("rep A reaching for rep B's booking", () => {
       await db.sql(
         `insert into public.contracts (booking_id, pdf_path, signature_path, signer_name)
          values ($1, 'c/b.pdf', 's/b.png', 'Beta Guest')`, [repBBooking])
+      const incident = await db.one<{ id: string }>(
+        `insert into public.incidents (booking_id, note, raised_by)
+         values ($1, 'scratched the door', $2) returning id`, [repBBooking, f.repB])
       await db.sql(
-        `insert into public.exceptions (booking_id, type, detail, raised_by)
-         values ($1, 'new_damage', 'scratched the door', $2)`, [repBBooking, f.repB])
+        `insert into public.incident_photos (incident_id, path, added_by)
+         values ($1, $2, $3)`,
+        [incident.id, `${repBBooking}/incidents/secret.jpg`, f.repB])
 
       await db.asUser(f.repA, async () => {
         expect(await db.sql(
@@ -108,8 +112,13 @@ describe("rep A reaching for rep B's booking", () => {
           `select id, pdf_path from public.contracts where booking_id = $1`,
           [repBBooking])).toEqual([])
         expect(await db.sql(
-          `select id, detail from public.exceptions where booking_id = $1`,
+          `select id, note from public.incidents where booking_id = $1`,
           [repBBooking])).toEqual([])
+        // And the photos hanging off it — the path itself never reaches them,
+        // so there is nothing to hand to the storage API even if they tried.
+        expect(await db.sql(
+          `select id, path from public.incident_photos where incident_id = $1`,
+          [incident.id])).toEqual([])
       })
     })
 
@@ -122,8 +131,8 @@ describe("rep A reaching for rep B's booking", () => {
         `insert into public.handovers (booking_id, kind, by_profile) values ($1, 'pickup', $2)`,
         [repBBooking, f.repA]))).toBe('42501')
       expect(await errcode(() => db.sql(
-        `insert into public.exceptions (booking_id, type, detail, raised_by)
-         values ($1, 'other', 'x', $2)`, [repBBooking, f.repA]))).toBe('42501')
+        `insert into public.incidents (booking_id, note, raised_by)
+         values ($1, 'x', $2)`, [repBBooking, f.repA]))).toBe('42501')
       expect(await errcode(() => db.sql(
         `insert into public.contracts (booking_id, pdf_path, signature_path, signer_name)
          values ($1, 'x', 'y', 'z')`, [repBBooking]))).toBe('42501')
@@ -152,7 +161,7 @@ describe("rep A reaching for rep B's booking", () => {
       expect(await errcode(() => db.sql(
         `select public.admin_set_user_active($1, false)`, [f.repB]))).toBe('IR001')
       expect(await errcode(() => db.sql(
-        `select * from public.admin_exception_detail($1)`, [blockId]))).toBe('IR001')
+        `select * from public.admin_incident_detail($1)`, [blockId]))).toBe('IR001')
     })
   })
 })

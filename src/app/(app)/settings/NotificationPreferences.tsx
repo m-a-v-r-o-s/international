@@ -11,7 +11,7 @@ import { saveNotificationPreferences, type NotifyState } from './actions'
  * admin-only, and saveNotificationPreferences() refuses the write for anyone
  * else regardless of what a request claims.
  */
-export function NotificationPreferences({ exceptions }: { exceptions: boolean }) {
+export function NotificationPreferences({ incidents }: { incidents: boolean }) {
   const t = useTranslations('settings')
   const tc = useTranslations('common')
   const te = useTranslations('errors')
@@ -33,13 +33,13 @@ export function NotificationPreferences({ exceptions }: { exceptions: boolean })
         <li>
           <label className="flex items-start gap-3">
             <input
-              type="checkbox" name="notify_exceptions" defaultChecked={exceptions}
+              type="checkbox" name="notify_incidents" defaultChecked={incidents}
               className="mt-1 size-5 shrink-0"
-              aria-describedby="notify_exceptions-hint"
+              aria-describedby="notify_incidents-hint"
             />
             <span>
-              <span className="block text-[0.9375rem] font-medium">{t('notifyExceptions')}</span>
-              <span className="ir-hint" id="notify_exceptions-hint">{t('notifyExceptionsHint')}</span>
+              <span className="block text-[0.9375rem] font-medium">{t('notifyIncidents')}</span>
+              <span className="ir-hint" id="notify_incidents-hint">{t('notifyIncidentsHint')}</span>
             </span>
           </label>
         </li>

@@ -23,25 +23,25 @@ export async function saveFuelIn(_prev: HandoverState, formData: FormData): Prom
 /**
  * R5 step 3 — confirm → Returned.
  *
- * Two things happen, in this order and for this reason:
+ * Now just the transition, and deliberately so. It used to flag two things on
+ * the way through — a fuel shortfall and any new damage mark, each raising a
+ * queue item for the boss — and neither survives (0030):
  *
- * 1. The evidence is flagged. A fuel shortfall and any new damage mark each
- *    raise an `exceptions` row — and that is ALL the rep does with them. They
- *    are recorded and flagged, never priced, never argued, never collected
- *    (docs/01-DECISIONS.md §14). `charge` and `resolution` are not in
- *    the rep's column grant at all; the boss sets them through
- *    admin_resolve_exception() from A6 and nowhere else.
- * 2. The rental moves to `returned`, which drops it out of the exclusion
- *    constraint's predicate and therefore out of availability() — so an early
- *    return reopens the remaining dates immediately (§4). The price does not
- *    change: an early return earns no refund.
+ *  · The FUEL shortfall is priced by the database itself, on this very
+ *    transition, at the owner's rate per missing eighth
+ *    (app.bookings_fuel_charge()). Nothing to flag and nobody to ask.
+ *  · NEW DAMAGE is reported by the rep as an incident, in words and
+ *    photographs, from /incidents — which is how a cracked mirror is actually
+ *    described. Inferring one from taps on a diagram was a poor substitute.
  *
- * Flags before the transition, because the evidence must not be lost if the
- * transition fails; and each insert is guarded by an existence check, because
- * the transition is not what makes it happen only once.
+ * What the transition itself does is unchanged: `returned` drops the rental out
+ * of the exclusion constraint's predicate and therefore out of availability(),
+ * so an early return reopens the remaining dates immediately
+ * (docs/01-DECISIONS.md §4). The price does not change — an early return earns
+ * no refund.
  */
 export async function completeReturn(_prev: HandoverState, formData: FormData): Promise<HandoverState> {
-  const staff = await requireUnlocked()
+  await requireUnlocked()
 
   const parsed = uuidSchema.safeParse(formData.get('booking_id'))
   if (!parsed.success) return { error: 'IR104' }
@@ -49,62 +49,14 @@ export async function completeReturn(_prev: HandoverState, formData: FormData): 
 
   const supabase = await supabaseServer()
 
-  const { data: booking, error: bookingError } = await supabase.from('bookings')
-    .select('id, status, car_id').eq('id', bookingId).eq('kind', 'rental').maybeSingle()
-  if (bookingError) return { error: errorKey(bookingError) }
-  if (!booking) return { error: 'IR112' }
-  if (booking.status !== 'out') return { error: 'IR109' }
-
-  const [{ data: handovers }, { data: car }] = await Promise.all([
-    supabase.from('handovers').select('id, kind, fuel_eighths').eq('booking_id', bookingId),
-    supabase.from('cars').select('id, model_id').eq('id', booking.car_id).maybeSingle(),
-  ])
-
-  const { data: model } = car
-    ? await supabase.from('car_models').select('tank_litres').eq('id', car.model_id).maybeSingle()
-    : { data: null }
-
-  const pickup = (handovers ?? []).find((h) => h.kind === 'pickup')
-  const ret = (handovers ?? []).find((h) => h.kind === 'return')
+  // The one thing still checked here rather than in the database: a rental
+  // cannot close without the return handover, because that reading is what the
+  // fuel charge is computed from and a rental closed without one can never get
+  // a second chance at it. Everything else about the transition — who may make
+  // it, from which state — is the guard trigger's, and is not restated here.
+  const { data: ret } = await supabase.from('handovers')
+    .select('id').eq('booking_id', bookingId).eq('kind', 'return').maybeSingle()
   if (!ret) return { error: 'IR104' }
-
-  const { data: existing } = await supabase.from('exceptions')
-    .select('id, type').eq('booking_id', bookingId)
-  const alreadyRaised = new Set((existing ?? []).map((e) => e.type))
-
-  // ── Fuel shortfall ────────────────────────────────────────────────────────
-  const out = pickup?.fuel_eighths ?? null
-  const back = ret.fuel_eighths ?? null
-  if (out !== null && back !== null && back < out && !alreadyRaised.has('fuel_short')) {
-    // The detail is numbers and symbols on purpose: it is stored once and read
-    // by a manager in either language, so it must not be a sentence in one of
-    // them. A6 renders the readings themselves with translated labels.
-    const tank = model?.tank_litres ?? null
-    const short = out - back
-    const litres = tank !== null ? ` ≈ ${((tank * short) / 8).toFixed(1)} L` : ''
-    const { error } = await supabase.from('exceptions').insert({
-      booking_id: bookingId,
-      type: 'fuel_short',
-      detail: `${out}/8 → ${back}/8 (−${short}/8${litres})`,
-      raised_by: staff.id,
-    })
-    if (error) return { error: errorKey(error) }
-  }
-
-  // ── New damage ────────────────────────────────────────────────────────────
-  const { data: newMarks } = await supabase.from('damage_marks')
-    .select('id, view, mark_type').eq('handover_id', ret.id).order('created_at')
-
-  if ((newMarks ?? []).length > 0 && !alreadyRaised.has('new_damage')) {
-    const summary = (newMarks ?? []).map((m) => `${m.view}/${m.mark_type}`).join(', ')
-    const { error } = await supabase.from('exceptions').insert({
-      booking_id: bookingId,
-      type: 'new_damage',
-      detail: `${(newMarks ?? []).length}: ${summary}`,
-      raised_by: staff.id,
-    })
-    if (error) return { error: errorKey(error) }
-  }
 
   const { error } = await supabase.from('bookings')
     .update({ status: 'returned' }).eq('id', bookingId)

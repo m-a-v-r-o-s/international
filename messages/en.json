@@ -99,8 +99,8 @@
     "pushOff": "This device does not receive notifications.",
     "pushEnable": "Turn on for this device",
     "pushDisable": "Turn off for this device",
-    "notifyExceptions": "Exceptions",
-    "notifyExceptionsHint": "Damage flagged, a car not returned, an eligibility override."
+    "notifyIncidents": "Incidents",
+    "notifyIncidentsHint": "A rep has sent something in."
   },
   "availability": {
     "title": "Availability",
@@ -246,7 +246,7 @@
     "goToAvailability": "Check availability",
     "goToMyBookings": "My bookings",
     "goToMovements": "Movements sheet",
-    "goToExceptions": "Exceptions",
+    "goToIncidents": "Incidents",
     "pickedUp": "Picked up",
     "droppedOff": "Dropped off"
   },
@@ -416,24 +416,18 @@
     "stepDone": "done",
     "step": {
       "fuel": "Fuel",
-      "damage": "Damage",
       "confirm": "Confirm"
     },
     "fuelOutWas": "Fuel at pickup: {level}",
     "sameToSame": "The car goes out and comes back at the same level. Read the gauge as it is now.",
-    "toDamage": "Continue to damage",
     "toConfirm": "Continue to confirm",
-    "damageIntro": "Damage already on the car at pickup is shown greyed out and cannot be changed here. Add anything new.",
-    "damageNotPriced": "Record what you can see and nothing more. New damage goes to the manager, who decides what it costs. Do not price it, do not argue it and do not take money for it.",
-    "newDamage": "New damage",
-    "marksCount": "{n, plural, =0 {None} one {# mark} other {# marks}}",
-    "willFlagFuel": "The manager will be sent the {n}/8 shortfall to settle.",
-    "willFlagDamage": "The manager will be sent {n, plural, one {# new mark} other {# new marks}} to settle.",
     "confirmHint": "Confirming closes the rental. The remaining days go back into availability straight away, and the price does not change — an early return earns no refund.",
     "confirmAction": "Complete the return",
     "confirmPrompt": "Complete the return now?",
     "alreadyReturned": "This rental has already been returned.",
-    "notReturnable": "This booking is not out, so there is nothing to return."
+    "notReturnable": "This booking is not out, so there is nothing to return.",
+    "fuelCharge": "Back {n}/8 short — €{amount} will be added to this booking.",
+    "damageGoesToIncidents": "Anything wrong with the car — damage, mess, something missing — is reported separately under Incidents, with photos."
   },
   "admin": {
     "navLabel": "Admin sections",
@@ -444,7 +438,7 @@
       "categories": "Categories",
       "pricing": "Pricing",
       "bookings": "Bookings",
-      "exceptions": "Exceptions",
+      "incidents": "Incidents",
       "exceptionBookings": "Exception bookings",
       "cash": "Cash",
       "settings": "Settings",
@@ -623,46 +617,37 @@
       "previewButton": "Calculate",
       "previewResult": "{days, plural, one {# day} other {# days}} — €{total}"
     },
-    "exceptions": {
-      "title": "Exceptions",
-      "subtitle": "Everything non-standard in the business lands here. The rep records the evidence; you decide the amount and close it.",
+    "incidents": {
+      "title": "Incidents",
+      "subtitle": "What the reps have sent in. You decide what each one costs.",
       "filterState": "Show",
       "stateOpen": "Open",
       "stateResolved": "Closed",
       "stateAll": "All",
-      "filterType": "Kind",
-      "anyType": "Any kind",
       "apply": "Apply",
       "open": "Open",
       "resolved": "Closed",
       "resolvedOn": "Closed on {date}",
       "empty": "Nothing here.",
-      "emptyOpen": "Nothing open. Everything raised has been dealt with.",
-      "type": {
-        "fuel_short": "Fuel shortfall",
-        "new_damage": "New damage",
-        "late_return": "Late return",
-        "no_show": "No-show",
-        "eligibility_override": "Eligibility override",
-        "other": "Other"
-      },
+      "emptyOpen": "Nothing open. Everything sent in has been dealt with.",
       "booking": "Booking",
-      "raisedBy": "Raised by",
+      "note": "What the rep wrote",
+      "noNote": "No note — see the photos.",
+      "raisedBy": "Sent in by",
       "raisedBySystem": "The system",
-      "raisedAt": "Raised",
-      "detail": "Recorded",
-      "backToQueue": "Back to the queue",
-      "fuelEvidence": "Fuel readings",
-      "shortBy": "Short by",
-      "fuelJudgement": "Nothing has been charged for this. The app records the shortfall and leaves the amount to you.",
-      "resolveTitle": "Settle this",
-      "resolveHint": "Set what it costs and say what was decided. This is the only place either is set, and the change is logged.",
+      "raisedAt": "Sent",
+      "backToQueue": "Back to incidents",
+      "photoCount": "{n, plural, one {# photo} other {# photos}}",
+      "photoAlt": "Photo {n}",
+      "photoUnavailable": "This photo could not be opened.",
+      "resolveTitle": "Settle it",
+      "resolveHint": "Set what it costs and close the item. Leave the amount empty if there is nothing to charge — that is not the same as charging zero.",
       "chargeLabel": "Charge (€)",
-      "chargeHint": "Leave blank for nothing to charge. Blank and €0 are recorded differently.",
-      "resolutionLabel": "What was decided",
-      "resolutionHint": "Kept on the record. Reps never see it.",
-      "closeAction": "Close this item",
-      "updateAction": "Update this item",
+      "chargeHint": "Whole euros. Leave empty for nothing to charge.",
+      "resolutionLabel": "What you decided",
+      "resolutionHint": "For your own records. The rep never sees this.",
+      "closeAction": "Close the item",
+      "updateAction": "Update",
       "saved": "Saved."
     },
     "exceptionBookings": {
@@ -1067,8 +1052,8 @@
     "evening": {
       "title": "Returns due back today"
     },
-    "exceptions": {
-      "title": "{n, plural, one {# new exception} other {# new exceptions}}"
+    "incidents": {
+      "title": "{n, plural, one {# new incident} other {# new incidents}}"
     }
   },
   "adminLedger": {

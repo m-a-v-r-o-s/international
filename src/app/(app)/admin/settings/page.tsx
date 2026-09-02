@@ -68,10 +68,10 @@ export default async function AdminSettingsPage() {
       .eq('id', 1).maybeSingle(),
     supabase.rpc('admin_licence_retention_status'),
     supabase.rpc('admin_customer_ledger_status'),
-    supabase.from('profiles').select('notify_exceptions').eq('id', staff.id).maybeSingle(),
+    supabase.from('profiles').select('notify_incidents').eq('id', staff.id).maybeSingle(),
   ])
 
-  const exceptions = (profile as { notify_exceptions?: boolean } | null)?.notify_exceptions ?? true
+  const incidents = (profile as { notify_incidents?: boolean } | null)?.notify_incidents ?? true
 
   const company = parseCompany(data?.company)
   const readiness = contractReadiness(company)
@@ -105,7 +105,7 @@ export default async function AdminSettingsPage() {
         <h2 id="notify-heading" className="text-[1.125rem] font-semibold">{ts('notifications')}</h2>
         <PushToggle publicKey={vapidPublicKey()} />
         <hr className="border-line" />
-        <NotificationPreferences exceptions={exceptions} />
+        <NotificationPreferences incidents={incidents} />
       </section>
 
       <section className="ir-card flex flex-col gap-3 p-5" aria-labelledby="acct-heading">

@@ -5,7 +5,7 @@ import { seed, bookAsRep, type Fixtures } from '../helpers/fixtures'
 // Push notifications (docs/01-DECISIONS.md §22), through
 // supabase/migrations/20260830190000_notifications.sql.
 //
-//   Admin: exceptions — damage flagged, car not returned, eligibility override.
+//   Admin: incidents — whatever a rep found and sent in.
 //   Reps:  morning summary of their pickups, evening reminder of returns due.
 //
 // The notifier runs as the service role, which bypasses RLS, so what a rep may
@@ -25,11 +25,11 @@ afterAll(async () => { await db?.close() })
 
 beforeEach(async () => {
   await db.sql(`delete from public.push_subscriptions`)
-  await db.sql(`delete from public.exceptions`)
+  await db.sql(`delete from public.incidents`)
   await db.sql(`delete from public.bookings`)
   await db.sql(
     `update public.profiles
-        set notify_morning = true, notify_evening = true, notify_exceptions = true`)
+        set notify_morning = true, notify_evening = true, notify_incidents = true`)
 })
 
 const subscribe = (profile: string, endpoint: string) =>
@@ -57,22 +57,22 @@ describe('who gets told what', () => {
     }
   })
 
-  test('exceptions go to the boss, never to a rep — §14 makes them his business', async () => {
+  test('incidents go to the boss, never to a rep — §14 makes them his business', async () => {
     await subscribe(f.repA, 'https://push.example/a')
     await subscribe(f.admin, 'https://push.example/boss')
 
-    const rows = await targets('exceptions')
+    const rows = await targets('incidents')
     expect(rows.map((r) => r.profile_id)).toEqual([f.admin])
   })
 
-  test('a rep with notify_exceptions set is still never an exceptions target', async () => {
+  test('a rep with notify_incidents set is still never an incidents target', async () => {
     await subscribe(f.repA, 'https://push.example/a')
     // The column is writable by the person it belongs to; the ROLE is what the
     // query checks, so setting it changes nothing for a rep.
     await db.asUser(f.repA, () => db.sql(
-      `update public.profiles set notify_exceptions = true where id = $1`, [f.repA]))
+      `update public.profiles set notify_incidents = true where id = $1`, [f.repA]))
 
-    expect(await targets('exceptions')).toHaveLength(0)
+    expect(await targets('incidents')).toHaveLength(0)
   })
 
   test('a rep cannot opt out of morning or evening — 0027 clamps both regardless of who writes', async () => {
@@ -195,28 +195,28 @@ describe("a rep's digest is their own day, and nothing more", () => {
   })
 })
 
-describe('the boss is told about an exception exactly once', () => {
-  async function raise(type = 'new_damage') {
+describe('the boss is told about an incident exactly once', () => {
+  async function raise(note = 'dent in the front wing') {
     const bookingId = await bookAsRep(db, f.repA, {
       carId: f.car1, hotelId: f.hotelA, start: '2026-07-06', end: '2026-07-09',
     })
     await db.asUser(f.repA, () => db.sql(
-      `insert into public.exceptions (booking_id, type, detail, raised_by)
-       values ($1, $2::public.exception_type, '1: front/dent', $3)`,
-      [bookingId, type, f.repA]))
+      `insert into public.incidents (booking_id, note, raised_by)
+       values ($1, $2, $3)`,
+      [bookingId, note, f.repA]))
     return bookingId
   }
 
   const pending = () => db.as({ kind: 'service' }, () => db.sql<{
-    id: string; type: string; booking_ref: string; plate: string
-  }>(`select id, type, booking_ref, plate from public.pending_exception_notifications()`))
+    id: string; note: string; booking_ref: string; plate: string
+  }>(`select id, note, booking_ref, plate from public.pending_incident_notifications()`))
 
-  test('a newly raised exception is pending, with just enough to write a line', async () => {
+  test('a newly raised incident is pending, with just enough to write a line', async () => {
     await raise()
     const rows = await pending()
 
     expect(rows).toHaveLength(1)
-    expect(rows[0]?.type).toBe('new_damage')
+    expect(rows[0]?.note).toBe('dent in the front wing')
     expect(rows[0]?.plate).toBe('ABC-1001')
     expect(rows[0]?.booking_ref).toMatch(/^\d{4}-\d{4}$/)
   })
@@ -226,27 +226,27 @@ describe('the boss is told about an exception exactly once', () => {
     const [row] = await pending()
 
     const marked = await db.as({ kind: 'service' }, () => db.one<{ v: number }>(
-      `select public.mark_exceptions_notified(array[$1]::uuid[]) as v`, [row!.id]))
+      `select public.mark_incidents_notified(array[$1]::uuid[]) as v`, [row!.id]))
     expect(marked.v).toBe(1)
     expect(await pending()).toHaveLength(0)
 
     // A second sweep marks nothing — the stamp is one-way.
     const again = await db.as({ kind: 'service' }, () => db.one<{ v: number }>(
-      `select public.mark_exceptions_notified(array[$1]::uuid[]) as v`, [row!.id]))
+      `select public.mark_incidents_notified(array[$1]::uuid[]) as v`, [row!.id]))
     expect(again.v).toBe(0)
   })
 
-  test('an exception raised by the eligibility override is swept like any other', async () => {
-    // Three code paths raise exceptions today and more will later, which is
-    // why the notifier sweeps rather than being called from each of them.
+  test('the eligibility override announces nothing — it is the boss\'s own act', async () => {
+    // It used to raise one, which meant pushing the boss a notification about
+    // something he had just done himself (0030). The sweep design stays: it is
+    // there so that the next path which DOES raise one needs no wiring.
     const bookingId = await bookAsRep(db, f.repA, {
       carId: f.car1, hotelId: f.hotelA, start: '2026-07-06', end: '2026-07-09',
     })
     await db.asUser(f.admin, () => db.sql(
       `select public.admin_override_eligibility($1, 'Passport checked by hand')`, [bookingId]))
 
-    const rows = await pending()
-    expect(rows.map((r) => r.type)).toEqual(['eligibility_override'])
+    expect(await pending()).toHaveLength(0)
   })
 
   test('a rep cannot mark the boss\'s inbox as read', async () => {
@@ -254,11 +254,11 @@ describe('the boss is told about an exception exactly once', () => {
     const [row] = await pending()
 
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `select public.mark_exceptions_notified(array[$1]::uuid[])`, [row!.id])))).toBe('42501')
+      `select public.mark_incidents_notified(array[$1]::uuid[])`, [row!.id])))).toBe('42501')
 
     // Nor by writing the column, which is in no client grant.
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `update public.exceptions set notified_at = now() where id = $1`, [row!.id]))))
+      `update public.incidents set notified_at = now() where id = $1`, [row!.id]))))
       .toBe('42501')
 
     expect(await pending()).toHaveLength(1)
@@ -273,7 +273,7 @@ describe('the notifier is the server\'s own, not a session\'s', () => {
       expect(await errcode(() => db.asUser(who, () => db.sql(
         `select kind from public.rep_day_movements($1, '2026-07-06')`, [f.repA])))).toBe('42501')
       expect(await errcode(() => db.asUser(who, () => db.sql(
-        `select id from public.pending_exception_notifications()`)))).toBe('42501')
+        `select id from public.pending_incident_notifications()`)))).toBe('42501')
       expect(await errcode(() => db.asUser(who, () => db.sql(
         `select public.drop_push_subscription('https://push.example/a')`)))).toBe('42501')
     }

@@ -264,7 +264,7 @@ describe('R4 step 2 · the eligibility gate is a hard block in the database', ()
     expect(await errcode(() => pickUp(f.repA, bookingId))).toBe('IR120')
   })
 
-  test('the admin override opens the gate, and raises the exception the boss will see', async () => {
+  test('the admin override opens the gate, and is recorded on the booking alone', async () => {
     const bookingId = await bookAsRep(db, f.repA, {
       carId: f.carC, hotelId: f.hotelA, start: '2026-07-06', end: '2026-07-08',
     })
@@ -280,9 +280,11 @@ describe('R4 step 2 · the eligibility gate is a hard block in the database', ()
     expect(after.status).toBe('out')
     expect(after.eligibility_override_by).toBe(f.admin)
 
-    const [raised] = await db.sql<{ type: string }>(
-      `select type from public.exceptions where booking_id = $1`, [bookingId])
-    expect(raised?.type).toBe('eligibility_override')
+    // No queue item: the override is the boss's own act, so the two columns
+    // above and the audit log are the whole record of it (0030).
+    const raised = await db.sql(
+      `select id from public.incidents where booking_id = $1`, [bookingId])
+    expect(raised).toHaveLength(0)
   })
 })
 

@@ -6,10 +6,11 @@ import { seed, bookAsRep, type Fixtures } from '../helpers/fixtures'
 // a rep session, against the real policies and guard triggers.
 //
 // Two rules carry the weight here and both are checked from the rep's side,
-// not the service role's: a fuel shortfall and new damage are RECORDED and
-// FLAGGED and never priced (docs/01-DECISIONS.md §14) — charge and
-// resolution are outside the rep's column grant entirely — and an early return
-// reopens the remaining dates immediately while the price stays put (§4).
+// not the service role's: what a returning car costs is never the rep's to
+// decide (docs/01-DECISIONS.md §14) — a fuel shortfall is priced by the
+// database itself and `charge`/`resolution` on an incident are outside the
+// rep's column grant entirely — and an early return reopens the remaining
+// dates immediately while the price stays put (§4).
 
 let db: TestDb
 let f: Fixtures
@@ -65,110 +66,138 @@ describe('R5 step 1 · fuel in, and the shortfall the rep never prices', () => {
     expect(ret.id).not.toBe(pickupId)
   })
 
-  test('a shortfall raises a fuel_short exception and never a charge', async () => {
+  test('a shortfall is priced by the database at the moment of return', async () => {
+    const { bookingId } = await rentalOut(f.repA, f.car1, f.hotelA, '2026-07-06', '2026-07-08')
+    const before = await db.one<{ total: number }>(
+      `select total from public.bookings where id = $1`, [bookingId])
+    await fuelIn(f.repA, bookingId, 6)
+
+    // Reading the gauge is not returning the car: nothing is charged until the
+    // rental actually closes.
+    expect((await db.one<{ fuel_charge: number | null }>(
+      `select fuel_charge from public.bookings where id = $1`, [bookingId])).fuel_charge)
+      .toBeNull()
+
+    await db.asUser(f.repA, () => db.sql(
+      `update public.bookings set status = 'returned' where id = $1`, [bookingId]))
+
+    const after = await db.one<{ fuel_charge: number; total: number }>(
+      `select fuel_charge, total from public.bookings where id = $1`, [bookingId])
+    expect(after.fuel_charge).toBe(20)          // two eighths short, at €10 each
+    // And it is a SEPARATE figure: the total is the one on the signed
+    // agreement and does not move (0030).
+    expect(after.total).toBe(before.total)
+  })
+
+  test('the rate is a setting, not a constant', async () => {
+    await db.sql(`update public.app_settings set fuel_charge_per_eighth = 15 where id = 1`)
+    const { bookingId } = await rentalOut(f.repA, f.car1, f.hotelA, '2026-07-06', '2026-07-08')
+    await fuelIn(f.repA, bookingId, 5)
+    await db.asUser(f.repA, () => db.sql(
+      `update public.bookings set status = 'returned' where id = $1`, [bookingId]))
+
+    expect((await db.one<{ fuel_charge: number }>(
+      `select fuel_charge from public.bookings where id = $1`, [bookingId])).fuel_charge)
+      .toBe(45)                                  // three eighths × €15
+
+    await db.sql(`update public.app_settings set fuel_charge_per_eighth = 10 where id = 1`)
+  })
+
+  test('a car brought back full, or fuller, is charged nothing at all', async () => {
+    const { bookingId } = await rentalOut(f.repA, f.car1, f.hotelA, '2026-07-06', '2026-07-08', 6)
+    await fuelIn(f.repA, bookingId, 8)
+    await db.asUser(f.repA, () => db.sql(
+      `update public.bookings set status = 'returned' where id = $1`, [bookingId]))
+
+    // Null, not zero: "nothing to charge" and "charged €0" are different
+    // statements about a rental.
+    expect((await db.one<{ fuel_charge: number | null }>(
+      `select fuel_charge from public.bookings where id = $1`, [bookingId])).fuel_charge)
+      .toBeNull()
+  })
+
+  test('a rep cannot write the fuel charge, or talk the trigger out of it', async () => {
     const { bookingId } = await rentalOut(f.repA, f.car1, f.hotelA, '2026-07-06', '2026-07-08')
     await fuelIn(f.repA, bookingId, 6)
 
-    await db.asUser(f.repA, () => db.sql(
-      `insert into public.exceptions (booking_id, type, detail, raised_by)
-       values ($1, 'fuel_short', '8/8 → 6/8 (−2/8 ≈ 9.5 L)', $2)`, [bookingId, f.repA]))
+    // Not in the update grant at all.
+    expect(await errcode(() => db.asUser(f.repA, () => db.sql(
+      `update public.bookings set fuel_charge = 0 where id = $1`, [bookingId])))).toBe('42501')
 
-    const [raised] = await db.asUser(f.repA, () => db.sql<{ type: string; detail: string; raised_by: string }>(
-      `select type, detail, raised_by from public.exceptions where booking_id = $1`, [bookingId]))
-    expect(raised?.type).toBe('fuel_short')
-    expect(raised?.detail).toContain('−2/8')
-    expect(raised?.raised_by).toBe(f.repA)
-
-    // The one thing the rep must never do with it.
-    const [row] = await db.sql<{ charge: number | null; resolution: string | null }>(
-      `select charge, resolution from public.exceptions where booking_id = $1`, [bookingId])
-    expect(row?.charge).toBeNull()
-    expect(row?.resolution).toBeNull()
+    // And the owner writing it by hand is still overruled by the transition,
+    // which computes the figure rather than accepting one.
+    await db.sql(
+      `update public.bookings set status = 'returned', fuel_charge = 0 where id = $1`,
+      [bookingId])
+    expect((await db.one<{ fuel_charge: number }>(
+      `select fuel_charge from public.bookings where id = $1`, [bookingId])).fuel_charge)
+      .toBe(20)
   })
 
   test('a rep cannot set charge or resolution — they are not in the grant at all', async () => {
     const { bookingId } = await rentalOut(f.repA, f.car1, f.hotelA, '2026-07-06', '2026-07-08')
 
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `insert into public.exceptions (booking_id, type, raised_by, charge)
-       values ($1, 'fuel_short', $2, 50)`, [bookingId, f.repA])))).toBe('42501')
+      `insert into public.incidents (booking_id, note, raised_by, charge)
+       values ($1, 'scratched', $2, 50)`, [bookingId, f.repA])))).toBe('42501')
 
     await db.asUser(f.repA, () => db.sql(
-      `insert into public.exceptions (booking_id, type, raised_by)
-       values ($1, 'fuel_short', $2)`, [bookingId, f.repA]))
+      `insert into public.incidents (booking_id, note, raised_by)
+       values ($1, 'scratched', $2)`, [bookingId, f.repA]))
 
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `update public.exceptions set charge = 50 where booking_id = $1`, [bookingId]))))
+      `update public.incidents set charge = 50 where booking_id = $1`, [bookingId]))))
       .toBe('42501')
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `select charge from public.exceptions where booking_id = $1`, [bookingId]))))
+      `select charge from public.incidents where booking_id = $1`, [bookingId]))))
       .toBe('42501')
   })
 
-  test('a rep cannot raise an exception in someone else\'s name, nor on their booking', async () => {
+  test('a rep cannot raise an incident in someone else\'s name, nor on their booking', async () => {
     const { bookingId } = await rentalOut(f.repA, f.car1, f.hotelA, '2026-07-06', '2026-07-08')
     const other = await rentalOut(f.repB, f.car3, f.hotelB, '2026-07-06', '2026-07-08')
 
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `insert into public.exceptions (booking_id, type, raised_by)
-       values ($1, 'fuel_short', $2)`, [bookingId, f.repB])))).toBe('42501')
+      `insert into public.incidents (booking_id, note, raised_by)
+       values ($1, 'not my name', $2)`, [bookingId, f.repB])))).toBe('42501')
 
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `insert into public.exceptions (booking_id, type, raised_by)
-       values ($1, 'new_damage', $2)`, [other.bookingId, f.repA])))).toBe('42501')
+      `insert into public.incidents (booking_id, note, raised_by)
+       values ($1, 'not my booking', $2)`, [other.bookingId, f.repA])))).toBe('42501')
   })
 
-  test('a rep cannot read an exception raised on another rep\'s booking', async () => {
+  test('a rep cannot read an incident raised on another rep\'s booking', async () => {
     const other = await rentalOut(f.repB, f.car3, f.hotelB, '2026-07-06', '2026-07-08')
     await db.asUser(f.repB, () => db.sql(
-      `insert into public.exceptions (booking_id, type, raised_by)
-       values ($1, 'fuel_short', $2)`, [other.bookingId, f.repB]))
+      `insert into public.incidents (booking_id, note, raised_by)
+       values ($1, 'theirs', $2)`, [other.bookingId, f.repB]))
 
     const seen = await db.asUser(f.repA, () => db.sql(
-      `select id from public.exceptions where booking_id = $1`, [other.bookingId]))
+      `select id from public.incidents where booking_id = $1`, [other.bookingId]))
     expect(seen).toHaveLength(0)
   })
 })
 
-describe('R5 step 2 · pre-existing marks carry forward, new marks are distinguished', () => {
-  test('pickup marks stay pre_existing; return marks do not', async () => {
+describe('R5 step 2 · the damage diagram belongs to the pickup', () => {
+  // The return no longer has a diagram of its own (0030). Damage found on a
+  // returning car is reported as an INCIDENT, in words and photographs, which
+  // is how a cracked mirror is actually described. What survives here is the
+  // pickup side: those marks are the car's agreed condition and go on to the
+  // signed contract, so `pre_existing` still means what it always did.
+  test('pickup marks are the pre-existing condition the contract is signed against', async () => {
     const { bookingId, pickupId } = await rentalOut(f.repA, f.car1, f.hotelA, '2026-07-06', '2026-07-08')
     await db.asUser(f.repA, () => db.sql(
       `insert into public.damage_marks (handover_id, car_id, view, x, y, mark_type, pre_existing)
        values ($1, $2, 'left', 0.3, 0.5, 'scratch', true)`, [pickupId, f.car1]))
 
-    const ret = await fuelIn(f.repA, bookingId, 8)
-    await db.asUser(f.repA, () => db.sql(
-      `insert into public.damage_marks (handover_id, car_id, view, x, y, mark_type, pre_existing)
-       values ($1, $2, 'rear', 0.6, 0.7, 'dent', false)`, [ret.id, f.car1]))
-
     const marks = await db.asUser(f.repA, () => db.sql<{ view: string; pre_existing: boolean }>(
       `select m.view, m.pre_existing
        from public.damage_marks m
        join public.handovers h on h.id = m.handover_id
-       where h.booking_id = $1
-       order by m.pre_existing desc`, [bookingId]))
+       where h.booking_id = $1 and h.kind = 'pickup'`, [bookingId]))
 
-    expect(marks).toHaveLength(2)
+    expect(marks).toHaveLength(1)
     expect(marks[0]).toMatchObject({ view: 'left', pre_existing: true })
-    expect(marks[1]).toMatchObject({ view: 'rear', pre_existing: false })
-  })
-
-  test('a mark added at return raises new_damage, and it is never priced by the rep', async () => {
-    const { bookingId } = await rentalOut(f.repA, f.car1, f.hotelA, '2026-07-06', '2026-07-08')
-    const ret = await fuelIn(f.repA, bookingId, 8)
-    await db.asUser(f.repA, () => db.sql(
-      `insert into public.damage_marks (handover_id, car_id, view, x, y, mark_type, pre_existing)
-       values ($1, $2, 'rear', 0.6, 0.7, 'dent', false)`, [ret.id, f.car1]))
-
-    await db.asUser(f.repA, () => db.sql(
-      `insert into public.exceptions (booking_id, type, detail, raised_by)
-       values ($1, 'new_damage', '1: rear/dent', $2)`, [bookingId, f.repA]))
-
-    const [raised] = await db.asUser(f.repA, () => db.sql<{ type: string; resolved_at: string | null }>(
-      `select type, resolved_at from public.exceptions where booking_id = $1`, [bookingId]))
-    expect(raised?.type).toBe('new_damage')
-    expect(raised?.resolved_at).toBeNull()   // open until the boss closes it
   })
 })
 

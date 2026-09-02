@@ -16,8 +16,8 @@ const uuidSchema = z.string().uuid()
 /**
  * A6 · The boss sets the charge and closes the item.
  *
- * admin_resolve_exception() is the only door, and not for convenience:
- * `exceptions.charge` and `exceptions.resolution` are withheld from
+ * admin_resolve_incident() is the only door, and not for convenience:
+ * `incidents.charge` and `incidents.resolution` are withheld from
  * `authenticated` by column grant, so a direct update is refused for the admin
  * as flatly as for a rep. The RPC re-checks app.is_admin() itself and writes
  * through the audited table, so the amount lands in audit_log with actor,
@@ -27,7 +27,7 @@ const uuidSchema = z.string().uuid()
  * through as null rather than coerced to zero, which would read on the record
  * as a charge of €0 that was actually decided.
  */
-export async function resolveException(_prev: FormState, formData: FormData): Promise<FormState> {
+export async function resolveIncident(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin()
 
   const raw = String(formData.get('charge') ?? '').trim()
@@ -43,27 +43,26 @@ export async function resolveException(_prev: FormState, formData: FormData): Pr
   if (!parsed.success) return { error: 'IR104' }
 
   const supabase = await supabaseServer()
-  const { error } = await supabase.rpc('admin_resolve_exception', {
+  const { error } = await supabase.rpc('admin_resolve_incident', {
     p_id: parsed.data.id,
     p_charge: sqlNull(parsed.data.charge),
     p_resolution: sqlNull(parsed.data.resolution),
   })
   if (error) return { error: errorKey(error) }
 
-  revalidatePath(`/admin/exceptions/${parsed.data.id}`)
-  revalidatePath('/admin/exceptions')
+  revalidatePath(`/admin/incidents/${parsed.data.id}`)
+  revalidatePath('/admin/incidents')
   return { saved: true }
 }
 
-/** Filters are a plain GET redirect, same shape as A5's, so the URL stays shareable. */
-export async function filterExceptions(formData: FormData): Promise<void> {
+/**
+ * Filters are a plain GET redirect, same shape as A5's, so the URL stays
+ * shareable. Open/closed is the whole filter now — there was a type dropdown
+ * beside it until 0030, when the six types became one free-form record.
+ */
+export async function filterIncidents(formData: FormData): Promise<void> {
   await requireAdmin()
 
   const state = z.enum(['open', 'resolved', 'all']).catch('open').parse(formData.get('state'))
-  const type = z.enum(['fuel_short', 'new_damage', 'late_return', 'no_show',
-                       'eligibility_override', 'other', '']).catch('').parse(formData.get('type'))
-
-  const query = new URLSearchParams({ state })
-  if (type) query.set('type', type)
-  redirect(`/admin/exceptions?${query.toString()}`)
+  redirect(`/admin/incidents?${new URLSearchParams({ state }).toString()}`)
 }

@@ -7,7 +7,7 @@ import { sendEach, targetsFor, type PushMessage, type SendOutcome, type Target }
 /**
  * The three notifications docs/01-DECISIONS.md §22 asks for, and no others.
  *
- *   · Admin, on an exception:   damage flagged, car not returned, override.
+ *   · Admin, on an incident:    whatever a rep found and sent in.
  *   · Rep, in the morning:      their own pickups today (plus any return due
  *                               today, since that shift is the only chance to
  *                               catch one that falls outside the usual
@@ -114,52 +114,63 @@ export async function notifyEveningReturns(on = athensToday()): Promise<SendOutc
   return sendEach(targets, (target) => repDigest(target, 'return', on))
 }
 
+/** As much of a rep's note as fits on a lock screen beside the reference. */
+const NOTE_CHARS = 40
+
+function firstLine(note: string | null): string {
+  const line = (note ?? '').split('\n')[0]?.trim() ?? ''
+  if (line.length <= NOTE_CHARS) return line
+  return `${line.slice(0, NOTE_CHARS - 1).trimEnd()}…`
+}
+
 /**
- * Exceptions the boss has not been told about yet.
+ * Incidents the boss has not been told about yet.
  *
- * Swept rather than pushed from the place each one is raised: an exception is
- * created by the return flow, by the pickup flow and by
- * public.admin_override_eligibility(), and hanging a send off each of those
- * means the fourth path added next year notifies nobody. `notified_at` is
- * stamped only after the send, so a failure leaves them pending rather than
- * silently swallowed.
+ * Swept rather than pushed from the place each one is raised. Today there is
+ * one such place — a rep sending one in from /incidents — and the sweep is
+ * kept anyway: hanging a send off the raising code means the second path added
+ * next year notifies nobody. `notified_at` is stamped only after the send, so
+ * a failure leaves them pending rather than silently swallowed.
  *
  * They are stamped even when nobody is subscribed — otherwise the first person
- * to enable push would be greeted by every exception in the history of the
+ * to enable push would be greeted by every incident in the history of the
  * business.
  */
-export async function notifyPendingExceptions(): Promise<SendOutcome & { announced: number }> {
+export async function notifyPendingIncidents(): Promise<SendOutcome & { announced: number }> {
   const admin = supabaseAdmin()
 
-  const { data } = await admin.rpc('pending_exception_notifications', { p_limit: 50 })
+  const { data } = await admin.rpc('pending_incident_notifications', { p_limit: 50 })
   const pending = (data ?? []) as {
-    id: string; type: string; booking_ref: string; plate: string
+    id: string; note: string | null; booking_ref: string; plate: string
   }[]
 
   if (pending.length === 0) {
     return { configured: true, sent: 0, expired: 0, failed: 0, announced: 0 }
   }
 
-  const targets = await targetsFor('exceptions')
+  const targets = await targetsFor('incidents')
 
   const outcome = await sendEach(targets, (target) => {
+    // The note is the rep's own words, in whichever language they wrote them —
+    // so it is passed through rather than translated, with the reference and
+    // plate beside it to say which car is being talked about.
     const body = pending.slice(0, MAX_LINES).map((e) =>
-      `${translate(target.lang, `admin.exceptions.type.${e.type}`)}  ${e.booking_ref}  ${e.plate}`)
+      [e.booking_ref, e.plate, firstLine(e.note)].filter(Boolean).join('  '))
     if (pending.length > MAX_LINES) body.push('…')
 
     return {
       // The boss may see an aggregate; §7's rule is about reps.
-      title: translate(target.lang, 'push.exceptions.title', { n: pending.length }),
+      title: translate(target.lang, 'push.incidents.title', { n: pending.length }),
       body: body.join('\n'),
-      url: '/admin/exceptions',
-      tag: 'ir-exceptions',
+      url: '/admin/incidents',
+      tag: 'ir-incidents',
       lang: target.lang,
     }
   })
 
   // Only once the sending is done, and regardless of whether anybody was
   // listening — see above.
-  const { data: marked } = await admin.rpc('mark_exceptions_notified', {
+  const { data: marked } = await admin.rpc('mark_incidents_notified', {
     p_ids: pending.map((e) => e.id),
   })
 

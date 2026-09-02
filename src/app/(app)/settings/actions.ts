@@ -91,7 +91,7 @@ export async function saveNotificationPreferences(
 
   const supabase = await supabaseServer()
   const { error } = await supabase.from('profiles').update({
-    notify_exceptions: formData.get('notify_exceptions') === 'on',
+    notify_incidents: formData.get('notify_incidents') === 'on',
   }).eq('id', staff.id)
 
   if (error) return { error: errorKey(error) }

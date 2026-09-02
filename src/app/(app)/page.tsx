@@ -39,7 +39,7 @@ export default async function HomePage() {
         <p className="text-ink-soft">{tc('signedInAs', { name: staff.fullName || '—' })}</p>
         <p className="ir-card p-5">{th('adminNote')}</p>
         <Link href="/admin/movements" className="ir-btn-primary">{t('goToMovements')}</Link>
-        <Link href="/admin/exceptions" className="ir-btn-quiet">{t('goToExceptions')}</Link>
+        <Link href="/admin/incidents" className="ir-btn-quiet">{t('goToIncidents')}</Link>
       </div>
     )
   }

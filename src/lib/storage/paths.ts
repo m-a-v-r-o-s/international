@@ -25,10 +25,18 @@ export const BOOKING_FILES_BUCKET = 'booking-files'
  * naming convention — a purge that has to parse filenames to decide what to
  * keep is a purge that will one day delete a contract.
  */
-export const FILE_KINDS = ['licences', 'damage', 'signature', 'contract'] as const
+export const FILE_KINDS = ['licences', 'damage', 'signature', 'contract', 'incidents'] as const
 export type FileKind = (typeof FILE_KINDS)[number]
 
-/** Kinds a rep may overwrite or delete — mirrors the update/delete policies. */
+/**
+ * Kinds a rep may overwrite — mirrors the update policy.
+ *
+ * `incidents` is deliberately absent while being deletable in the policy: an
+ * incident photo lands on a fresh random basename every time, so there is no
+ * such thing as re-taking one in place. The wrong photo is deleted and another
+ * added, which leaves the deletion in the audit log rather than silently
+ * swapping the evidence under a path the boss may already have looked at.
+ */
 export const REPLACEABLE_KINDS: readonly FileKind[] = ['licences', 'damage']
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i

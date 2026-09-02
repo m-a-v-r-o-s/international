@@ -70,7 +70,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: '/admin/categories', label: ta('nav.categories') },
         { href: '/admin/pricing', label: ta('nav.pricing') },
         { href: '/admin/bookings', label: ta('nav.bookings') },
-        { href: '/admin/exceptions', label: ta('nav.exceptions') },
+        { href: '/admin/incidents', label: ta('nav.incidents') },
         { href: '/admin/exception-bookings', label: ta('nav.exceptionBookings') },
         { href: '/admin/cash', label: ta('nav.cash') },
         { href: '/admin/users', label: ta('nav.users') },

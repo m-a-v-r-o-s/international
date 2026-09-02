@@ -16,17 +16,24 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t('title') }
 }
 
-const STEPS = ['fuel', 'damage', 'confirm'] as const
+const STEPS = ['fuel', 'confirm'] as const
 type Step = (typeof STEPS)[number]
 
 /**
  * R5 · Return flow (docs/04-SCREENS.md).
  *
- * Fuel in, damage, confirm. Two things a rep does NOT do here, and the screen
- * says so out loud rather than leaving it to training: a fuel shortfall and
- * any new damage are recorded and flagged, never priced, never argued and
- * never collected (docs/01-DECISIONS.md §14). The rep's whole job is the
- * evidence; the boss decides the amount from A6.
+ * Fuel in, then confirm. It was three steps until 0030: the damage diagram in
+ * the middle existed to raise a `new_damage` flag from taps on a car outline,
+ * and damage found on a returning car is now REPORTED — in words and
+ * photographs, from /incidents — which is how a cracked mirror is actually
+ * described. The pickup keeps its diagram; that one is the agreed condition
+ * the contract is signed against.
+ *
+ * The fuel shortfall is no longer flagged either, because it is no longer a
+ * judgement: the database prices it on the transition at the owner's rate per
+ * missing eighth (docs/01-DECISIONS.md §14). The screen says the figure out
+ * loud before the rep confirms, so nobody learns of it after the guest has
+ * driven off.
  *
  * Confirming moves the rental to `returned`, which drops it out of the
  * exclusion constraint's predicate and so out of availability() — an early
@@ -65,21 +72,23 @@ export default async function ReturnPage({
     )
   }
 
-  const carried = pickup ? marksByHandover.get(pickup.id) ?? [] : []
-  const fresh = ret ? marksByHandover.get(ret.id) ?? [] : []
-
   const fuelOut = pickup?.fuel_eighths ?? null
   const fuelIn = ret?.fuel_eighths ?? null
-  const shortfall = fuelOut !== null && fuelIn !== null ? fuelOut - fuelIn : 0
+  const shortfall = fuelOut !== null && fuelIn !== null ? Math.max(0, fuelOut - fuelIn) : 0
+
+  // The same rate app.bookings_fuel_charge() will apply a moment later. Read
+  // rather than assumed, so the number the rep reads out to the guest is the
+  // number that lands on the booking.
+  const { data: settings } = await supabase.from('app_settings')
+    .select('fuel_charge_per_eighth').eq('id', 1).maybeSingle()
+  const rate = settings?.fuel_charge_per_eighth ?? 10
 
   const reachable: Record<Step, boolean> = {
     fuel: true,
-    damage: ret !== null,
     confirm: ret !== null,
   }
   const done: Record<Step, boolean> = {
     fuel: ret !== null && ret.fuel_eighths !== null,
-    damage: ret !== null,
     confirm: false,
   }
 
@@ -138,17 +147,7 @@ export default async function ReturnPage({
             />
           </div>
 
-          {ret ? <Link href={nextHref('fuel')} className="ir-btn-primary">{t('toDamage')}</Link> : null}
-        </section>
-      ) : null}
-
-      {step === 'damage' && ret ? (
-        <section className="flex flex-col gap-4">
-          <h2 className="text-[1.25rem] font-semibold">{t('step.damage')}</h2>
-          <p className="text-ink-soft">{t('damageIntro')}</p>
-          <p className="ir-notice border-warn bg-warn-tint text-warn">{t('damageNotPriced')}</p>
-          <DamageDiagram handoverId={ret.id} marks={fresh} carriedForward={carried} tone="new" />
-          <Link href={nextHref('damage')} className="ir-btn-primary">{t('toConfirm')}</Link>
+          {ret ? <Link href={nextHref('fuel')} className="ir-btn-primary">{t('toConfirm')}</Link> : null}
         </section>
       ) : null}
 
@@ -165,25 +164,16 @@ export default async function ReturnPage({
               <dt className="text-ink-soft">{th('fuelInLabel')}</dt>
               <dd className="font-medium">{fuelIn !== null ? th('eighths', { n: fuelIn }) : '—'}</dd>
             </div>
-            <div className="col-span-2">
-              <dt className="text-ink-soft">{t('newDamage')}</dt>
-              <dd className="font-medium">{t('marksCount', { n: fresh.length })}</dd>
-            </div>
           </dl>
 
           {shortfall > 0 ? (
             <p className="ir-notice border-warn bg-warn-tint text-warn" role="status">
-              {t('willFlagFuel', { n: shortfall })}
-            </p>
-          ) : null}
-
-          {fresh.length > 0 ? (
-            <p className="ir-notice border-warn bg-warn-tint text-warn" role="status">
-              {t('willFlagDamage', { n: fresh.length })}
+              {t('fuelCharge', { n: shortfall, amount: shortfall * rate })}
             </p>
           ) : null}
 
           <p className="ir-notice border-line bg-canvas">{t('confirmHint')}</p>
+          <p className="ir-hint">{t('damageGoesToIncidents')}</p>
 
           <ConfirmTransition
             bookingId={booking.id}

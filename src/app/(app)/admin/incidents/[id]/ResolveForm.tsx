@@ -4,7 +4,7 @@ import { useActionState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
 import { SubmitButton } from '@/components/SubmitButton'
-import { resolveException, type FormState } from '../actions'
+import { resolveIncident, type FormState } from '../actions'
 
 /**
  * A6 · Set the charge and close the item.
@@ -15,20 +15,20 @@ import { resolveException, type FormState } from '../actions'
  * same on a screen and differently on a record.
  */
 export function ResolveForm({
-  exceptionId, charge, resolution, resolvedAt,
+  incidentId, charge, resolution, resolvedAt,
 }: {
-  exceptionId: string
+  incidentId: string
   charge: number | null
   resolution: string | null
   resolvedAt: string | null
 }) {
-  const t = useTranslations('admin.exceptions')
+  const t = useTranslations('admin.incidents')
   const te = useTranslations('errors')
-  const [state, formAction] = useActionState<FormState, FormData>(resolveException, undefined)
+  const [state, formAction] = useActionState<FormState, FormData>(resolveIncident, undefined)
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
-      <input type="hidden" name="id" value={exceptionId} />
+      <input type="hidden" name="id" value={incidentId} />
 
       {state?.error ? (
         <p className="ir-notice border-danger bg-danger-tint text-danger" role="alert">{te(state.error)}</p>
