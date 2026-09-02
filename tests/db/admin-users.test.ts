@@ -253,22 +253,80 @@ describe('the PIN belongs to the rep whose device it unlocks', () => {
   test('a rep cannot set their own PIN directly — only set_pin_hash() through the service role can', async () => {
     // A baseline, planted the only way anyone can plant one: through the RPC.
     await db.as({ kind: 'service' }, () => db.sql(
-      `select public.set_pin_hash($1, 'baseline')`, [f.repB]))
+      `select public.set_pin_hash($1, 'baseline', true)`, [f.repB]))
 
     // 0027 closed the raw-PostgREST gap: the guard restores pin_hash whenever
-    // auth.uid() is not null, so the rep's own direct write is a no-op.
+    // auth.uid() is not null, so the rep's own direct write is a no-op. 0034
+    // gave the rep a change-PIN screen back, but not this door — it goes
+    // through the same RPC below.
     await db.asUser(f.repB, () => db.sql(
       `update public.profiles set pin_hash = 'mine' where id = $1`, [f.repB]))
     expect((await db.one<{ pin_hash: string }>(
       `select pin_hash from public.profiles where id = $1`, [f.repB])).pin_hash).toBe('baseline')
 
-    // The unlock/reissue path hashes in Node and stores through this RPC on
-    // the service role, where auth.uid() is null and the guard steps aside.
+    // The unlock/reissue/change path hashes in Node and stores through this RPC
+    // on the service role, where auth.uid() is null and the guard steps aside.
     await db.as({ kind: 'service' }, () => db.sql(
-      `select public.set_pin_hash($1, 'set-by-the-server')`, [f.repB]))
+      `select public.set_pin_hash($1, 'set-by-the-server', true)`, [f.repB]))
     expect((await db.one<{ pin_hash: string }>(
       `select pin_hash from public.profiles where id = $1`, [f.repB])).pin_hash)
       .toBe('set-by-the-server')
+  })
+
+  /**
+   * 0034 · A PIN the boss generated is temporary, and the rep replacing it is
+   * what makes it permanent (docs/01-DECISIONS.md §38). The flag that carries
+   * that is only as good as its being unreachable from the rep's own session:
+   * a rep who can clear it has dismissed the prompt without changing anything.
+   */
+  test('set_pin_hash records who chose the PIN, and the rep cannot rewrite that answer', async () => {
+    const mustChange = async () => (await db.one<{ pin_must_change: boolean }>(
+      `select pin_must_change from public.profiles where id = $1`, [f.repB])).pin_must_change
+
+    // What the boss's create/re-issue does: a PIN he has read off a screen.
+    await db.as({ kind: 'service' }, () => db.sql(
+      `select public.set_pin_hash($1, 'issued-by-the-boss', true)`, [f.repB]))
+    expect(await mustChange()).toBe(true)
+
+    // The rep cannot simply say they have dealt with it: the column is in no
+    // client update grant, so the write is refused before a policy or a trigger
+    // is reached at all.
+    expect(await errcode(() => db.asUser(f.repB, () => db.sql(
+      `update public.profiles set pin_must_change = false where id = $1`, [f.repB]))))
+      .toBe('42501')
+
+    // Nor can the boss clear it for them — the flag is about a secret only the
+    // rep is meant to end up holding, and he is the person it is kept from.
+    expect(await errcode(() => db.asUser(f.admin, () => db.sql(
+      `update public.profiles set pin_must_change = false where id = $1`, [f.repB]))))
+      .toBe('42501')
+
+    // And if that grant were ever handed out — which is exactly what happened to
+    // pin_hash in 0011 and is why 0027 had to exist — the guard is what still
+    // refuses. Granted and revoked around the assertion so the belt is tested
+    // with the braces deliberately off.
+    await db.sql(`grant update (pin_must_change) on public.profiles to authenticated`)
+    try {
+      await db.asUser(f.repB, () => db.sql(
+        `update public.profiles set pin_must_change = false where id = $1`, [f.repB]))
+      expect(await mustChange()).toBe(true)
+    } finally {
+      await db.sql(`revoke update (pin_must_change) on public.profiles from authenticated`)
+    }
+
+    // Changing the PIN is what clears it, and the two happen in one statement
+    // so neither can happen without the other.
+    await db.as({ kind: 'service' }, () => db.sql(
+      `select public.set_pin_hash($1, 'chosen-by-the-rep', false)`, [f.repB]))
+    expect(await mustChange()).toBe(false)
+    expect((await db.one<{ pin_hash: string }>(
+      `select pin_hash from public.profiles where id = $1`, [f.repB])).pin_hash)
+      .toBe('chosen-by-the-rep')
+
+    // And a re-issue puts it back: the boss knows this PIN too.
+    await db.as({ kind: 'service' }, () => db.sql(
+      `select public.set_pin_hash($1, 'reissued', true)`, [f.repB]))
+    expect(await mustChange()).toBe(true)
   })
 })
 

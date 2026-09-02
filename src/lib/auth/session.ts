@@ -12,6 +12,12 @@ export type Staff = {
   fullName: string
   lang: 'el' | 'en'
   hasPin: boolean
+  /**
+   * The PIN this rep is holding came from the boss, and they have not replaced
+   * it yet (docs/01-DECISIONS.md §38). Always false for the admin, who has no
+   * PIN at all (§21).
+   */
+  mustChangePin: boolean
 }
 
 /**
@@ -35,17 +41,21 @@ export async function currentStaff(): Promise<Staff | null> {
 
   if (!data || data.active !== true) return null
 
-  // `pin_hash` is granted to no client role, so whether a PIN exists is asked
-  // of the service role rather than selected alongside the profile.
+  // Neither `pin_hash` nor `pin_must_change` is granted to a client role, so
+  // both are asked of the service role rather than selected alongside the
+  // profile — one query for the two facts, which are about the same PIN.
   const { data: pin } = await supabaseAdmin()
-    .from('profiles').select('pin_hash').eq('id', user.id).maybeSingle()
+    .from('profiles').select('pin_hash, pin_must_change').eq('id', user.id).maybeSingle()
+
+  const credential = pin as { pin_hash?: string | null; pin_must_change?: boolean } | null
 
   return {
     id: data.id as string,
     role: data.role as 'admin' | 'rep',
     fullName: (data.full_name as string) || '',
     lang: (data.lang as 'el' | 'en') ?? 'el',
-    hasPin: typeof (pin as { pin_hash?: string | null } | null)?.pin_hash === 'string',
+    hasPin: typeof credential?.pin_hash === 'string',
+    mustChangePin: credential?.pin_must_change === true,
   }
 }
 
@@ -66,7 +76,21 @@ export async function requireAdmin(): Promise<Staff> {
   return staff
 }
 
-/** A rep who has not entered their PIN gets no further than the unlock screen. */
+/**
+ * A rep who has not entered their PIN gets no further than the unlock screen,
+ * and a rep still holding the PIN the boss generated for them gets no further
+ * than the screen that asks them to replace it (docs/01-DECISIONS.md §38).
+ *
+ * The two checks are in this order because the second screen asks for the
+ * current PIN: a device that is not unlocked has not proved anyone is holding
+ * it, and /change-pin is not the place to find that out.
+ *
+ * Every screen behind (app)/layout.tsx passes through here, which is what makes
+ * the prompt unavoidable rather than a suggestion. It is a redirect, not a
+ * permission — a rep who dodged it would be no more privileged than one who did
+ * not, only still carrying a credential the boss also knows, which is the state
+ * this whole path exists to end.
+ */
 export async function requireUnlocked(): Promise<Staff> {
   const staff = await requireStaff()
   if (staff.role === 'rep') {
@@ -75,6 +99,7 @@ export async function requireUnlocked(): Promise<Staff> {
     const store = await cookies()
     const gate = await readGate(store.get(GATE_COOKIE)?.value, serverEnv().sessionSecret)
     if (gate?.sub !== staff.id || !isUnlocked(gate)) redirect('/unlock')
+    if (staff.mustChangePin) redirect('/change-pin')
   }
   return staff
 }

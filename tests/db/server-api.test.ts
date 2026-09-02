@@ -23,7 +23,7 @@ describe('the server-only API', () => {
       expect(await errcode(() => db.sql(
         `select public.rep_device_matches($1, 'aaaaaaaaaaaaaaaaaaaa')`, [f.repA]))).toBe('42501')
       expect(await errcode(() => db.sql(
-        `select public.set_pin_hash($1, 'pretend-hash')`, [f.repA]))).toBe('42501')
+        `select public.set_pin_hash($1, 'pretend-hash', true)`, [f.repA]))).toBe('42501')
       expect(await errcode(() => db.sql(
         `select public.role_for_email('boss@example.com')`))).toBe('42501')
       expect(await errcode(() => db.sql(
@@ -39,7 +39,7 @@ describe('the server-only API', () => {
   describe('credential_lookup_for_email', () => {
     test('resolves an address to the row the sign-in needs', async () => {
       await db.as({ kind: 'service' }, async () => {
-        await db.sql(`select public.set_pin_hash($1, 'argon2-hash-stand-in')`, [f.repA])
+        await db.sql(`select public.set_pin_hash($1, 'argon2-hash-stand-in', true)`, [f.repA])
 
         const row = await db.one<{
           id: string; role: string; active: boolean; pin_hash: string | null

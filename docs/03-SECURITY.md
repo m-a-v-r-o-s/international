@@ -76,8 +76,13 @@ raw HTML. Every query parameterised. Upload endpoints: whitelist image MIME type
 sniffing content, cap size, store in a bucket with its own policy.
 
 **Auth & sessions** — admin OTP; rep PIN (argon2id), which since §32 is both the sign-in
-credential and the device unlock, issued and re-issued by the boss alone. A re-issue rotates
-the account's GoTrue password with it, so nothing older keeps working. Reset links for the
+credential and the device unlock. The boss issues it and can re-issue it, and a re-issue
+rotates the account's GoTrue password with it, so nothing older keeps working. Since §38 a
+PIN that came from him is temporary: `pin_must_change` is set with it, the rep is redirected
+to `/change-pin` until they replace it, and a chosen PIN must be six digits and not a run or
+a repeat. Changing one requires the current one — the screen sits behind a shift-length
+unlock window on a phone that lives on a front desk. `public.set_pin_hash()` remains the only
+writer of both columns, `service_role` only; a rep gets no grant, no policy and no RPC. Reset links for the
 admin's own path expire in 15 minutes and are rate
 limited. Account lockout after repeated failures. **No user enumeration** — login and reset
 give the same response whether or not the email exists. Cookies `HttpOnly` / `Secure` /

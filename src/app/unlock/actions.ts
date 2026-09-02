@@ -4,12 +4,12 @@ import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { allow, logSecurityEvent } from '@/lib/rate-limit'
-import { hashPin, isWellFormedPin, verifyPin, PIN_MAX, PIN_MIN } from '@/lib/auth/pin'
+import { hashPin, isChosenPinLength, isPredictablePin, verifyPin } from '@/lib/auth/pin'
 import { requireStaff } from '@/lib/auth/session'
 import { openUnlockWindow, requestIpHash } from '@/lib/auth/signin'
 
 export type UnlockState = {
-  error?: 'wrong' | 'rateLimited' | 'tooShort' | 'mismatch' | 'digitsOnly' | 'unknown'
+  error?: 'wrong' | 'rateLimited' | 'length' | 'weak' | 'mismatch' | 'digitsOnly' | 'unknown'
 }
 
 const pinSchema = z.string().trim().max(32)
@@ -18,10 +18,19 @@ const pinSchema = z.string().trim().max(32)
  * The fallback, not a step: since §32 the boss issues the PIN when he creates
  * the account, so a rep reaches this only if their `pin_hash` is somehow null.
  *
- * Refuses once a PIN already exists — only the boss reissues one after that
- * (docs/01-DECISIONS.md §32) — so this cannot become a rep's own self-service
- * "change PIN" if called directly instead of through the UI, which never
- * renders SetPinForm once staff.hasPin is true.
+ * THE `hasPin` GUARD IS LOAD-BEARING AND IS NOT THE LEFTOVER IT LOOKS LIKE.
+ * Since §38 a rep CAN change their own PIN, so this is no longer the only
+ * self-service door and no longer needs to refuse on those grounds. It refuses
+ * for a sharper reason: this action is the one place a PIN is written WITHOUT
+ * the old one being proved, because a row with a null hash has no old one to
+ * prove. Let it run against a row that does have a PIN and it becomes a way to
+ * take an account over an unattended, unlocked phone without knowing anything —
+ * exactly what changePin()'s current-PIN field exists to prevent. That is why
+ * the check is here, in the action, and not only in the page that decides
+ * whether to render SetPinForm.
+ *
+ * A PIN chosen here is the rep's own, so it clears pin_must_change and follows
+ * the same rules as one chosen on /change-pin: six digits, nothing predictable.
  */
 export async function setPin(_prev: UnlockState, formData: FormData): Promise<UnlockState> {
   const staff = await requireStaff()
@@ -32,12 +41,14 @@ export async function setPin(_prev: UnlockState, formData: FormData): Promise<Un
   if (!pin.success || !confirm.success) return { error: 'unknown' }
 
   if (!/^\d*$/.test(pin.data)) return { error: 'digitsOnly' }
-  if (!isWellFormedPin(pin.data)) return { error: 'tooShort' }
+  if (!isChosenPinLength(pin.data)) return { error: 'length' }
+  if (isPredictablePin(pin.data)) return { error: 'weak' }
   if (pin.data !== confirm.data) return { error: 'mismatch' }
 
   const { error } = await supabaseAdmin().rpc('set_pin_hash', {
     p_profile_id: staff.id,
     p_hash: await hashPin(pin.data),
+    p_boss_issued: false,
   })
   if (error) return { error: 'unknown' }
 

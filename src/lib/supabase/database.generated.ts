@@ -1047,6 +1047,7 @@ export type Database = {
           notify_morning: boolean
           phone: string | null
           pin_hash: string | null
+          pin_must_change: boolean
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
@@ -1061,6 +1062,7 @@ export type Database = {
           notify_morning?: boolean
           phone?: string | null
           pin_hash?: string | null
+          pin_must_change?: boolean
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
@@ -1075,6 +1077,7 @@ export type Database = {
           notify_morning?: boolean
           phone?: string | null
           pin_hash?: string | null
+          pin_must_change?: boolean
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
@@ -1476,7 +1479,7 @@ export type Database = {
         Returns: Database["public"]["Enums"]["user_role"]
       }
       set_pin_hash: {
-        Args: { p_hash: string; p_profile_id: string }
+        Args: { p_boss_issued: boolean; p_hash: string; p_profile_id: string }
         Returns: undefined
       }
       staff_hotels: {

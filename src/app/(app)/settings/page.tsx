@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { requireUnlocked } from '@/lib/auth/session'
@@ -11,13 +12,18 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * R8 · Settings — language, sign out (docs/04-SCREENS.md R8).
+ * R8 · Settings — language, PIN, sign out (docs/04-SCREENS.md R8).
  *
- * A rep has neither a PIN-change nor a notifications section here: only the
- * boss issues or changes a rep's PIN, and a rep's notifications are always on
- * rather than a preference — see setPin()'s first-use guard in
- * src/app/unlock/actions.ts and the notify_morning/notify_evening clamp in
- * app.profiles_before_write().
+ * The PIN section came back with §38: a rep changes their own PIN again, so
+ * this is where they reach it when nothing is forcing them to. The screen it
+ * links to is the same one requireUnlocked() sends them to while they are still
+ * holding a PIN the boss issued — one form, one action, one set of rules about
+ * what a PIN may be, whether the rep chose to come or was sent.
+ *
+ * There is still no notifications section: a rep's two kinds are always on
+ * rather than a preference, and the notify_morning/notify_evening clamp in
+ * app.profiles_before_write() is what makes that true rather than the absence
+ * of a control here.
  *
  * The boss's version of this screen — language plus notifications and
  * account — lives at /admin/settings, folded in alongside the company/legal
@@ -40,6 +46,12 @@ export default async function SettingsPage() {
         <h2 id="lang-heading" className="text-[1.125rem] font-semibold">{t('language')}</h2>
         <p className="text-[0.9375rem] text-ink-soft">{t('languageHelp')}</p>
         <LanguageSwitcher />
+      </section>
+
+      <section className="ir-card flex flex-col gap-3 p-5" aria-labelledby="pin-heading">
+        <h2 id="pin-heading" className="text-[1.125rem] font-semibold">{t('pin')}</h2>
+        <p className="text-[0.9375rem] text-ink-soft">{t('pinHelp')}</p>
+        <Link href="/change-pin" className="ir-btn-quiet">{t('pinChange')}</Link>
       </section>
 
       <section className="ir-card flex flex-col gap-3 p-5" aria-labelledby="acct-heading">

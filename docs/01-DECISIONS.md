@@ -575,6 +575,11 @@ fraction of it, in the open, with the boss able to re-issue the moment anything 
 > only way a rep's PIN ever changes: rep-side self-service was taken away at the owner's own
 > ask in 0027 and is not coming back through this door.
 >
+> — **The self-service half is superseded; see §38.** The owner asked for it back on 3 Sep,
+> and a PIN issued here is now temporary: it gets the rep in once and is replaced by one they
+> choose. Everything else in this decision stands, minting included, and §38 is built on it
+> rather than around it — `set_pin_hash()` is still the only writer of the column.
+>
 > The GoTrue account still gets a password, because `auth.admin.createUser()` requires one and
 > there is no passwordless shape in the Admin API. It is CSPRNG junk that is never returned,
 > logged or displayed, and re-issuing a PIN rotates it — otherwise "the old credential stops
@@ -885,3 +890,122 @@ See `supabase/migrations/20260902130000_admin_only_exceptions.sql`,
 `tests/db/exception-bookings.test.ts`. Deleted: `src/app/(app)/admin/exception-bookings/`,
 `bookings.exception_status`, `admin_approve_exception_booking()`,
 `admin_deny_exception_booking()`, `admin_pending_exception_bookings()` and IR123.
+
+## 38. The rep chooses their own PIN, and one the boss issued is temporary
+
+3 Sep 2026. The owner has asked for the opposite of what he asked for on 1 Sep: **a rep
+changes their own PIN again.** §32 decision 1 said self-service "is not coming back through
+this door"; it comes back through this one. That paragraph is superseded on this point
+alone — everything else in §32 stands, and the mechanism below is the one §32 built.
+
+On top of the plain reversal he asked for the prompt to be **unavoidable and repeating**: a
+rep who signs in with a PIN the boss generated is sent to a change-PIN screen before they can
+reach any part of the app, and sent there again at every sign-in until they have actually
+replaced it.
+
+### Why the reversal is right, which is not the same as why it was asked for
+
+§32 wrote the cost of the old shape down honestly — "the boss knows the initial PIN" — and
+answered it with authority: he is the owner, he has admin rights over every row, and the
+audit log names the actor on every write. That answer is true and it is about the wrong
+thing. Authority is not the question a credential answers. `bookings.created_by`, every
+`audit_log.actor_id`, the cash ledger and §8's whole isolation boundary are claims about
+**which person** did something, and a secret two people hold cannot support a claim about
+one of them. Not because the boss would forge a booking — because after the fact there is no
+longer any way to say that he could not have.
+
+So the generated PIN keeps doing the job it is good at and stops doing the one it never
+could. It is a **handover token**: minted by the server, read off a screen, good for getting
+one rep in one time. What it is not, from now on, is the thing that identifies them.
+
+### The decisions
+
+**1 · Full self-service, not first-use only.**
+> *Asked:* whether to unlock the change screen only for a rep still holding a boss-issued
+> PIN — the narrow fix the request literally needed — or generally.
+>
+> *Chosen:* generally. `/change-pin` is on the settings screen for a rep who has already
+> chosen one, and R8 (docs/04-SCREENS.md) listed a PIN section from the start.
+>
+> *Why:* the narrow version answers "the boss knows this one" and leaves "somebody watched me
+> type it at the desk" with no answer but asking the boss for a re-issue — which hands the
+> new PIN to a second person again. A rep who thinks their PIN was overheard should be able
+> to fix it in ten seconds without telling anyone, and that is a different act from the
+> forced one only in who initiated it.
+
+**2 · The current PIN is required, including on the forced screen.**
+> *Asked:* whether to skip the "current PIN" field on the forced first use, where the rep
+> typed that PIN into the login screen seconds earlier and §32 objected to exactly this kind
+> of second ask.
+>
+> *Chosen:* required, both ways, one form.
+>
+> *Why:* §32's objection was to a second **credential** — a password in front of a PIN, two
+> secrets for one door. This is one secret, asked for at the moment it is replaced. And the
+> screen is reachable for as long as the shift-length unlock window is open, on a phone that
+> lies on a hotel front desk: without the field, walking past an unattended unlocked phone is
+> enough to take the account, and the rep is then locked out behind a PIN a stranger chose.
+> The field costs six digits once per PIN and closes that outright.
+
+**3 · A chosen PIN is exactly six digits, and predictable ones are refused.**
+> *Asked:* nothing — this is the part of the reversal that had to be designed rather than
+> decided, because it is what the reversal actually costs.
+>
+> Every PIN in this system until now came out of `crypto.randomInt`, so §32's arithmetic —
+> ~768 guesses a day against a keyspace of a million, years to walk a meaningful fraction —
+> was a fact about the PIN and not a hope. A PIN a person picks is not uniform over that
+> million. An attacker does not walk a keyspace in order; they try the few hundred strings
+> people actually choose.
+>
+> So `isChosenPinLength()` holds the length at six — a rep who could pick four digits would
+> cut the keyspace to ten thousand, which the same rate limit walks in under a fortnight —
+> and `isPredictablePin()` refuses repeated blocks (`111111`, `121212`, `123123`), runs up
+> and down (`123456`, `654321`), and the short list of leaked favourites the first two rules
+> miss. It is not a strength meter and does not pretend to be one: it cannot know a rep chose
+> their year of birth and does not try. It removes the strings that would otherwise be tried
+> first, which is the part worth doing and the most that can be done without asking someone
+> at a desk to memorise something they will write on a sticky note instead.
+
+### What was deliberately not built
+
+**No new door in the database.** `public.set_pin_hash()` is still the only writer of
+`pin_hash`, still SECURITY DEFINER, still `service_role` only, and
+`app.profiles_before_write()` still refuses a `pin_hash` write from any caller with an
+`auth.uid()` — the raw-PostgREST gap 0027 closed stays closed. The rep gets no grant, no
+policy and no RPC of their own: `changePin()` authenticates them in Node, argon2-hashes what
+they typed, and calls the same function the boss's re-issue calls with the other answer to
+`p_boss_issued`. Nothing new is reachable from a browser holding the anon key.
+
+**The prompt is a redirect, not a permission.** `requireUnlocked()` sends a rep with
+`pin_must_change` to `/change-pin` before any screen behind `(app)/layout.tsx`, which is what
+makes it unavoidable in practice. It is not a privilege boundary and is not written as one — a
+rep who somehow got past it would be no more privileged than one who did not, only still
+carrying a credential the boss also knows, which is the state the whole path exists to end.
+What *is* enforced in the database is that the flag cannot be cleared without the PIN actually
+changing: `pin_must_change` is in no client grant, the guard restores it from `old` on any
+write with an `auth.uid()`, and `set_pin_hash()` writes hash and flag in one statement, so
+dismissing the prompt and replacing the PIN are one act.
+
+**Existing reps are not exempt.** The migration backfills `pin_must_change = true` for every
+rep already holding a PIN, because every one of those came from the boss. The pilot has not
+started (§32's October date), so this is a handful of rows, and the alternative was a set of
+accounts permanently excused from the rule on the grounds that they predate it.
+
+**A re-issue re-arms it.** A PIN the boss generates because one was lost or overheard has
+been read aloud too, so `reissueRepPin()` passes `p_boss_issued: true` exactly as account
+creation does, and the rep goes through the screen again. That is the point rather than a
+side effect.
+
+**Sessions are not reset on a change.** CLAUDE.md's "reset sessions on password change" has
+nothing to reset here: a rep is bound to one device (§1), so there is no second session to
+invalidate, and the person changing the PIN is the person holding that device. The unlock
+window is re-opened rather than closed, because they proved the old PIN and chose the new one
+in the same request and sending them to `/unlock` to type what they just set is ceremony.
+
+**The login field still accepts four to eight digits.** `isWellFormedPin()` is the reader and
+is unchanged: accounts issued a PIN under the old rules must still be able to sign in, and
+narrowing the reader would lock them out on the way to the screen that fixes it.
+
+See `supabase/migrations/20260903100000_rep_chooses_own_pin.sql`, `src/app/change-pin/`,
+`src/lib/auth/pin.ts`, `src/lib/auth/session.ts`, `src/lib/users/accounts.ts`,
+`tests/unit/pin-rules.test.ts` and `tests/db/admin-users.test.ts`.

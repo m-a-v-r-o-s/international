@@ -64,15 +64,19 @@ import { sha256Hex } from '../hash'
  * at creation time and the rep signs in with it directly; there is no password
  * for them to be given, forget, or be shown twice.
  *
- * The cost, stated plainly: the boss knows the initial PIN, and there is no
- * rep-side "change my PIN" — 0027 took that away deliberately, at his ask. That
- * is narrower than it sounds — he is the owner, he already has admin rights
- * over every row, and the audit log records the actor on every write — but it
- * is real, and the answer to a PIN that has been seen by the wrong person is
- * the same as the answer to a lost one: the boss re-issues it from the person's
- * page, which is instant and always available to him. When the domain arrives,
- * inviteUserByEmail() becomes available and this becomes a choice rather than
- * the only door.
+ * WHAT THE PIN ISSUED HERE IS, since §38. It is a handover token and nothing
+ * more: it gets the rep in once. The boss reads it off this screen, so the boss
+ * knows it, so it is by construction not something that identifies the rep — and
+ * `bookings.created_by` and every audit row under it are claims about which
+ * person did something. So `pin_must_change` is set with it, and the app asks
+ * the rep to replace it at that first sign-in and at every sign-in after it
+ * until they do (src/app/change-pin/). What the boss hands over stops working as
+ * an identity the moment the rep chooses their own.
+ *
+ * §32 recorded the opposite of this — 0027 removed rep-side PIN changes at the
+ * owner's own ask, and that paragraph said so. He has since asked for them back.
+ * Re-issue is unchanged and is still the answer to a lost or overheard PIN; it
+ * is simply no longer the ONLY way the column ever changes.
  */
 
 /**
@@ -165,6 +169,9 @@ export async function createRepAccount(input: {
   const { error: pinError } = await supabaseAdmin().rpc('set_pin_hash', {
     p_profile_id: data.user.id,
     p_hash: await hashPin(pin),
+    // The boss is about to read this off his screen, so it is temporary by
+    // definition: the rep is asked to replace it before they can work (§38).
+    p_boss_issued: true,
   })
 
   if (pinError) {
@@ -246,6 +253,11 @@ export async function reissueRepPin(input: {
   const { error: pinError } = await admin.rpc('set_pin_hash', {
     p_profile_id: input.profileId,
     p_hash: await hashPin(pin),
+    // Same as creation: a re-issued PIN has been read aloud too, so it also
+    // buys one sign-in and then asks to be replaced (§38). A rep who has been
+    // through /change-pin once goes through it again after a re-issue, which is
+    // the point — the boss knows this one as well.
+    p_boss_issued: true,
   })
 
   if (pinError) {

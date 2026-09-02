@@ -45,9 +45,10 @@ export function SetPinForm() {
   const [state, action] = useActionState(setPin, EMPTY)
 
   const pinError =
-    state.error === 'tooShort' ? t('tooShort')
-      : state.error === 'digitsOnly' ? t('digitsOnly')
-        : undefined
+    state.error === 'length' ? t('length')
+      : state.error === 'weak' ? t('weak')
+        : state.error === 'digitsOnly' ? t('digitsOnly')
+          : undefined
 
   return (
     <form action={action} className="flex flex-col gap-4" noValidate>
