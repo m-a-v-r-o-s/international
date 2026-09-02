@@ -475,7 +475,8 @@
       "hotels": "Hotels",
       "audit": "Audit log",
       "customers": "Customer ledger",
-      "deskSection": "Front desk"
+      "deskSection": "Front desk",
+      "adminSection": "Admin desk"
     },
     "movements": {
       "title": "Movements sheet",

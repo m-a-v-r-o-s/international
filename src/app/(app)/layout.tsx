@@ -51,35 +51,35 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   )
 
   /**
-   * The admin's list is his own screens with the rep's appended under their
-   * own heading — additive, never a mode to be in the wrong one of
+   * The admin's list is the rep's three screens under "Front desk", then his
+   * own under "Admin desk" — additive, never a mode to be in the wrong one of
    * (docs/01-DECISIONS.md §30 decision 4). Before this the admin branch linked
-   * to none of them, which is why "even the boss makes bookings sometimes" was
-   * not something the boss could do.
+   * to none of the rep's, which is why "even the boss makes bookings
+   * sometimes" was not something the boss could do. Front desk leads because
+   * it is the screens used standing in front of a guest, reached fastest.
    *
-   * `/` is deliberately not in the appended group. For an admin it is not a
-   * Today screen at all — it is his landing card, and A1 Movements is his
-   * morning screen — so listing it under "Today" would name it wrongly. The
-   * logo links there for everyone regardless.
+   * `/` is deliberately not in either group. For an admin it is not a Today
+   * screen at all — it is his landing card, and A1 Movements is his morning
+   * screen — so listing it under "Front desk" would name it wrongly. The logo
+   * links there for everyone regardless.
    */
   const items: NavItem[] = admin
     ? [
-        { href: '/admin/movements', label: ta('nav.movements') },
+        { href: '/availability', label: tn('availability'), section: ta('nav.deskSection') },
+        { href: '/bookings', label: tn('myBookings') },
+        { href: '/incidents', label: tn('incidents') },
+        { href: '/admin/movements', label: ta('nav.movements'), section: ta('nav.adminSection') },
         { href: '/admin/fleet', label: ta('nav.fleet') },
         { href: '/admin/categories', label: ta('nav.categories') },
         { href: '/admin/pricing', label: ta('nav.pricing') },
         { href: '/admin/bookings', label: ta('nav.bookings') },
         { href: '/admin/incidents', label: ta('nav.incidents') },
-        { href: '/admin/exception-bookings', label: ta('nav.exceptionBookings') },
         { href: '/admin/cash', label: ta('nav.cash') },
         { href: '/admin/users', label: ta('nav.users') },
         { href: '/admin/hotels', label: ta('nav.hotels') },
         { href: '/admin/customers', label: ta('nav.customers') },
         { href: '/admin/audit', label: ta('nav.audit') },
         { href: '/admin/settings', label: ta('nav.settings') },
-        { href: '/availability', label: tn('availability'), section: ta('nav.deskSection') },
-        { href: '/bookings', label: tn('myBookings') },
-        { href: '/incidents', label: tn('incidents') },
       ]
     : [
         { href: '/', label: tn('today') },

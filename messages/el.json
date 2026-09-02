@@ -475,7 +475,8 @@
       "hotels": "Ξενοδοχεία",
       "audit": "Αρχείο ενεργειών",
       "customers": "Πελατολόγιο",
-      "deskSection": "Υποδοχή"
+      "deskSection": "Υποδοχή",
+      "adminSection": "Διαχείριση"
     },
     "movements": {
       "title": "Φύλλο κινήσεων",
