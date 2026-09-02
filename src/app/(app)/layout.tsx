@@ -56,21 +56,28 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   )
 
   /**
-   * The admin's list is the rep's three screens under "Front desk", then his
-   * own under "Admin desk" — additive, never a mode to be in the wrong one of
-   * (docs/01-DECISIONS.md §30 decision 4). Before this the admin branch linked
-   * to none of the rep's, which is why "even the boss makes bookings
-   * sometimes" was not something the boss could do. Front desk leads because
-   * it is the screens used standing in front of a guest, reached fastest.
+   * The admin's list is every one of the rep's screens under "Front desk",
+   * then his own under "Admin desk" — additive, never a mode to be in the
+   * wrong one of (docs/01-DECISIONS.md §30 decision 4). Before this the admin
+   * branch linked to none of the rep's, which is why "even the boss makes
+   * bookings sometimes" was not something the boss could do. Front desk leads
+   * because it is the screens used standing in front of a guest, reached
+   * fastest.
    *
-   * `/` is deliberately not in either group. For an admin it is not a Today
-   * screen at all — it is his landing card, and A1 Movements is his morning
-   * screen — so listing it under "Front desk" would name it wrongly. The logo
-   * links there for everyone regardless.
+   * Two of the rep's screens are deliberately not repeated here verbatim:
+   * `/` is not a Today screen for an admin at all — it is his landing card,
+   * and A1 Movements is his morning screen — so listing it under "Front desk"
+   * would name it wrongly, and the logo links there for everyone regardless.
+   * Settings is the admin's own `/admin/settings` under "Admin desk" instead
+   * of the rep's `/settings` — that route already redirects an admin there,
+   * folding language/sign-out in alongside the company/legal settings so
+   * there is still only one settings screen an admin ever needs.
    */
   const items: NavItem[] = admin
     ? [
-        { href: '/availability', label: tn('availability'), section: ta('nav.deskSection') },
+        { href: '/pickups', label: tn('pickups'), section: ta('nav.deskSection') },
+        { href: '/returns', label: tn('dropoffs') },
+        { href: '/availability', label: tn('availability') },
         { href: '/bookings', label: tn('myBookings') },
         { href: '/incidents', label: tn('incidents') },
         { href: '/admin/movements', label: ta('nav.movements'), section: ta('nav.adminSection') },
