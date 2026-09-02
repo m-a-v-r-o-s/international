@@ -810,6 +810,11 @@ See `supabase/migrations/20260902110000_fuel_payment.sql`,
 
 ## 36. The availability filters ask the two questions a guest actually asks
 
+> **Superseded by §39 (3 Sep 2026).** Both remaining filters are gone: grouping the results by
+> model with a count against each answers seats and gearbox by being read. The reasoning below
+> stands as the record of how four became two, and `SEAT_CHOICES` / `matchesSeatChoice()` no
+> longer exist.
+
 R2 shipped with four filters — category, transmission, seats, A/C — which was the fleet's
 data model handed to the rep as a form. The owner cut it to two (2 Sep 2026), and each cut
 is a different kind of decision.
@@ -1009,3 +1014,94 @@ narrowing the reader would lock them out on the way to the screen that fixes it.
 See `supabase/migrations/20260903100000_rep_chooses_own_pin.sql`, `src/app/change-pin/`,
 `src/lib/auth/pin.ts`, `src/lib/auth/session.ts`, `src/lib/users/accounts.ts`,
 `tests/unit/pin-rules.test.ts` and `tests/db/admin-users.test.ts`.
+
+## 39. Availability counts models, not plates — and the filters go with the form
+
+R2 listed every plate: six near-identical Fiat Pandas in a row, roughly a hundred rows for
+this fleet, each with a free/occupied badge. That is the fleet's data model handed to the rep
+as a list, and it answers a question nobody asks. A guest asks for a Panda; the rep needs to
+know whether there is one and how many are left, and only then which one.
+
+**The screen is now a visual list of MODELS**, grouped under their group heading, each card
+carrying the model's photo and `n of m free` for the chosen dates. Cards run left to right,
+two to a line on a phone, wrapping onto the next line rather than scrolling sideways: with
+eight groups a shelf would be eight separate swipe gestures, and a model off the right-hand
+edge is a model the rep does not know they have.
+
+**A model with nothing free greys out and keeps its place.** It is not hidden and it is not
+sorted to the bottom, because the shape of a group has to be the same every time the rep
+opens it — and because "no Pandas, but I have a Yaris" is the sentence the screen exists to
+support. The greying is never the only signal: the card also says *None free* in words, since
+colour alone fails WCAG 1.4.1 and fails a rep in August sunlight for the same practical reason.
+
+**Free means free for the WHOLE range.** One booking row holds one car for the whole rental
+(docs/06-IMPLEMENTATION-NOTES.md), so a plate free for five days of a six-day search is not an
+offer the rep can make. Counting it would put a number on screen that the confirm step then
+refuses, in front of the guest.
+
+**`Book` names the first free plate**, because a booking commits one `car_id` and which of six
+identical Pandas the guest gets is not a decision anyone makes at that point in the
+conversation. The rep who does care opens `Plates` on the card and picks one.
+
+**This leaks nothing §8 forbids.** A count of free plates is derived from exactly the occupied
+dates `availability()` already returns. It carries no rep, no customer, no reason and no
+times; an admin's service block and another rep's booking both simply fail to be free, which
+is what §8 requires them to look like.
+
+**The two filters are gone, and the submit button with them.** §36 cut four filters to two —
+seats and transmission — on the grounds that they were the two questions a guest actually
+asks. Grouping by model with a count against each answers both by being read: the seat count
+is on every card, the gearbox is on every card, and the fleet is now sixteen cards rather than
+a hundred rows, so narrowing it before looking at it stopped being how anyone reads the
+screen. `SEAT_CHOICES`, `isSeatChoice()` and `matchesSeatChoice()` are deleted rather than left
+unused — they had no other caller.
+
+**The dates stay, and they auto-load.** Availability is not defined without a range, so the
+two date fields remain — but there is no `Show` button. A guest asks "what about the week
+after?", and that should cost one tap on a date, not a tap and then a hunt for the button that
+makes the tap count. The change is debounced (a desktop date input fires `change` as each part
+is typed, so `2026-07-01` arrives via a year of `0002`), it refuses to navigate to an end
+before a start, and it still navigates rather than holding state — so the range lives in the
+URL and back, refresh and a pasted link all behave, which is what the old GET form was for.
+A `<noscript>` submit button keeps the screen working without JavaScript.
+
+See `supabase/migrations/20260903120000_model_photos_and_engine.sql`,
+`src/lib/availability/types.ts` (`groupFleet`), `src/lib/storage/fleet-photos.ts`,
+`src/app/(app)/availability/` and `tests/unit/availability-filters.test.ts`.
+
+## 40. Models move to the fleet, groups stay in settings — and a category is now a "group"
+
+Two halves of A3 that had always been one screen, split by what they actually are.
+
+**A model is part of the fleet**, so it is created and edited on the fleet screen, beside the
+plates that belong to it. The screen already grouped cars by model; it now has two doors above
+that list — `Add a car model` and `Add a plate` — and an `Edit model` disclosure on each model
+heading. A plate has always required a model (the select is `required`), and the order the two
+buttons sit in says which comes first.
+
+**A group is a pricing and eligibility band** — what a category costs, how old its driver must
+be — which the boss sets once a season. That belongs with the rest of the settings, and it
+stayed in `admin/settings/CategoriesSection.tsx` when the models left it.
+
+**A new model must have a photo.** R2 is a visual list and a model without a picture is a hole
+in it. Editing an existing model does not require one, which is not an inconsistency: an empty
+file input on an edit means *leave the picture alone*, and the seeded placeholder models
+predate the bucket and have to stay editable — including to add the photo they lack.
+
+**`car_models` gains `engine_cc` and `horsepower`**, both nullable. They are the two specs a
+guest asks unprompted at the desk and the two the table did not carry. Nullable because an
+electric model has no cc, and because a model whose brochure figure nobody has looked up yet
+still has to be saveable — a model that cannot be added until someone finds its tank size is a
+model that gets added to the fleet as a sticky note instead.
+
+**"Category" is now "group" in the interface, and only in the interface.** It is the term the
+rental trade uses and the term the client uses. The table, the columns, the policies and the
+code are still `categories`: renaming them would touch the RLS policies, the guard triggers,
+`price_rows`, the audit log and every screen at once, to no one's benefit. The rename lives in
+`messages/*.json`. In Greek the swap is `κατηγορία → ομάδα`, which is grammatically free —
+both nouns are feminine, so every article and adjective around them is unchanged. One string
+is deliberately exempt: `pickup.licenceBackHint` speaks of the categories on a *driving
+licence*, which are not car groups.
+
+See `src/app/(app)/admin/fleet/ModelForm.tsx`, `src/app/(app)/admin/fleet/model-actions.ts`,
+`src/app/(app)/admin/settings/CategoriesSection.tsx` and `messages/`.

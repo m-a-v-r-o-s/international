@@ -88,7 +88,7 @@ test('authenticated reaches only the named functions in app', async () => {
        and has_function_privilege('authenticated', p.oid, 'EXECUTE')
      order by 1`)
 
-  // Granted by name in 0001, 0008, 0011, 0016 and 0021. Everything else in
+  // Granted by name in 0001, 0008, 0011, 0016, 0021 and 0033. Everything else in
   // `app` — the trigger functions, the rate limiter, the security log, the
   // audit redactor — is the server's and the schema's own business.
   //
@@ -109,6 +109,10 @@ test('authenticated reaches only the named functions in app', async () => {
     'my_hotel_ids',
     'object_booking_id',
     'object_file_kind',
+    // 0033, and here for the same reason as the two above it: a storage policy
+    // on fleet-photos calls it to read the model out of the object name, and a
+    // policy is evaluated as the caller.
+    'object_model_id',
     'phone_e164',
     'rental_days',
     'today',

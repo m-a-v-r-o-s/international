@@ -1,5 +1,5 @@
 -- ═════════════════════════════════════════════════════════════════════════════
--- 0033 · A model's picture, and the two specs a guest asks about
+-- 0035 · A model's picture, and the two specs a guest asks about
 --
 -- Two changes, both driven by R2 becoming a visual list of MODELS rather than
 -- a list of plates (docs/04-SCREENS.md).

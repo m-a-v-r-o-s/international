@@ -350,7 +350,9 @@ export type Database = {
         Row: {
           category_id: string
           doors: number
+          engine_cc: number | null
           fuel_type: string
+          horsepower: number | null
           id: string
           make: string
           model: string
@@ -362,7 +364,9 @@ export type Database = {
         Insert: {
           category_id: string
           doors: number
+          engine_cc?: number | null
           fuel_type: string
+          horsepower?: number | null
           id?: string
           make: string
           model: string
@@ -374,7 +378,9 @@ export type Database = {
         Update: {
           category_id?: string
           doors?: number
+          engine_cc?: number | null
           fuel_type?: string
+          horsepower?: number | null
           id?: string
           make?: string
           model?: string

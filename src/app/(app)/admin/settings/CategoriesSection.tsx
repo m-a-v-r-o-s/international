@@ -2,39 +2,33 @@ import { getTranslations } from 'next-intl/server'
 import { supabaseServer } from '@/lib/supabase/server'
 import { Disclosure } from '@/components/Disclosure'
 import { CategoryForm } from '../categories/CategoryForm'
-import { ModelForm } from '../categories/ModelForm'
-import type { CarModelRow, CategoryRow } from '@/lib/supabase/database.types'
+import type { CategoryRow } from '@/lib/supabase/database.types'
 
 /**
- * A3's categories & models half, folded into A10 Settings the same way the
- * hotels half was (see the note at the top of page.tsx). It used to be its own
- * sidebar entry at /admin/categories, which now only redirects here.
+ * A3's GROUPS half, folded into A10 Settings the same way the hotels half was
+ * (see the note at the top of page.tsx). It used to be its own sidebar entry
+ * at /admin/categories, which now only redirects here.
  *
- * The 8 categories and the 20 models that sit in them. The client's real names
- * have not arrived (docs/01-DECISIONS.md §28.1-2); this section is exactly
- * where the boss will type them in once they do, so it has to exist ahead of
- * the fleet, not after it.
+ * The models that sit in these groups are NOT here: they moved to the fleet
+ * screen, beside the plates that belong to them
+ * (admin/fleet/ModelForm.tsx). The split is the difference between the two
+ * things. A group is a pricing and eligibility band — what a category costs,
+ * how old its driver must be — which the boss sets once a season and which
+ * belongs with the rest of the settings. A model is a car in the yard.
+ *
+ * The 8 groups themselves. The client's real names have not arrived
+ * (docs/01-DECISIONS.md §28.1-2); this section is exactly where the boss will
+ * type them in once they do, so it has to exist ahead of the fleet, not after.
  */
 export async function CategoriesSection() {
   const t = await getTranslations('admin.categories')
-  const tm = await getTranslations('admin.models')
   const supabase = await supabaseServer()
 
-  const [{ data: categories }, { data: models }] = await Promise.all([
-    supabase.from('categories')
-      .select('id, code, name_el, name_en, min_driver_age, min_licence_years, sort_order')
-      .order('sort_order'),
-    supabase.from('car_models')
-      .select('id, make, model, category_id, transmission, fuel_type, seats, doors, tank_litres, photo_path')
-      .order('make'),
-  ])
+  const { data: categories } = await supabase.from('categories')
+    .select('id, code, name_el, name_en, min_driver_age, min_licence_years, sort_order')
+    .order('sort_order')
 
   const cats = (categories ?? []) as CategoryRow[]
-  const mods = (models ?? []) as CarModelRow[]
-  const modelsByCategory = new Map<string, CarModelRow[]>()
-  for (const m of mods) {
-    modelsByCategory.set(m.category_id, [...(modelsByCategory.get(m.category_id) ?? []), m])
-  }
 
   return (
     <section className="ir-card flex flex-col gap-4 p-4" aria-labelledby="categories-heading">
@@ -61,22 +55,6 @@ export async function CategoriesSection() {
             <Disclosure summary={t('edit')}>
               <CategoryForm category={category} />
             </Disclosure>
-
-            <div className="mt-4 flex flex-col gap-2">
-              {(modelsByCategory.get(category.id) ?? []).map((model) => (
-                <Disclosure
-                  key={model.id}
-                  summary={`${model.make} ${model.model} · ${model.seats} ${tm('seatsShort')} · ${
-                    model.transmission === 'automatic' ? tm('automatic') : tm('manual')
-                  }`}
-                >
-                  <ModelForm model={model} categories={cats} />
-                </Disclosure>
-              ))}
-              <Disclosure summary={`+ ${tm('add')}`}>
-                <ModelForm categories={cats} />
-              </Disclosure>
-            </div>
           </section>
         ))}
       </div>

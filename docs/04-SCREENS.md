@@ -26,11 +26,18 @@ Big primary action per row: **Start pickup** / **Start return**.
 Footer strip: **cash in hand today** + `Hand over` action. *(The only aggregate a rep sees.)*
 
 ### R2 · Availability
-The core lookup. Pick a date range → the fleet, grouped by category.
-Each car: photo thumb, plate, model, spec chips, and a free/occupied bar across the range.
-Occupied is a **flat neutral block with no label** — no rep, no reason, no times, ever.
-Filters: **seats (4 / 5 / 7+) and transmission** — nothing else (docs/01-DECISIONS.md §36).
-`Book this car` on any car free for the whole range.
+The core lookup. Pick a date range → the fleet as a **visual list of car models**, grouped
+under their group heading (docs/01-DECISIONS.md §39).
+One card per model: the model's photo, its name, gearbox and seats, a pip bar with one pip per
+plate, and **`n of m free`** for the whole range. Cards run left to right, two to a line on a
+phone, wrapping onto the next line.
+A model with **nothing free is greyed out and keeps its place**, labelled *None free* in words
+as well as in colour.
+Occupied is a **flat neutral fact with no label** — no rep, no reason, no times, ever; a count
+of free plates is that same fact added up.
+**No filters and no submit button** — the two dates are the whole search, and changing one
+re-loads the list. `Plates` on a card lists the individual plates for the rep who wants to
+choose; `Book` takes the first free one.
 
 ### R3 · New booking
 1. **Dates** — start, end, pickup time (default 08:30–11:30), drop-off time
@@ -133,11 +140,15 @@ out / free / blocked / back today. The counts for the whole yard and the categor
 filters sit above it. Tap a car → its calendar, its history, its record.
 
 Managing the fleet happens on the same screen, because A2 and A3 were two lists of the same
-hundred plates: add a car from the disclosure above the list; edit, archive or delete on the
-car's own record, which also **blocks a date range** with an admin-only reason. Photo, plate,
-make, model, category, year, colour, transmission, fuel, seats, doors, tank litres. Archived
-cars carry no status and are not counted or filtered — they keep their own collapsed list at
-the foot. A3's number is kept so every reference to A4-A10 still points where it did.
+hundred plates. **Two doors above the list** (docs/01-DECISIONS.md §40): `Add a car model` —
+make, model, group, gearbox, fuel, seats, doors, engine cc, horsepower, tank litres and a
+**required photo** — and `Add a plate`, which must name a model that already exists. Each model
+heading carries its photo and an `Edit model` disclosure; edit, archive or delete a plate on
+its own record, which also **blocks a date range** with an admin-only reason. Archived cars
+carry no status and are not counted or filtered — they keep their own collapsed list at the
+foot. A3's number is kept so every reference to A4-A10 still points where it did.
+The **groups** themselves (their names, minimum age and licence years) live in A10 Settings,
+because a group is a pricing and eligibility band rather than a car.
 
 ### A4 · Pricing
 Pricing periods for a season (add, edit, drag the boundaries) with overlap prevented.

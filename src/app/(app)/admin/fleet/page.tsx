@@ -5,7 +5,9 @@ import { requireAdmin } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
 import { todayAthens } from '@/lib/dates'
 import { Disclosure } from '@/components/Disclosure'
+import { modelPhotoUrl } from '@/lib/storage/fleet-photos'
 import { CarForm } from './CarForm'
+import { ModelForm } from './ModelForm'
 import type { BookingRow, CarModelRow, CarRow, CategoryRow } from '@/lib/supabase/database.types'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -46,7 +48,7 @@ export default async function FleetPage({
       .select('id, plate, model_id, year, colour, photo_path, archived_at, created_at, updated_at')
       .order('plate'),
     supabase.from('car_models')
-      .select('id, make, model, category_id, transmission, fuel_type, seats, doors, tank_litres, photo_path')
+      .select('id, make, model, category_id, transmission, fuel_type, seats, doors, tank_litres, engine_cc, horsepower, photo_path')
       .order('make'),
     supabase.from('categories').select('id, code, name_el, name_en, min_driver_age, min_licence_years, sort_order')
       .order('sort_order'),
@@ -154,9 +156,14 @@ export default async function FleetPage({
         <button type="submit" className="ir-btn-quiet !w-auto">{t('apply')}</button>
       </form>
 
-      <Disclosure summary={`+ ${t('add')}`}>
-        <CarForm models={allModels} />
-      </Disclosure>
+      <div className="flex flex-col gap-3">
+        <Disclosure summary={`+ ${t('addModel')}`}>
+          <ModelForm categories={allCategories} />
+        </Disclosure>
+        <Disclosure summary={`+ ${t('add')}`}>
+          <CarForm models={allModels} />
+        </Disclosure>
+      </div>
 
       {filtered.length === 0 ? (
         <p className="text-ink-soft">{t('noneMatch')}</p>
@@ -165,12 +172,33 @@ export default async function FleetPage({
           {[...byModel.entries()].map(([modelId, group]) => {
             const model = modelById.get(modelId)
             const category = model ? catById.get(model.category_id) : undefined
+            const photoUrl = model ? modelPhotoUrl(supabase, model.photo_path) : null
             return (
               <section key={modelId} className="ir-card p-4">
-                <h2 className="text-[1.0625rem] font-semibold">
-                  {model ? `${model.make} ${model.model}` : t('unknownModel')}
-                  {category ? <span className="ml-2 text-[0.875rem] font-normal text-ink-soft">{category.code}</span> : null}
-                </h2>
+                <div className="flex items-start gap-3">
+                  {photoUrl ? (
+                    // Decorative here: the model's name is right beside it, so a
+                    // screen reader that announced the picture too would read the
+                    // same car twice.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={photoUrl}
+                      alt=""
+                      className="aspect-[4/3] w-20 shrink-0 rounded-field border border-line object-cover"
+                    />
+                  ) : null}
+                  <h2 className="min-w-0 flex-1 text-[1.0625rem] font-semibold">
+                    {model ? `${model.make} ${model.model}` : t('unknownModel')}
+                    {category ? <span className="ml-2 text-[0.875rem] font-normal text-ink-soft">{category.code}</span> : null}
+                  </h2>
+                </div>
+                {model ? (
+                  <div className="mt-2">
+                    <Disclosure summary={t('editModel')}>
+                      <ModelForm model={model} categories={allCategories} photoUrl={photoUrl} />
+                    </Disclosure>
+                  </div>
+                ) : null}
                 <ul className="mt-3 flex flex-col divide-y divide-line">
                   {group.map(({ car, hold, status }) => (
                     <li key={car.id} className="flex items-center justify-between gap-3 py-2.5">
