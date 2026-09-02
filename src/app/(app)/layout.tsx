@@ -33,6 +33,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // settings screen lives in the sidebar. It now just flips the language
   // directly, in one click, and the sidebar is the only place settings live.
   const nextLocale = locale === 'el' ? 'en' : 'el'
+  // The button's label names the language it switches *to*, not the one
+  // already applied — "English" while reading Greek, "Ελληνικά" while
+  // reading English. Naming the current language read as an inert label,
+  // not a control someone would tap.
+  const nextLocaleLabel = nextLocale === 'el' ? t('greek') : t('english')
 
   // Matches the line-icon style already used for the drawer's burger icon.
   const globeIcon = (
@@ -124,7 +129,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 <input type="hidden" name="locale" value={nextLocale} />
                 <button type="submit" className="flex items-center gap-1 text-[0.875rem] text-ink-soft underline underline-offset-2 hover:text-ink">
                   {globeIcon}
-                  {t('language')}
+                  {nextLocaleLabel}
                 </button>
               </form>
               <SignOutButton className="flex items-center gap-1 text-[0.875rem] text-ink-soft underline underline-offset-2 hover:text-ink">
@@ -173,7 +178,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                   <input type="hidden" name="locale" value={nextLocale} />
                   <button type="submit" className="flex items-center gap-1 underline underline-offset-2 hover:text-brand-ink">
                     {globeIcon}
-                    {t('language')}
+                    {nextLocaleLabel}
                   </button>
                 </form>
                 <SignOutButton className="flex items-center gap-1 underline underline-offset-2 hover:text-brand-ink">
