@@ -9,3 +9,7 @@ next-env.d.ts
 /.vercel
 /coverage
 *.tsbuildinfo
+
+# Supabase CLI scratch state — the linked project ref and its version check.
+# Not secret, but local to whoever ran the CLI, not a fact about the repo.
+supabase/.temp/

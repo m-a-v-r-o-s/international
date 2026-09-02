@@ -12,13 +12,14 @@
  *    for `BookingRow`. The aliases below are that, and nothing more.
  *
  * 2. THE CHECK-CONSTRAINED COLUMNS. `car_models.transmission`,
- *    `car_models.fuel_type`, `handovers.kind`, `damage_marks.view` and
- *    `damage_marks.mark_type` are `text` with a CHECK constraint rather than
- *    Postgres enums, so the generator can only report `string` — a CHECK is
- *    invisible to it in a way that a real enum is not. The database still
- *    enforces the value; TypeScript simply cannot see the enforcement. The
- *    unions are declared once here rather than asserted at each read.
- *    Worth doing properly one day: making these five columns real enums would
+ *    `car_models.fuel_type`, `handovers.kind`, `damage_marks.view`,
+ *    `damage_marks.mark_type` and `bookings.exception_status` are `text` with a
+ *    CHECK constraint rather than Postgres enums, so the generator can only
+ *    report `string` — a CHECK is invisible to it in a way that a real enum is
+ *    not. The database still enforces the value; TypeScript simply cannot see
+ *    the enforcement. The unions are declared once here rather than asserted
+ *    at each read.
+ *    Worth doing properly one day: making these six columns real enums would
  *    delete this section and let the generator carry the unions itself. That
  *    is a schema change and wants its own migration, not a provisioning
  *    session — recorded in docs/06-IMPLEMENTATION-NOTES.md.
@@ -29,195 +30,15 @@ export * from './database.generated'
 
 import type { Database as GeneratedDatabase } from './database.generated'
 
-/**
- * What the generator has not caught up with yet.
- *
- * This intersection shadows the `Database` that `export *` above re-exports,
- * and every caller imports `Database` from HERE (nothing imports
- * `database.generated` directly), so what is added below is what the app sees.
- * Each block names the migration it stands in for.
- *
- * STATUS, 2 Sep 2026. Every migration in `supabase/migrations` is applied to
- * the project, `20260902110000_fuel_payment.sql` included, so what is declared
- * below and what is deployed agree. Everything up to
- * `20260902100000_incidents.sql` was additionally checked field by field
- * against the real generated output for that schema. Two of those declarations
- * are kept deliberately rather than folded away, because both are better than
- * what the generator emits: `bookings.exception_status` is narrowed to its four
- * real values (per note 2 above — the generator can only see `string`), and
- * `incidents`'s `Insert`/`Update` describe the GRANT rather than the table
- * (per note 3).
- *
- * `database.generated.ts` itself predates all of it. Regenerating it needs network
- * access to the project, which is why it did not happen here — from the
- * machine this was written on the pooler's SSL probe times out and the direct
- * host answers only on IPv6. Run
- * `supabase gen types typescript --project-id jhjzcrypzpvevxouuejm` from
- * somewhere that can reach it, and everything below except those two
- * narrowings can then be deleted.
- */
-type GenPublic = GeneratedDatabase['public']
-type GenTable = { Row: object; Insert: object; Update: object }
-
-/**
- * One table, plus columns the generator has not seen yet. `Insert` and
- * `Update` take them as optional throughout: every column added below is
- * either derived by a trigger or has a default, so no caller ever sends one.
- */
-type WithColumns<T extends GenTable, C> = Omit<T, 'Row' | 'Insert' | 'Update'> & {
-  Row: T['Row'] & C
-  Insert: T['Insert'] & Partial<C>
-  Update: T['Update'] & Partial<C>
-}
-
-/** The same, for a column that was renamed rather than added. */
-type RenameColumn<T extends GenTable, From extends string, C> =
-  Omit<T, 'Row' | 'Insert' | 'Update'> & {
-    Row: Omit<T['Row'], From> & C
-    Insert: Omit<T['Insert'], From> & Partial<C>
-    Update: Omit<T['Update'], From> & Partial<C>
-  }
-
-/** 20260902100000_incidents.sql · `exceptions` became `incidents`. */
-type IncidentsTable = {
-  Row: {
-    booking_id: string
-    charge: number | null
-    id: string
-    note: string | null
-    notified_at: string | null
-    raised_at: string
-    raised_by: string | null
-    resolution: string | null
-    resolved_at: string | null
-    resolved_by: string | null
-  }
-  Insert: {
-    booking_id: string
-    id?: string
-    note?: string | null
-    raised_by?: string | null
-  }
-  Update: {
-    note?: string | null
-    resolved_at?: string | null
-  }
-  Relationships: []
-}
-
-/** 20260902100000_incidents.sql · the photos a rep attaches to one. */
-type IncidentPhotosTable = {
-  Row: {
-    added_at: string
-    added_by: string | null
-    id: string
-    incident_id: string
-    path: string
-  }
-  Insert: {
-    added_by?: string | null
-    id?: string
-    incident_id: string
-    path: string
-  }
-  Update: { path?: string }
-  Relationships: []
-}
-
-export type Database = Omit<GeneratedDatabase, 'public'> & {
-  public: Omit<GenPublic, 'Functions' | 'Tables'> & {
-    Tables: Omit<
-      GenPublic['Tables'],
-      'exceptions' | 'bookings' | 'app_settings' | 'profiles' | 'handovers'
-    > & {
-      incidents: IncidentsTable
-      incident_photos: IncidentPhotosTable
-      // 20260901150000_booking_exception_approval.sql and
-      // 20260902100000_incidents.sql.
-      bookings: WithColumns<GenPublic['Tables']['bookings'], {
-        exception_status: 'pending' | 'approved' | 'denied' | null
-        fuel_charge: number | null
-      }>
-      // 20260902100000_incidents.sql.
-      app_settings: WithColumns<GenPublic['Tables']['app_settings'], {
-        fuel_charge_per_eighth: number
-      }>
-      profiles: RenameColumn<
-        GenPublic['Tables']['profiles'], 'notify_exceptions',
-        { notify_incidents: boolean }
-      >
-      // 20260902110000_fuel_payment.sql. The money the rep took at the desk
-      // when the car came back, on the event where it changed hands.
-      handovers: WithColumns<GenPublic['Tables']['handovers'], {
-        fuel_collected: number
-        fuel_pay_method: 'cash' | 'card' | 'transfer' | null
-        fuel_cash_handover_id: string | null
-      }>
-    }
-    Functions: Omit<
-      GenPublic['Functions'],
-      'admin_resolve_exception' | 'admin_exception_detail'
-      | 'pending_exception_notifications' | 'mark_exceptions_notified'
-    > & {
-      // 20260901150000_booking_exception_approval.sql
-      admin_approve_exception_booking: { Args: { p_booking_id: string }; Returns: void }
-      admin_deny_exception_booking: { Args: { p_booking_id: string }; Returns: void }
-      admin_pending_exception_bookings: {
-        Args: Record<string, never>
-        Returns: {
-          booking_id: string
-          ref: string
-          plate: string
-          hotel_name: string | null
-          room_number: string | null
-          guest: string | null
-          pickup_at: string | null
-          reason: string | null
-        }[]
-      }
-      // 20260902100000_incidents.sql
-      admin_resolve_incident: {
-        Args: { p_id: string; p_charge: number | null; p_resolution: string | null }
-        Returns: void
-      }
-      admin_incident_detail: {
-        Args: { p_id: string }
-        Returns: {
-          id: string
-          booking_id: string
-          note: string | null
-          raised_by: string | null
-          raised_at: string
-          resolved_by: string | null
-          resolved_at: string | null
-          charge: number | null
-          resolution: string | null
-        }[]
-      }
-      pending_incident_notifications: {
-        Args: { p_limit?: number }
-        Returns: {
-          id: string
-          note: string | null
-          raised_at: string
-          booking_ref: string
-          plate: string
-        }[]
-      }
-      mark_incidents_notified: { Args: { p_ids: string[] }; Returns: number }
-    }
-  }
-}
-
-type Tbl = Database['public']['Tables']
+type Tbl = GeneratedDatabase['public']['Tables']
 type Row<T extends keyof Tbl> = Tbl[T]['Row']
 
 // ── Enums, straight from the generated ones ─────────────────────────────────
-export type UserRole = Database['public']['Enums']['user_role']
-export type BookingKind = Database['public']['Enums']['booking_kind']
-export type BookingStatus = Database['public']['Enums']['booking_status']
-export type PayMethod = Database['public']['Enums']['pay_method']
-export type SeatType = Database['public']['Enums']['seat_type']
+export type UserRole = GeneratedDatabase['public']['Enums']['user_role']
+export type BookingKind = GeneratedDatabase['public']['Enums']['booking_kind']
+export type BookingStatus = GeneratedDatabase['public']['Enums']['booking_status']
+export type PayMethod = GeneratedDatabase['public']['Enums']['pay_method']
+export type SeatType = GeneratedDatabase['public']['Enums']['seat_type']
 
 // ── The unions a CHECK constraint enforces and the generator cannot see ─────
 // Each one names the migration that constrains it, so a change there has an
@@ -232,6 +53,8 @@ export type HandoverKind = 'pickup' | 'return'
 export type DamageViewCol = 'front' | 'rear' | 'left' | 'right' | 'top'
 /** `damage_marks.mark_type` — CHECK in 20260830090600_operations.sql. */
 export type MarkTypeCol = 'scratch' | 'dent' | 'chip' | 'crack' | 'other'
+/** `bookings.exception_status` — CHECK in 20260901150000_booking_exception_approval.sql. */
+export type ExceptionStatus = 'pending' | 'approved' | 'denied'
 
 // ── Row aliases ─────────────────────────────────────────────────────────────
 export type ProfileRow = Row<'profiles'>
@@ -243,7 +66,10 @@ export type CarRow = Row<'cars'>
 export type PricingPeriodRow = Row<'pricing_periods'>
 export type PriceRowRow = Row<'price_rows'>
 export type PriceExtraDayRow = Row<'price_extra_day'>
-export type BookingRow = Row<'bookings'>
+/** Narrowed per note 2 above. */
+export type BookingRow = Omit<Row<'bookings'>, 'exception_status'> & {
+  exception_status: ExceptionStatus | null
+}
 export type BookingExtraRow = Row<'booking_extras'>
 export type BookingDriverRow = Row<'booking_drivers'>
 export type ContractRow = Row<'contracts'>

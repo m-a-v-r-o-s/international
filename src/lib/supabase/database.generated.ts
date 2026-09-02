@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           company: Json
           dropoff_window: string
+          fuel_charge_per_eighth: number
           id: number
           licence_retention_months: number
           pickup_window: string
@@ -26,6 +27,7 @@ export type Database = {
         Insert: {
           company?: Json
           dropoff_window?: string
+          fuel_charge_per_eighth?: number
           id?: number
           licence_retention_months?: number
           pickup_window?: string
@@ -34,6 +36,7 @@ export type Database = {
         Update: {
           company?: Json
           dropoff_window?: string
+          fuel_charge_per_eighth?: number
           id?: number
           licence_retention_months?: number
           pickup_window?: string
@@ -196,6 +199,8 @@ export type Database = {
           eligibility_override_at: string | null
           eligibility_override_by: string | null
           end_date: string
+          exception_status: string | null
+          fuel_charge: number | null
           hotel_id: string | null
           id: string
           kind: Database["public"]["Enums"]["booking_kind"]
@@ -233,6 +238,8 @@ export type Database = {
           eligibility_override_at?: string | null
           eligibility_override_by?: string | null
           end_date: string
+          exception_status?: string | null
+          fuel_charge?: number | null
           hotel_id?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["booking_kind"]
@@ -270,6 +277,8 @@ export type Database = {
           eligibility_override_at?: string | null
           eligibility_override_by?: string | null
           end_date?: string
+          exception_status?: string | null
+          fuel_charge?: number | null
           hotel_id?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["booking_kind"]
@@ -715,75 +724,14 @@ export type Database = {
           },
         ]
       }
-      exceptions: {
-        Row: {
-          booking_id: string
-          charge: number | null
-          detail: string | null
-          id: string
-          notified_at: string | null
-          raised_at: string
-          raised_by: string | null
-          resolution: string | null
-          resolved_at: string | null
-          resolved_by: string | null
-          type: Database["public"]["Enums"]["exception_type"]
-        }
-        Insert: {
-          booking_id: string
-          charge?: number | null
-          detail?: string | null
-          id?: string
-          notified_at?: string | null
-          raised_at?: string
-          raised_by?: string | null
-          resolution?: string | null
-          resolved_at?: string | null
-          resolved_by?: string | null
-          type: Database["public"]["Enums"]["exception_type"]
-        }
-        Update: {
-          booking_id?: string
-          charge?: number | null
-          detail?: string | null
-          id?: string
-          notified_at?: string | null
-          raised_at?: string
-          raised_by?: string | null
-          resolution?: string | null
-          resolved_at?: string | null
-          resolved_by?: string | null
-          type?: Database["public"]["Enums"]["exception_type"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "exceptions_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "exceptions_raised_by_fkey"
-            columns: ["raised_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "exceptions_resolved_by_fkey"
-            columns: ["resolved_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       handovers: {
         Row: {
           booking_id: string
           by_profile: string
+          fuel_cash_handover_id: string | null
+          fuel_collected: number
           fuel_eighths: number | null
+          fuel_pay_method: Database["public"]["Enums"]["pay_method"] | null
           id: string
           kind: string
           notes: string | null
@@ -792,7 +740,10 @@ export type Database = {
         Insert: {
           booking_id: string
           by_profile: string
+          fuel_cash_handover_id?: string | null
+          fuel_collected?: number
           fuel_eighths?: number | null
+          fuel_pay_method?: Database["public"]["Enums"]["pay_method"] | null
           id?: string
           kind: string
           notes?: string | null
@@ -801,7 +752,10 @@ export type Database = {
         Update: {
           booking_id?: string
           by_profile?: string
+          fuel_cash_handover_id?: string | null
+          fuel_collected?: number
           fuel_eighths?: number | null
+          fuel_pay_method?: Database["public"]["Enums"]["pay_method"] | null
           id?: string
           kind?: string
           notes?: string | null
@@ -820,6 +774,13 @@ export type Database = {
             columns: ["by_profile"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "handovers_fuel_cash_handover_id_fkey"
+            columns: ["fuel_cash_handover_id"]
+            isOneToOne: false
+            referencedRelation: "cash_handovers"
             referencedColumns: ["id"]
           },
         ]
@@ -883,6 +844,106 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      incident_photos: {
+        Row: {
+          added_at: string
+          added_by: string | null
+          id: string
+          incident_id: string
+          path: string
+        }
+        Insert: {
+          added_at?: string
+          added_by?: string | null
+          id?: string
+          incident_id: string
+          path: string
+        }
+        Update: {
+          added_at?: string
+          added_by?: string | null
+          id?: string
+          incident_id?: string
+          path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_photos_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_photos_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incidents: {
+        Row: {
+          booking_id: string
+          charge: number | null
+          id: string
+          note: string | null
+          notified_at: string | null
+          raised_at: string
+          raised_by: string | null
+          resolution: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+        }
+        Insert: {
+          booking_id: string
+          charge?: number | null
+          id?: string
+          note?: string | null
+          notified_at?: string | null
+          raised_at?: string
+          raised_by?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Update: {
+          booking_id?: string
+          charge?: number | null
+          id?: string
+          note?: string | null
+          notified_at?: string | null
+          raised_at?: string
+          raised_by?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidents_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_raised_by_fkey"
+            columns: ["raised_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       price_extra_day: {
         Row: {
@@ -988,7 +1049,7 @@ export type Database = {
           id: string
           lang: string
           notify_evening: boolean
-          notify_exceptions: boolean
+          notify_incidents: boolean
           notify_morning: boolean
           phone: string | null
           pin_hash: string | null
@@ -1002,7 +1063,7 @@ export type Database = {
           id: string
           lang?: string
           notify_evening?: boolean
-          notify_exceptions?: boolean
+          notify_incidents?: boolean
           notify_morning?: boolean
           phone?: string | null
           pin_hash?: string | null
@@ -1016,7 +1077,7 @@ export type Database = {
           id?: string
           lang?: string
           notify_evening?: boolean
-          notify_exceptions?: boolean
+          notify_incidents?: boolean
           notify_morning?: boolean
           phone?: string | null
           pin_hash?: string | null
@@ -1094,6 +1155,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_approve_exception_booking: {
+        Args: { p_booking_id: string }
+        Returns: undefined
+      }
       admin_audit_entities: {
         Args: never
         Returns: {
@@ -1166,6 +1231,10 @@ export type Database = {
         }[]
       }
       admin_delete_block: { Args: { p_id: string }; Returns: undefined }
+      admin_deny_exception_booking: {
+        Args: { p_booking_id: string }
+        Returns: undefined
+      }
       admin_erase_customer: {
         Args: { p_customer_id: string }
         Returns: {
@@ -1173,19 +1242,18 @@ export type Database = {
           front_path: string
         }[]
       }
-      admin_exception_detail: {
+      admin_incident_detail: {
         Args: { p_id: string }
         Returns: {
           booking_id: string
           charge: number
-          detail: string
           id: string
+          note: string
           raised_at: string
           raised_by: string
           resolution: string
           resolved_at: string
           resolved_by: string
-          type: Database["public"]["Enums"]["exception_type"]
         }[]
       }
       admin_licence_retention_status: {
@@ -1228,7 +1296,20 @@ export type Database = {
           rep_name: string
         }[]
       }
-      admin_resolve_exception: {
+      admin_pending_exception_bookings: {
+        Args: never
+        Returns: {
+          booking_id: string
+          guest: string
+          hotel_name: string
+          pickup_at: string
+          plate: string
+          reason: string
+          ref: string
+          room_number: string
+        }[]
+      }
+      admin_resolve_incident: {
         Args: { p_charge: number; p_id: string; p_resolution: string }
         Returns: undefined
       }
@@ -1352,7 +1433,7 @@ export type Database = {
         }
         Returns: undefined
       }
-      mark_exceptions_notified: { Args: { p_ids: string[] }; Returns: number }
+      mark_incidents_notified: { Args: { p_ids: string[] }; Returns: number }
       mark_licences_purged: {
         Args: { p_booking_ids: string[] }
         Returns: number
@@ -1366,14 +1447,14 @@ export type Database = {
           handover_id: string
         }[]
       }
-      pending_exception_notifications: {
+      pending_incident_notifications: {
         Args: { p_limit?: number }
         Returns: {
           booking_ref: string
           id: string
+          note: string
           plate: string
           raised_at: string
-          type: Database["public"]["Enums"]["exception_type"]
         }[]
       }
       push_targets: {
@@ -1447,13 +1528,6 @@ export type Database = {
         | "cancelled"
         | "no_show"
         | "blocked"
-      exception_type:
-        | "fuel_short"
-        | "new_damage"
-        | "late_return"
-        | "no_show"
-        | "eligibility_override"
-        | "other"
       pay_method: "cash" | "card" | "transfer"
       seat_type: "infant" | "child" | "booster"
       user_role: "admin" | "rep"
@@ -1472,12 +1546,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1501,11 +1575,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1526,11 +1600,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1551,11 +1625,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1568,11 +1642,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1592,14 +1666,6 @@ export const Constants = {
         "cancelled",
         "no_show",
         "blocked",
-      ],
-      exception_type: [
-        "fuel_short",
-        "new_damage",
-        "late_return",
-        "no_show",
-        "eligibility_override",
-        "other",
       ],
       pay_method: ["cash", "card", "transfer"],
       seat_type: ["infant", "child", "booster"],
