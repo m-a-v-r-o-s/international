@@ -139,7 +139,25 @@ deviation from the rule and wants a one-line-each follow-up.
 **The generated types replaced the hand-written ones, and every mismatch was a
 discrepancy about the SCHEMA rather than about the data.** None of them meant
 the app believed something false about a value. `src/lib/supabase/database.generated.ts`
-is now produced by `supabase gen types` and never edited;
+is now produced by `supabase gen types` and never edited — **`npm run types`**, with
+the CLI pinned as a devDependency rather than fetched by `npx` each time.
+
+That script passes `--project-id` and reads `SUPABASE_ACCESS_TOKEN` from the
+environment, which is the only one of the four forms that works here. `--db-url`
+and `--local` shell out to Docker for schema introspection and Docker is not
+installed; `--linked` wants a `supabase/config.toml` that this repo does not
+have and should not grow one for, since migrations are applied by
+`scripts/db-apply.ts` and the CLI's own migration history table is not in use.
+`--project-id` needs none of that — the ref is public (it is already the
+hostname in `NEXT_PUBLIC_SUPABASE_URL`) and the token does the authenticating.
+
+**The consequence worth knowing before running it: the types come from the
+REMOTE schema, not from `supabase/migrations/`.** A migration that has not been
+deployed yet is invisible to the generator, and regenerating before deploying
+will silently *revert* the file to whatever the remote still believes — dropping
+new columns and restoring ones a migration removed. So: deploy, then regenerate.
+Where the two genuinely have to move together, the file is edited by hand for
+exactly the new columns and regenerated at the next deploy;
 `src/lib/supabase/database.types.ts` is the thin layer over it holding the row
 aliases and the three things the generator cannot express. First, a CHECK
 constraint is invisible to it: `transmission`, `fuel_type`, `handovers.kind`,
