@@ -1,12 +1,9 @@
 import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { requireUnlocked } from '@/lib/auth/session'
-import { supabaseServer } from '@/lib/supabase/server'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { SignOutButton } from '@/components/SignOutButton'
-import { vapidPublicKey } from '@/lib/push/keys'
-import { NotificationPreferences } from './NotificationPreferences'
-import { PushToggle } from './PushToggle'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('settings')
@@ -14,8 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * R8 · Settings — language, notifications (admin only), sign out
- * (docs/04-SCREENS.md R8).
+ * R8 · Settings — language, sign out (docs/04-SCREENS.md R8).
  *
  * A rep has neither a PIN-change nor a notifications section here: only the
  * boss issues or changes a rep's PIN, and a rep's notifications are always on
@@ -23,23 +19,18 @@ export async function generateMetadata(): Promise<Metadata> {
  * src/app/unlock/actions.ts and the notify_morning/notify_evening clamp in
  * app.profiles_before_write().
  *
- * For the boss, notifications stay two separate things: whether THIS DEVICE
- * receives pushes at all — a browser permission and subscription that belong
- * to the phone in hand — and which KINDS of message they want anywhere.
+ * The boss's version of this screen — language plus notifications and
+ * account — lives at /admin/settings, folded in alongside the company/legal
+ * settings so the sidebar's single "Settings" entry is the only settings
+ * screen an admin ever needs. An admin landing here (an old link, the
+ * header's globe button) is sent straight there instead of seeing a second,
+ * incomplete settings page.
  */
 export default async function SettingsPage() {
   const staff = await requireUnlocked()
+  if (staff.role === 'admin') redirect('/admin/settings')
   const t = await getTranslations('settings')
   const tc = await getTranslations('common')
-  const supabase = await supabaseServer()
-
-  const { data } = await supabase
-    .from('profiles')
-    .select('notify_exceptions')
-    .eq('id', staff.id)
-    .maybeSingle()
-
-  const exceptions = (data as { notify_exceptions?: boolean } | null)?.notify_exceptions ?? true
 
   return (
     <div className="flex flex-col gap-6">
@@ -50,15 +41,6 @@ export default async function SettingsPage() {
         <p className="text-[0.9375rem] text-ink-soft">{t('languageHelp')}</p>
         <LanguageSwitcher />
       </section>
-
-      {staff.role === 'admin' ? (
-        <section className="ir-card flex flex-col gap-3 p-5" aria-labelledby="notify-heading">
-          <h2 id="notify-heading" className="text-[1.125rem] font-semibold">{t('notifications')}</h2>
-          <PushToggle publicKey={vapidPublicKey()} />
-          <hr className="border-line" />
-          <NotificationPreferences exceptions={exceptions} />
-        </section>
-      ) : null}
 
       <section className="ir-card flex flex-col gap-3 p-5" aria-labelledby="acct-heading">
         <h2 id="acct-heading" className="text-[1.125rem] font-semibold">{t('account')}</h2>

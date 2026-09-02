@@ -5,6 +5,8 @@ import { Footer } from '@/components/Footer'
 import { SideNav, NavDrawer, type NavItem } from '@/components/SideNav'
 import { SignOutButton } from '@/components/SignOutButton'
 import { vapidPublicKey } from '@/lib/push/keys'
+import { getLocale } from '@/i18n/locale'
+import { setLocale } from '@/lib/actions/locale'
 import { AutoPushSubscribe } from './settings/AutoPushSubscribe'
 
 /**
@@ -22,8 +24,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const tn = await getTranslations('nav')
   const ta = await getTranslations('admin')
   const tapp = await getTranslations('app')
+  const locale = await getLocale()
 
   const admin = staff.role === 'admin'
+
+  // The header's globe button used to open its own settings page — a second,
+  // partial one for an admin (docs/04-SCREENS.md R8 vs A10) since the real
+  // settings screen lives in the sidebar. It now just flips the language
+  // directly, in one click, and the sidebar is the only place settings live.
+  const nextLocale = locale === 'el' ? 'en' : 'el'
 
   // Matches the line-icon style already used for the drawer's burger icon.
   const globeIcon = (
@@ -110,10 +119,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               <span className="max-w-[16rem] truncate text-[0.875rem] text-ink-soft">
                 {staff.fullName || tr(staff.role)}
               </span>
-              <Link href="/settings" className="flex items-center gap-1 text-[0.875rem] text-ink-soft underline underline-offset-2 hover:text-ink">
-                {globeIcon}
-                {t('language')}
-              </Link>
+              <form action={setLocale} className="contents">
+                <input type="hidden" name="locale" value={nextLocale} />
+                <button type="submit" className="flex items-center gap-1 text-[0.875rem] text-ink-soft underline underline-offset-2 hover:text-ink">
+                  {globeIcon}
+                  {t('language')}
+                </button>
+              </form>
               <SignOutButton className="flex items-center gap-1 text-[0.875rem] text-ink-soft underline underline-offset-2 hover:text-ink">
                 {signOutIcon}
                 {t('signOut')}
@@ -156,10 +168,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 </Link>
               </div>
               <div className="flex items-center gap-2 text-[0.8125rem] text-brand-tint">
-                <Link href="/settings" className="flex items-center gap-1 underline underline-offset-2 hover:text-brand-ink">
-                  {globeIcon}
-                  {t('language')}
-                </Link>
+                <form action={setLocale} className="contents">
+                  <input type="hidden" name="locale" value={nextLocale} />
+                  <button type="submit" className="flex items-center gap-1 underline underline-offset-2 hover:text-brand-ink">
+                    {globeIcon}
+                    {t('language')}
+                  </button>
+                </form>
                 <SignOutButton className="flex items-center gap-1 underline underline-offset-2 hover:text-brand-ink">
                   {signOutIcon}
                   {t('signOut')}

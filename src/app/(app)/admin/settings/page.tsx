@@ -2,12 +2,17 @@ import type { Metadata } from 'next'
 import { getTranslations, getFormatter } from 'next-intl/server'
 import { requireAdmin } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { SignOutButton } from '@/components/SignOutButton'
+import { vapidPublicKey } from '@/lib/push/keys'
 import {
   contractReadiness, parseCompany, REQUIRED_FOR_CONTRACT, type RequiredCompanyField,
 } from '@/lib/contract/company'
 import { CompanyForm } from './CompanyForm'
 import { PurgeForm, RetentionForm, WindowsForm } from './RetentionForms'
 import { ClearLedgerForm } from '../customers/LedgerForms'
+import { NotificationPreferences } from '../../settings/NotificationPreferences'
+import { PushToggle } from '../../settings/PushToggle'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('adminSettings')
@@ -41,21 +46,32 @@ export async function generateMetadata(): Promise<Metadata> {
  * the page rather than sitting on the ledger screen a rep might also open.
  * The ledger's own screen lives at /admin/customers; there is no pointer to
  * it here any more, only this danger-zone action.
+ *
+ * Language, notifications and account used to live on a second page at
+ * /settings, reachable only from the header's globe link — a boss following
+ * the sidebar's own "Settings" entry landed here instead and never saw them.
+ * They're folded in below so the sidebar has exactly one settings screen;
+ * /settings now redirects here for an admin.
  */
 export default async function AdminSettingsPage() {
-  await requireAdmin()
+  const staff = await requireAdmin()
   const t = await getTranslations('adminSettings')
+  const ts = await getTranslations('settings')
+  const tc = await getTranslations('common')
   const tl = await getTranslations('adminLedger')
   const format = await getFormatter()
   const supabase = await supabaseServer()
 
-  const [{ data }, { data: retention }, { data: ledger }] = await Promise.all([
+  const [{ data }, { data: retention }, { data: ledger }, { data: profile }] = await Promise.all([
     supabase.from('app_settings')
       .select('id, company, licence_retention_months, pickup_window, dropoff_window')
       .eq('id', 1).maybeSingle(),
     supabase.rpc('admin_licence_retention_status'),
     supabase.rpc('admin_customer_ledger_status'),
+    supabase.from('profiles').select('notify_exceptions').eq('id', staff.id).maybeSingle(),
   ])
+
+  const exceptions = (profile as { notify_exceptions?: boolean } | null)?.notify_exceptions ?? true
 
   const company = parseCompany(data?.company)
   const readiness = contractReadiness(company)
@@ -78,6 +94,24 @@ export default async function AdminSettingsPage() {
         <h1 className="text-[1.75rem] font-bold tracking-tight">{t('title')}</h1>
         <p className="text-ink-soft">{t('intro')}</p>
       </div>
+
+      <section className="ir-card flex flex-col gap-3 p-5" aria-labelledby="lang-heading">
+        <h2 id="lang-heading" className="text-[1.125rem] font-semibold">{ts('language')}</h2>
+        <p className="text-[0.9375rem] text-ink-soft">{ts('languageHelp')}</p>
+        <LanguageSwitcher />
+      </section>
+
+      <section className="ir-card flex flex-col gap-3 p-5" aria-labelledby="notify-heading">
+        <h2 id="notify-heading" className="text-[1.125rem] font-semibold">{ts('notifications')}</h2>
+        <PushToggle publicKey={vapidPublicKey()} />
+        <hr className="border-line" />
+        <NotificationPreferences exceptions={exceptions} />
+      </section>
+
+      <section className="ir-card flex flex-col gap-3 p-5" aria-labelledby="acct-heading">
+        <h2 id="acct-heading" className="text-[1.125rem] font-semibold">{ts('account')}</h2>
+        <SignOutButton className="ir-btn-quiet">{tc('signOut')}</SignOutButton>
+      </section>
 
       {readiness.ready ? (
         <p className="ir-notice border-ok bg-ok-tint text-ok" role="status">{t('ready')}</p>
