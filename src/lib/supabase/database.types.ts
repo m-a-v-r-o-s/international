@@ -32,13 +32,28 @@ import type { Database as GeneratedDatabase } from './database.generated'
 /**
  * What the generator has not caught up with yet.
  *
- * `database.generated.ts` is regenerated from the real project, and the last
- * few migrations have not been applied there — so this intersection stands in
- * for them. It shadows the `Database` that `export *` above re-exports, and
- * every caller imports `Database` from HERE (nothing imports
+ * This intersection shadows the `Database` that `export *` above re-exports,
+ * and every caller imports `Database` from HERE (nothing imports
  * `database.generated` directly), so what is added below is what the app sees.
- * Each block names the migration that will delete it once `supabase gen types`
- * picks the change up.
+ * Each block names the migration it stands in for.
+ *
+ * STATUS, 2 Sep 2026. Every migration in `supabase/migrations` is now applied
+ * to the project — `20260902100000_incidents.sql` included — so the schema
+ * this file describes and the schema that is actually deployed agree, and
+ * every declaration below has been checked field by field against the real
+ * generated output for that schema. Two things are deliberately kept rather
+ * than folded away, and both are improvements on what the generator emits:
+ * `bookings.exception_status` is narrowed to its four real values (per note 2
+ * above; the generator can only see `string`), and the `Insert`/`Update` on
+ * `incidents` are the GRANT rather than the table (per note 3).
+ *
+ * `database.generated.ts` itself is still the file from before that migration.
+ * Regenerating it needs network access to the project, which is why it did not
+ * happen here: from the machine this was written on, the pooler's SSL probe
+ * times out and the direct host answers only on IPv6. Run
+ * `supabase gen types typescript --project-id jhjzcrypzpvevxouuejm` from
+ * somewhere that can reach it, and everything below except those two
+ * narrowings can then be deleted.
  */
 type GenPublic = GeneratedDatabase['public']
 type GenTable = { Row: object; Insert: object; Update: object }

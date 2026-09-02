@@ -731,6 +731,8 @@ different things.
 See `supabase/migrations/20260902100000_incidents.sql`,
 `src/app/(app)/incidents/` and `src/app/(app)/admin/incidents/`.
 
-**Operational note.** The Railway cron service that sweeps the boss's inbox now runs
-`npm run notify -- --incidents`; the old `--exceptions` flag no longer exists. See
-docs/07-SEASON-ROUTINE.md §1.
+**Operational note.** Applied to the project and to Railway on 2 Sep 2026: the migration is
+live, and the cron service that sweeps the boss's inbox now runs
+`npm run notify -- --incidents` (the old `--exceptions` flag no longer exists). The service is
+still named `notify-exceptions` in Railway, which is cosmetic. See docs/07-SEASON-ROUTINE.md
+§1, which also corrects a schedule this repo had recorded wrongly.
