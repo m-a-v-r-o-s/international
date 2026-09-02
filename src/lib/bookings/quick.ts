@@ -34,6 +34,24 @@ const optionalText = (max: number) =>
 
 /** Baby seats, exactly as `booking_extras.seat_type` already enumerates them (§9). */
 export const SEAT_TYPES = ['infant', 'child', 'booster'] as const
+export type SeatType = (typeof SEAT_TYPES)[number]
+
+/** Every car carries at most this many of any one seat type — the owner's number, not the database's (which allows up to 4). */
+export const MAX_SEAT_QTY = 3
+
+/**
+ * The form posts one `seat` value per unit wanted (three child seats is
+ * three `seat=child` entries), the same shape a plain checkbox already
+ * produced when at most one of each was possible. This turns that flat list
+ * into the `{seat, qty}` rows `booking_extras` actually stores, capping each
+ * type at `MAX_SEAT_QTY` in case a tampered request posts more than the UI
+ * allows.
+ */
+export function groupSeatExtras(seats: readonly SeatType[]): { seat: SeatType; qty: number }[] {
+  const counts = new Map<SeatType, number>()
+  for (const seat of seats) counts.set(seat, Math.min(MAX_SEAT_QTY, (counts.get(seat) ?? 0) + 1))
+  return [...counts.entries()].map(([seat, qty]) => ({ seat, qty }))
+}
 
 /**
  * Where the rep lands afterwards, and the only reason one action serves two

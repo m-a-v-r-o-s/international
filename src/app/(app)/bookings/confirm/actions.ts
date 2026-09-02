@@ -6,7 +6,7 @@ import { supabaseServer } from '@/lib/supabase/server'
 import type { BookingInsert, Database } from '@/lib/supabase/database.types'
 import { errorKey, type ErrorKey } from '@/lib/errors'
 import { athensInstant } from '@/lib/dates'
-import { parseQuickBooking } from '@/lib/bookings/quick'
+import { groupSeatExtras, parseQuickBooking } from '@/lib/bookings/quick'
 import { verifyEmail } from '@/lib/email/validate'
 import { sendNewBookingConfirmation } from '@/lib/bookings/confirmation'
 
@@ -77,11 +77,12 @@ export async function createQuickBooking(
 
   if (error) return { error: errorKey(error) }
 
-  if (input.seats.length > 0) {
+  const seatExtras = groupSeatExtras(input.seats)
+  if (seatExtras.length > 0) {
     // As in R3: the seats are free and the booking exists without them, so a
     // failure here does not throw away a car that is now held.
     await supabase.from('booking_extras').insert(
-      input.seats.map((seat) => ({ booking_id: booking.id, seat })))
+      seatExtras.map((e) => ({ booking_id: booking.id, seat: e.seat, qty: e.qty })))
   }
 
   // As in R3: an exception booking is not live yet, so its confirmation waits

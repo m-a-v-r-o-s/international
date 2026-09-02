@@ -143,15 +143,14 @@
     "phone": "Phone",
     "dob": "Date of birth",
     "email": "Email",
-    "emailHint": "Checked before the booking can be confirmed — the confirmation with pickup time, cost and licence requirements goes here.",
-    "emailWaivedHint": "Not required on an exception booking. No confirmation email goes out until the manager approves it and the address is added.",
     "extrasTitle": "Extras",
-    "extrasHint": "Free of charge. Lets the rep know what to have ready at pickup.",
     "seat": {
       "infant": "Infant seat (up to 1 year)",
       "child": "Child seat (1–4 years)",
       "booster": "Booster seat"
     },
+    "seatDecrease": "Decrease {seat}",
+    "seatIncrease": "Increase {seat}",
     "priceTitle": "Price",
     "priceNeedsCarAndDates": "Choose a car and valid dates to see the price.",
     "priceBreakdown": "{days, plural, one {# day} other {# days}}",
@@ -163,16 +162,12 @@
     "exceptionBooking": "Exception booking — pick-up outside the usual window",
     "exceptionReasonLabel": "Reason for the exception",
     "exceptionApprovalHint": "An exception booking is not live until the manager approves it: the car is held, but it will not appear on Today, the movements sheet or pickup until then. Nothing else on this form is required when this box is ticked.",
-    "phoneHint": "With the country code where you have it — +30 for a Greek number. A number we already know fills the guest in.",
-    "returningGuest": "We have rented to this number before ({name}). The fields below were filled in from that rental — check them with the guest and correct anything that has changed.",
-    "nameOptional": "Optional. If the guest gave a name, it saves writing it on the day sheet — either way it is filled in properly at pickup."
+    "returningGuest": "We have rented to this number before ({name}). The fields below were filled in from that rental — check them with the guest and correct anything that has changed."
   },
   "quickBooking": {
     "title": "Booking confirmation",
     "intro": "For a guest who orders a car over the phone. The number, the room, the car, the dates and any child seats — that is all. The name, date of birth and licence are taken at pickup, from the licence itself.",
     "guestTitle": "Caller",
-    "nameOptional": "Optional. Leave blank if they did not give a name — it is read off the licence at pickup. A name here only saves you writing it on the day sheet.",
-    "carHint": "If this car is already taken for these dates the booking is refused and nothing is saved.",
     "seatsTitle": "Child seats",
     "confirm": "Confirm the booking"
   },

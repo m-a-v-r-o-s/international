@@ -11,8 +11,7 @@ import {
 import type { CarWithSpecs } from '@/lib/availability/types'
 import type { BookingWindows, Hotel } from '@/lib/bookings/types'
 import { formatEuros } from '@/lib/money'
-
-const SEAT_TYPES = ['infant', 'child', 'booster'] as const
+import { MAX_SEAT_QTY, SEAT_TYPES, type SeatType } from '@/lib/bookings/quick'
 
 export function NewBookingForm({
   cars, hotels, defaultHotelId, preselectedCar, defaultFrom, defaultTo, windows,
@@ -32,7 +31,7 @@ export function NewBookingForm({
   const [carId, setCarId] = useState(preselectedCar?.id ?? '')
   const [start, setStart] = useState(defaultFrom ?? '')
   const [end, setEnd] = useState(defaultTo ?? '')
-  const [seats, setSeats] = useState<Set<typeof SEAT_TYPES[number]>>(new Set())
+  const [seatQty, setSeatQty] = useState<Record<SeatType, number>>({ infant: 0, child: 0, booster: 0 })
   const [pickupException, setPickupException] = useState(false)
 
   const selectedCar = cars.find((c) => c.id === carId) ?? null
@@ -109,14 +108,14 @@ export function NewBookingForm({
         <h2 className="mb-3 text-[1.0625rem] font-semibold">{t('datesTitle')}</h2>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="ir-label" htmlFor="start_date">{t('pickupDate')}</label>
+            <label className="ir-label" htmlFor="start_date">{t('pickupDate')} *</label>
             <input
               id="start_date" name="start_date" type="date" className="ir-field" required
               value={start} onChange={(e) => setStart(e.target.value)}
             />
           </div>
           <div>
-            <label className="ir-label" htmlFor="end_date">{t('returnDate')}</label>
+            <label className="ir-label" htmlFor="end_date">{t('returnDate')} *</label>
             <input
               id="end_date" name="end_date" type="date" className="ir-field" required
               value={end} onChange={(e) => setEnd(e.target.value)}
@@ -170,7 +169,7 @@ export function NewBookingForm({
           {pickupException ? (
             <div className="mt-2">
               <label className="ir-label" htmlFor="pickup_exception_reason">
-                {t('exceptionReasonLabel')}
+                {t('exceptionReasonLabel')} *
               </label>
               <input
                 id="pickup_exception_reason" name="pickup_exception_reason"
@@ -201,7 +200,7 @@ export function NewBookingForm({
           </div>
         ) : (
           <div>
-            <label className="ir-label" htmlFor="car_id">{t('chooseCar')}</label>
+            <label className="ir-label" htmlFor="car_id">{t('chooseCar')} *</label>
             <select
               id="car_id" className="ir-field" value={carId}
               onChange={(e) => setCarId(e.target.value)} required
@@ -220,7 +219,7 @@ export function NewBookingForm({
         <h2 className="mb-3 text-[1.0625rem] font-semibold">{t('hotelTitle')}</h2>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="ir-label" htmlFor="hotel_id">{t('hotel')}</label>
+            <label className="ir-label" htmlFor="hotel_id">{t('hotel')} *</label>
             <select id="hotel_id" name="hotel_id" className="ir-field" required defaultValue={defaultHotelId}>
               <option value="" disabled>{t('chooseHotel')}</option>
               {hotels.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
@@ -234,11 +233,10 @@ export function NewBookingForm({
         <h2 className="mb-3 text-[1.0625rem] font-semibold">{t('guestTitle')}</h2>
         <div className="mb-3">
           <Field
-            id="cust_phone" name="cust_phone" type="tel" label={t('phone')} required maxLength={32}
+            id="cust_phone" name="cust_phone" type="tel" label={`${t('phone')} *`} required maxLength={32}
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             onBlur={askLedger}
-            hint={t('phoneHint')}
           />
         </div>
 
@@ -265,43 +263,56 @@ export function NewBookingForm({
             value={last} onChange={(e) => setLast(e.target.value)}
           />
         </div>
-        <p className="ir-hint mt-1">{t('nameOptional')}</p>
         <div className="mt-3">
           <Field
-            id="cust_dob" name="cust_dob" type="date" label={t('dob')} required
+            id="cust_dob" name="cust_dob" type="date" label={`${t('dob')} *`} required
             value={dob} onChange={(e) => setDob(e.target.value)}
           />
         </div>
         <div className="mt-3">
           <Field
-            id="cust_email" name="cust_email" type="email" label={t('email')} maxLength={254}
+            id="cust_email" name="cust_email" type="email"
+            label={pickupException ? t('email') : `${t('email')} *`} maxLength={254}
             required={!pickupException}
-            hint={pickupException ? t('emailWaivedHint') : t('emailHint')}
           />
         </div>
       </section>
 
       <section className="ir-card p-4">
         <h2 className="mb-3 text-[1.0625rem] font-semibold">{t('extrasTitle')}</h2>
-        <p className="mb-2 text-[0.875rem] text-ink-soft">{t('extrasHint')}</p>
-        <div className="flex flex-col gap-2">
-          {SEAT_TYPES.map((seat) => (
-            <label key={seat} className="flex min-h-11 items-center gap-2.5 text-[1.0625rem] text-ink">
-              <input
-                type="checkbox" name="seat" value={seat}
-                checked={seats.has(seat)}
-                onChange={(e) => {
-                  setSeats((prev) => {
-                    const next = new Set(prev)
-                    if (e.target.checked) next.add(seat); else next.delete(seat)
-                    return next
-                  })
-                }}
-                className="size-5 rounded border-control"
-              />
-              {t(`seat.${seat}`)}
-            </label>
-          ))}
+        <div className="flex flex-col gap-3">
+          {SEAT_TYPES.map((seat) => {
+            const qty = seatQty[seat]
+            return (
+              <div key={seat} className="flex items-center justify-between gap-3">
+                <span className="text-[1.0625rem] text-ink">{t(`seat.${seat}`)}</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    aria-label={t('seatDecrease', { seat: t(`seat.${seat}`) })}
+                    disabled={qty === 0}
+                    onClick={() => setSeatQty((prev) => ({ ...prev, [seat]: Math.max(0, prev[seat] - 1) }))}
+                    className="flex size-11 items-center justify-center rounded-field border border-control text-lg font-semibold text-ink hover:bg-brand-tint disabled:opacity-40"
+                  >
+                    −
+                  </button>
+                  <span className="w-6 text-center text-[1.0625rem] tabular-nums" aria-live="polite">{qty}</span>
+                  <button
+                    type="button"
+                    aria-label={t('seatIncrease', { seat: t(`seat.${seat}`) })}
+                    disabled={qty === MAX_SEAT_QTY}
+                    onClick={() => setSeatQty((prev) => ({ ...prev, [seat]: Math.min(MAX_SEAT_QTY, prev[seat] + 1) }))}
+                    className="flex size-11 items-center justify-center rounded-field border border-control text-lg font-semibold text-ink hover:bg-brand-tint disabled:opacity-40"
+                  >
+                    +
+                  </button>
+                </div>
+                {Array.from({ length: qty }, (_, i) => (
+                  <input key={i} type="hidden" name="seat" value={seat} />
+                ))}
+              </div>
+            )
+          })}
         </div>
       </section>
 

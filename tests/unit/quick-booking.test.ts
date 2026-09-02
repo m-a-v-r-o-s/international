@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { parseQuickBooking, quickBookingSchema } from '../../src/lib/bookings/quick'
+import { groupSeatExtras, parseQuickBooking, quickBookingSchema } from '../../src/lib/bookings/quick'
 
 // R3b · the booking confirmation taken over the phone (docs/01-DECISIONS.md
 // §30 decision 2). The schema is the whole of what this screen refuses, so it
@@ -106,6 +106,28 @@ describe('the rest of the narrow form', () => {
     expect(parseQuickBooking(valid({ pickup_time: '08:30' })).ok).toBe(true)
     expect(parseQuickBooking(valid({ pickup_time: '24:00' })).ok).toBe(false)
     expect(parseQuickBooking(valid({ dropoff_time: '9pm' })).ok).toBe(false)
+  })
+})
+
+describe('how many of each seat the car gets', () => {
+  test('a repeated value becomes one row with the count', () => {
+    expect(groupSeatExtras(['child', 'child', 'child'])).toEqual([{ seat: 'child', qty: 3 }])
+  })
+
+  test('different types stay as separate rows', () => {
+    expect(groupSeatExtras(['infant', 'child', 'infant'])).toEqual([
+      { seat: 'infant', qty: 2 },
+      { seat: 'child', qty: 1 },
+    ])
+  })
+
+  test('a tampered request cannot exceed three of one type', () => {
+    expect(groupSeatExtras(['booster', 'booster', 'booster', 'booster', 'booster']))
+      .toEqual([{ seat: 'booster', qty: 3 }])
+  })
+
+  test('none at all is an empty list, not a zero-qty row', () => {
+    expect(groupSeatExtras([])).toEqual([])
   })
 })
 

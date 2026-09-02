@@ -10,6 +10,7 @@ import { findCustomerByPhone } from '@/lib/customers/lookup'
 import { athensInstant } from '@/lib/dates'
 import { verifyEmail } from '@/lib/email/validate'
 import { sendNewBookingConfirmation } from '@/lib/bookings/confirmation'
+import { groupSeatExtras, SEAT_TYPES } from '@/lib/bookings/quick'
 
 const uuidSchema = z.string().uuid()
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -148,7 +149,7 @@ export async function createBooking(
     // regardless of what this schema lets through.
     pickup_exception: z.boolean().optional().default(false),
     pickup_exception_reason: z.string().trim().max(300).optional().transform((v) => v || null),
-    seats: z.array(z.enum(['infant', 'child', 'booster'])).optional().default([]),
+    seats: z.array(z.enum(SEAT_TYPES)).optional().default([]),
   }).safeParse({
     car_id: formData.get('car_id'),
     hotel_id: formData.get('hotel_id'),
@@ -211,12 +212,13 @@ export async function createBooking(
 
   if (error) return { error: errorKey(error) }
 
-  if (parsed.data.seats.length > 0) {
+  const seatExtras = groupSeatExtras(parsed.data.seats)
+  if (seatExtras.length > 0) {
     // Extras are free and non-essential to the booking existing; a failure
     // here should not orphan the rep on an error screen for a car that is
     // already booked. The booking detail page lets them add a seat afterwards.
     await supabase.from('booking_extras').insert(
-      parsed.data.seats.map((seat) => ({ booking_id: booking.id, seat })))
+      seatExtras.map((e) => ({ booking_id: booking.id, seat: e.seat, qty: e.qty })))
   }
 
   // An exception booking is not live yet — the confirmation goes out when the

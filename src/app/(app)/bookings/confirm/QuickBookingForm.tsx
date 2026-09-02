@@ -4,7 +4,7 @@ import { useActionState, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
 import { SubmitButton } from '@/components/SubmitButton'
-import { SEAT_TYPES, type QuickBookingNext } from '@/lib/bookings/quick'
+import { MAX_SEAT_QTY, SEAT_TYPES, type QuickBookingNext, type SeatType } from '@/lib/bookings/quick'
 import { createQuickBooking, type QuickBookingState } from './actions'
 import {
   previewBookingQuote, lookupCustomer,
@@ -50,7 +50,7 @@ export function QuickBookingForm({
   const [carId, setCarId] = useState('')
   const [start, setStart] = useState(defaultFrom ?? '')
   const [end, setEnd] = useState(defaultTo ?? '')
-  const [seats, setSeats] = useState<Set<typeof SEAT_TYPES[number]>>(new Set())
+  const [seatQty, setSeatQty] = useState<Record<SeatType, number>>({ infant: 0, child: 0, booster: 0 })
   const [pickupException, setPickupException] = useState(false)
 
   const selectedCar = cars.find((c) => c.id === carId) ?? null
@@ -118,11 +118,10 @@ export function QuickBookingForm({
       <section className="ir-card p-4">
         <h2 className="mb-3 text-[1.0625rem] font-semibold">{t('guestTitle')}</h2>
         <Field
-          id="cust_phone" name="cust_phone" type="tel" label={tn('phone')} required maxLength={32}
+          id="cust_phone" name="cust_phone" type="tel" label={`${tn('phone')} *`} required maxLength={32}
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           onBlur={askLedger}
-          hint={tn('phoneHint')}
         />
 
         {lookup?.status === 'found' && lookup.match ? (
@@ -148,12 +147,11 @@ export function QuickBookingForm({
             value={last} onChange={(e) => setLast(e.target.value)}
           />
         </div>
-        <p className="ir-hint mt-1">{t('nameOptional')}</p>
         <div className="mt-3">
           <Field
-            id="cust_email" name="cust_email" type="email" label={tn('email')} maxLength={254}
+            id="cust_email" name="cust_email" type="email"
+            label={pickupException ? tn('email') : `${tn('email')} *`} maxLength={254}
             required={!pickupException}
-            hint={pickupException ? tn('emailWaivedHint') : tn('emailHint')}
           />
         </div>
       </section>
@@ -162,7 +160,7 @@ export function QuickBookingForm({
         <h2 className="mb-3 text-[1.0625rem] font-semibold">{tn('hotelTitle')}</h2>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="ir-label" htmlFor="hotel_id">{tn('hotel')}</label>
+            <label className="ir-label" htmlFor="hotel_id">{tn('hotel')} *</label>
             <select id="hotel_id" name="hotel_id" className="ir-field" required defaultValue={defaultHotelId}>
               <option value="" disabled>{tn('chooseHotel')}</option>
               {hotels.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
@@ -174,7 +172,7 @@ export function QuickBookingForm({
 
       <section className="ir-card p-4">
         <h2 className="mb-3 text-[1.0625rem] font-semibold">{tn('carTitle')}</h2>
-        <label className="ir-label" htmlFor="car_id">{tn('chooseCar')}</label>
+        <label className="ir-label" htmlFor="car_id">{tn('chooseCar')} *</label>
         <select
           id="car_id" name="car_id" className="ir-field" value={carId}
           onChange={(e) => setCarId(e.target.value)} required
@@ -184,21 +182,20 @@ export function QuickBookingForm({
             <option key={c.id} value={c.id}>{c.plate} — {c.make} {c.model} ({c.category_code})</option>
           ))}
         </select>
-        <p className="ir-hint">{t('carHint')}</p>
       </section>
 
       <section className="ir-card p-4">
         <h2 className="mb-3 text-[1.0625rem] font-semibold">{tn('datesTitle')}</h2>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="ir-label" htmlFor="start_date">{tn('pickupDate')}</label>
+            <label className="ir-label" htmlFor="start_date">{tn('pickupDate')} *</label>
             <input
               id="start_date" name="start_date" type="date" className="ir-field" required
               value={start} onChange={(e) => setStart(e.target.value)}
             />
           </div>
           <div>
-            <label className="ir-label" htmlFor="end_date">{tn('returnDate')}</label>
+            <label className="ir-label" htmlFor="end_date">{tn('returnDate')} *</label>
             <input
               id="end_date" name="end_date" type="date" className="ir-field" required
               value={end} onChange={(e) => setEnd(e.target.value)}
@@ -253,7 +250,7 @@ export function QuickBookingForm({
           {pickupException ? (
             <div className="mt-2">
               <label className="ir-label" htmlFor="pickup_exception_reason">
-                {tn('exceptionReasonLabel')}
+                {tn('exceptionReasonLabel')} *
               </label>
               <input
                 id="pickup_exception_reason" name="pickup_exception_reason"
@@ -272,25 +269,39 @@ export function QuickBookingForm({
 
       <section className="ir-card p-4">
         <h2 className="mb-3 text-[1.0625rem] font-semibold">{t('seatsTitle')}</h2>
-        <p className="mb-2 text-[0.875rem] text-ink-soft">{tn('extrasHint')}</p>
-        <div className="flex flex-col gap-2">
-          {SEAT_TYPES.map((seat) => (
-            <label key={seat} className="flex min-h-11 items-center gap-2.5 text-[1.0625rem] text-ink">
-              <input
-                type="checkbox" name="seat" value={seat}
-                checked={seats.has(seat)}
-                onChange={(e) => {
-                  setSeats((prev) => {
-                    const nextSeats = new Set(prev)
-                    if (e.target.checked) nextSeats.add(seat); else nextSeats.delete(seat)
-                    return nextSeats
-                  })
-                }}
-                className="size-5 rounded border-control"
-              />
-              {tn(`seat.${seat}`)}
-            </label>
-          ))}
+        <div className="flex flex-col gap-3">
+          {SEAT_TYPES.map((seat) => {
+            const qty = seatQty[seat]
+            return (
+              <div key={seat} className="flex items-center justify-between gap-3">
+                <span className="text-[1.0625rem] text-ink">{tn(`seat.${seat}`)}</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    aria-label={tn('seatDecrease', { seat: tn(`seat.${seat}`) })}
+                    disabled={qty === 0}
+                    onClick={() => setSeatQty((prev) => ({ ...prev, [seat]: Math.max(0, prev[seat] - 1) }))}
+                    className="flex size-11 items-center justify-center rounded-field border border-control text-lg font-semibold text-ink hover:bg-brand-tint disabled:opacity-40"
+                  >
+                    −
+                  </button>
+                  <span className="w-6 text-center text-[1.0625rem] tabular-nums" aria-live="polite">{qty}</span>
+                  <button
+                    type="button"
+                    aria-label={tn('seatIncrease', { seat: tn(`seat.${seat}`) })}
+                    disabled={qty === MAX_SEAT_QTY}
+                    onClick={() => setSeatQty((prev) => ({ ...prev, [seat]: Math.min(MAX_SEAT_QTY, prev[seat] + 1) }))}
+                    className="flex size-11 items-center justify-center rounded-field border border-control text-lg font-semibold text-ink hover:bg-brand-tint disabled:opacity-40"
+                  >
+                    +
+                  </button>
+                </div>
+                {Array.from({ length: qty }, (_, i) => (
+                  <input key={i} type="hidden" name="seat" value={seat} />
+                ))}
+              </div>
+            )
+          })}
         </div>
       </section>
 
