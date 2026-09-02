@@ -1,6 +1,7 @@
 -- International Rentals — reference schema (draft for the implementing agent)
--- Postgres / Supabase. Money is integer cents. Dates are date, not timestamp,
--- wherever the business rule is "a day is morning to night".
+-- Postgres / Supabase. Money is integer whole euros — never cents/decimals.
+-- Dates are date, not timestamp, wherever the business rule is "a day is
+-- morning to night".
 
 create extension if not exists btree_gist;
 
@@ -93,14 +94,14 @@ create table price_rows (
   period_id     uuid not null references pricing_periods on delete cascade,
   category_id   uuid not null references categories,
   days          smallint not null check (days between 1 and 7),
-  total_cents   integer not null check (total_cents >= 0),
+  total         integer not null check (total >= 0),
   primary key (period_id, category_id, days)
 );
 
 create table price_extra_day (
   period_id     uuid not null references pricing_periods on delete cascade,
   category_id   uuid not null references categories,
-  cents         integer not null check (cents >= 0),
+  price         integer not null check (price >= 0),
   primary key (period_id, category_id)
 );
 
@@ -139,8 +140,8 @@ create table bookings (
   -- money (never visible to a rep other than the owner/hotel rep)
   period_id       uuid references pricing_periods,   -- snapshot: which table priced it
   days            smallint,
-  total_cents     integer,
-  collected_cents integer not null default 0,
+  total           integer,
+  collected       integer not null default 0,
   pay_method      pay_method,
   paid            boolean not null default false,
 
@@ -247,7 +248,7 @@ create table exceptions (
   raised_at     timestamptz not null default now(),
   resolved_by   uuid references profiles,
   resolved_at   timestamptz,
-  charge_cents  integer,                   -- the boss's decision. Rep never sets this.
+  charge        integer,                   -- the boss's decision. Rep never sets this.
   resolution    text
 );
 
@@ -255,7 +256,7 @@ create table exceptions (
 create table cash_handovers (
   id            uuid primary key default gen_random_uuid(),
   rep_id        uuid not null references profiles,
-  amount_cents  integer not null,
+  amount        integer not null,
   handed_at     timestamptz not null default now(),
   confirmed_by  uuid references profiles   -- admin confirms receipt
 );

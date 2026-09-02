@@ -37,7 +37,7 @@ async function pickedUp(rep: string, carId: string, hotelId: string, start: stri
      values ($1, 'pickup', $2, 8)`, [bookingId, rep]))
   await db.asUser(rep, () => db.sql(
     `update public.bookings
-        set collected_cents = 9000, pay_method = 'cash', paid = true, status = 'out'
+        set collected = 90, pay_method = 'cash', paid = true, status = 'out'
       where id = $1`, [bookingId]))
 
   return bookingId
@@ -50,11 +50,11 @@ describe('the ordinary case: the same car is still free', () => {
     await db.asUser(f.repA, () => db.sql(
       `update public.bookings set end_date = '2026-07-10' where id = $1`, [bookingId]))
 
-    const after = await db.one<{ days: number; total_cents: number; period_id: string; status: string }>(
-      `select days, total_cents, period_id, status from public.bookings where id = $1`, [bookingId])
+    const after = await db.one<{ days: number; total: number; period_id: string; status: string }>(
+      `select days, total, period_id, status from public.bookings where id = $1`, [bookingId])
     expect(after.status).toBe('out')
     expect(after.days).toBe(5)
-    expect(after.total_cents).toBe(14000)     // low season, category A, 5 days
+    expect(after.total).toBe(140)     // low season, category A, 5 days
     expect(after.period_id).toBe(f.low)       // the pickup date's period still prices it
   })
 
@@ -184,18 +184,18 @@ describe('what an extension may never become', () => {
     await db.asUser(f.repA, () => db.sql(
       `update public.bookings
           set end_date = '2026-07-10', cust_first = 'Someone', room_number = '999',
-              collected_cents = 1, paid = false
+              collected = 1, paid = false
         where id = $1`, [bookingId]))
 
     const after = await db.one<{
-      end_date: string; cust_first: string; room_number: string; collected_cents: number; paid: boolean
-    }>(`select end_date, cust_first, room_number, collected_cents, paid
+      end_date: string; cust_first: string; room_number: string; collected: number; paid: boolean
+    }>(`select end_date, cust_first, room_number, collected, paid
         from public.bookings where id = $1`, [bookingId])
 
     expect(after.end_date).toBe('2026-07-10')        // the extension stands
     expect(after.cust_first).toBe('Anna')            // everything else reverted
     expect(after.room_number).toBe('101')
-    expect(after.collected_cents).toBe(9000)
+    expect(after.collected).toBe(90)
     expect(after.paid).toBe(true)
   })
 
@@ -220,10 +220,10 @@ describe('what an extension may never become', () => {
     await db.asUser(f.repA, () => db.sql(
       `update public.bookings set end_date = '2026-10-05' where id = $1`, [bookingId]))
 
-    const after = await db.one<{ days: number; period_id: string; total_cents: number }>(
-      `select days, period_id, total_cents from public.bookings where id = $1`, [bookingId])
+    const after = await db.one<{ days: number; period_id: string; total: number }>(
+      `select days, period_id, total from public.bookings where id = $1`, [bookingId])
     expect(after.days).toBe(8)
     expect(after.period_id).toBe(f.peak)
-    expect(after.total_cents).toBe(30000 + 4000)   // peak catA: 7-day total + 1 extra day
+    expect(after.total).toBe(300 + 40)   // peak catA: 7-day total + 1 extra day
   })
 })

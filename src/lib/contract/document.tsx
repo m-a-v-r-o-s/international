@@ -178,8 +178,8 @@ export function ContractDocument({ data, labels }: { data: ContractData; labels:
 
         <Section title={labels.payment}>
           <View style={styles.row}>
-            <Cell third label={labels.total} value={euros(data.totalCents)} />
-            <Cell third label={labels.collected} value={euros(data.collectedCents)} />
+            <Cell third label={labels.total} value={euros(data.total)} />
+            <Cell third label={labels.collected} value={euros(data.collected)} />
             <Cell
               third
               label={labels.method}

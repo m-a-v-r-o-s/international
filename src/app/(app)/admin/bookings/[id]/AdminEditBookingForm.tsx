@@ -15,7 +15,7 @@ export function AdminEditBookingForm({
 }: {
   booking: Pick<BookingRow, 'id' | 'car_id' | 'hotel_id' | 'room_number' | 'start_date' | 'end_date'
     | 'cust_first' | 'cust_last' | 'cust_phone' | 'cust_dob' | 'status'
-    | 'collected_cents' | 'pay_method' | 'paid'>
+    | 'collected' | 'pay_method' | 'paid'>
   hotels: Hotel[]
   cars: Car[]
 }) {
@@ -24,15 +24,7 @@ export function AdminEditBookingForm({
   const tn = useTranslations('newBooking')
   const tc = useTranslations('common')
   const te = useTranslations('errors')
-  const [state, formAction] = useActionState<FormState, FormData>(async (_prev, formData) => {
-    // Collected amount is typed in euros, same convention as A4's price grid
-    // (docs/(app)/admin/pricing/PriceGrid.tsx) — the app never stores or
-    // displays a float, so the conversion to cents happens here, once, before
-    // the server action's own cents validation runs.
-    const euros = formData.get('collected_euros')
-    formData.set('collected_cents', String(Math.round(Number.parseFloat(String(euros || '0')) * 100)))
-    return adminUpdateBooking(_prev, formData)
-  }, undefined)
+  const [state, formAction] = useActionState<FormState, FormData>(adminUpdateBooking, undefined)
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -88,8 +80,8 @@ export function AdminEditBookingForm({
 
       <div className="grid grid-cols-2 gap-3">
         <Field
-          id="collected_euros" name="collected_euros" type="number" min={0} step={0.01} inputMode="decimal"
-          label={t('collectedCents')} defaultValue={(booking.collected_cents / 100).toFixed(2)}
+          id="collected" name="collected" type="number" min={0} step={1} inputMode="numeric"
+          label={t('collected')} defaultValue={booking.collected}
         />
         <div>
           <label className="ir-label" htmlFor="pay_method">{t('payMethod')}</label>

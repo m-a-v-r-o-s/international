@@ -208,7 +208,7 @@ describe('A1 · the movements sheet at 200 rows', () => {
 describe('the rep screens do not degrade with the fleet', () => {
   test('R6 · a rep\'s own bookings at 200 rows', async () => {
     const { ms, value } = await timed('my bookings · newest 50', () => db.asUser(f.repA, () => db.sql(
-      `select id, ref, status, car_id, start_date, end_date, total_cents
+      `select id, ref, status, car_id, start_date, end_date, total
        from public.bookings
        where kind = 'rental'
        order by start_date desc

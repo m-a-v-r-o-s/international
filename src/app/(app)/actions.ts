@@ -5,7 +5,7 @@ import { requireUnlocked } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
 import { errorKey, type ErrorKey } from '@/lib/errors'
 
-export type HandOverState = { error?: ErrorKey; amountCents?: number } | undefined
+export type HandOverState = { error?: ErrorKey; amount?: number } | undefined
 
 /**
  * R1's footer strip — the rep hands over today's cash.
@@ -29,5 +29,5 @@ export async function handOverCash(_prev: HandOverState, _formData: FormData): P
   if (error) return { error: errorKey(error) }
 
   revalidatePath('/')
-  return { amountCents: data?.[0]?.amount_cents ?? 0 }
+  return { amount: data?.[0]?.amount ?? 0 }
 }

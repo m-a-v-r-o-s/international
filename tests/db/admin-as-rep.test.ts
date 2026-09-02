@@ -31,13 +31,13 @@ describe('§30 · an admin creating a rental the way a rep does', () => {
   test('the insert succeeds and the row is authored by the admin', async () => {
     const booking = await db.asUser(f.admin, () => db.one<{
       id: string; ref: string; kind: string; status: string
-      created_by: string; days: number; total_cents: number; period_id: string
+      created_by: string; days: number; total: number; period_id: string
     }>(
       `insert into public.bookings
          (car_id, hotel_id, room_number, start_date, end_date,
           cust_first, cust_last, cust_phone, cust_dob)
        values ($1, $2, '112', '2026-07-06', '2026-07-08', 'Boss', 'Booking', '+306900000042', '1988-03-04')
-       returning id, ref, kind, status, created_by, days, total_cents, period_id`,
+       returning id, ref, kind, status, created_by, days, total, period_id`,
       [f.car1, f.hotelA]))
 
     expect(booking.created_by).toBe(f.admin)
@@ -47,7 +47,7 @@ describe('§30 · an admin creating a rental the way a rep does', () => {
     // The engine prices an admin's rental exactly as it prices a rep's: the
     // admin MAY type a total instead, but sending none is not a licence to
     // skip the tables.
-    expect(booking.total_cents).toBe(9000)
+    expect(booking.total).toBe(90)
     expect(booking.ref).toMatch(/^\d{4}-\d{4}$/)
     expect(booking.period_id).toBe(f.low)
   })

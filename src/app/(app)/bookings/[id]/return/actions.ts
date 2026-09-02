@@ -28,7 +28,7 @@ export async function saveFuelIn(_prev: HandoverState, formData: FormData): Prom
  * 1. The evidence is flagged. A fuel shortfall and any new damage mark each
  *    raise an `exceptions` row — and that is ALL the rep does with them. They
  *    are recorded and flagged, never priced, never argued, never collected
- *    (docs/01-DECISIONS.md §14). `charge_cents` and `resolution` are not in
+ *    (docs/01-DECISIONS.md §14). `charge` and `resolution` are not in
  *    the rep's column grant at all; the boss sets them through
  *    admin_resolve_exception() from A6 and nowhere else.
  * 2. The rental moves to `returned`, which drops it out of the exclusion

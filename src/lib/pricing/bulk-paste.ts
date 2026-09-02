@@ -11,22 +11,22 @@
 export type BulkPasteRow = {
   line: number
   categoryCode: string
-  /** Index 0..6 are the 1..7 day totals; index 7 is the extra-day rate. Cents. */
-  cents: [number, number, number, number, number, number, number, number]
+  /** Index 0..6 are the 1..7 day totals; index 7 is the extra-day rate. Whole euros. */
+  euros: [number, number, number, number, number, number, number, number]
 }
 
 export type BulkPasteResult =
   | { ok: true; rows: BulkPasteRow[] }
   | { ok: false; badLine: number }
 
-const NUMBER = /^\d+([.,]\d{1,2})?$/
+/** Whole numbers only — money in this app is never cents or a fraction of a euro. */
+const NUMBER = /^\d+$/
 
 /**
  * One delimiter for the whole line, chosen from what actually separates the
- * 9 fields — never split on every candidate character at once, or a
- * comma-decimal total ("35,50") gets sliced in half by the same regex that is
- * supposed to separate cells (this is the bug `src/lib/fleet/csv.ts` already
- * had to solve for Excel's Greek-locale semicolons).
+ * 9 fields — never split on every candidate character at once (this is the
+ * same ambiguity `src/lib/fleet/csv.ts` already had to solve for Excel's
+ * Greek-locale semicolons).
  */
 function detectDelimiter(line: string): string {
   const tabs = (line.match(/\t/g) ?? []).length
@@ -53,11 +53,11 @@ export function parseBulkPaste(text: string, knownCodes: Set<string>): BulkPaste
       return { ok: false, badLine: i + 1 }
     }
 
-    const cents = numbers.map((n) => Math.round(Number.parseFloat(n.replace(',', '.')) * 100))
+    const euros = numbers.map((n) => Number.parseInt(n, 10))
     rows.push({
       line: i + 1,
       categoryCode,
-      cents: cents as BulkPasteRow['cents'],
+      euros: euros as BulkPasteRow['euros'],
     })
   }
 

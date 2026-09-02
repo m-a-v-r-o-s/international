@@ -363,7 +363,7 @@ describe('the lookup function is a narrow door', () => {
     const row = await matched(f.repB, '+306941230001')
     const keys = Object.keys(row)
     for (const forbidden of [
-      'hotel_id', 'room_number', 'total_cents', 'created_by', 'booking_id', 'ref',
+      'hotel_id', 'room_number', 'total', 'created_by', 'booking_id', 'ref',
     ]) {
       expect(keys).not.toContain(forbidden)
     }

@@ -32,15 +32,15 @@ beforeAll(async () => {
   const historic = await db.one<{ id: string }>(
     `insert into public.pricing_periods (season_year, name, start_date, end_date)
      values (2020, 'Archive', '2020-01-01', '2026-05-31') returning id`)
-  const table = [[1, 3000], [2, 5500], [3, 8000], [4, 10000],
-                 [5, 12000], [6, 13500], [7, 15000]] as const
-  for (const [days, cents] of table) {
+  const table = [[1, 30], [2, 55], [3, 80], [4, 100],
+                 [5, 120], [6, 135], [7, 150]] as const
+  for (const [days, euros] of table) {
     await db.sql(
-      `insert into public.price_rows (period_id, category_id, days, total_cents)
-       values ($1, $2, $3, $4)`, [historic.id, f.catA, days, cents])
+      `insert into public.price_rows (period_id, category_id, days, total)
+       values ($1, $2, $3, $4)`, [historic.id, f.catA, days, euros])
   }
   await db.sql(
-    `insert into public.price_extra_day (period_id, category_id, cents) values ($1, $2, 2000)`,
+    `insert into public.price_extra_day (period_id, category_id, price) values ($1, $2, 20)`,
     [historic.id, f.catA])
 })
 afterAll(async () => { await db?.close() })

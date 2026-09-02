@@ -90,10 +90,10 @@ on conflict do nothing;
 -- Totals for 1–7 days, plus the per-extra-day rate for 8+.
 -- These are placeholders with a plausible shape only: the per-day rate eases off
 -- with length, and peak costs more than low. The admin will type the real ones.
-insert into public.price_rows (period_id, category_id, days, total_cents)
+insert into public.price_rows (period_id, category_id, days, total)
 select p.id, c.id, d.days,
        round(
-         (2500 + (c.sort_order - 1) * 900)          -- a base day rate per category
+         (25 + (c.sort_order - 1) * 9)               -- a base day rate per category, euros
          * (case p.name
               when 'Low start — PLACEHOLDER' then 1.00
               when 'Mid — PLACEHOLDER'       then 1.35
@@ -108,8 +108,8 @@ cross join generate_series(1, 7) as d(days)
 where p.season_year = 2027
 on conflict do nothing;
 
-insert into public.price_extra_day (period_id, category_id, cents)
-select pr.period_id, pr.category_id, round(pr.total_cents / 7.0 * 0.85)::integer
+insert into public.price_extra_day (period_id, category_id, price)
+select pr.period_id, pr.category_id, round(pr.total / 7.0 * 0.85)::integer
 from public.price_rows pr
 where pr.days = 7
 on conflict do nothing;

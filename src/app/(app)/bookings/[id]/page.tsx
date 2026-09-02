@@ -9,6 +9,7 @@ import { ExtendBookingForm } from './ExtendBookingForm'
 import { CancelForm } from './CancelForm'
 import { signBookingFile } from '@/lib/storage/booking-files'
 import { athensDateTime } from '@/lib/contract/data'
+import { formatEuros } from '@/lib/money'
 import type { BookingRow } from '@/lib/supabase/database.types'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -20,7 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 const BOOKING_COLUMNS =
   'id, ref, status, car_id, category_id, hotel_id, room_number, start_date, end_date, ' +
   'pickup_at, dropoff_at, cust_first, cust_last, cust_phone, cust_dob, exception_status, ' +
-  'total_cents, days, collected_cents, pay_method, paid, created_by, created_at'
+  'total, days, collected, pay_method, paid, created_by, created_at'
 
 /**
  * R7 · Booking detail (docs/04-SCREENS.md). Before pickup: edit anything, or
@@ -48,7 +49,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
     'id' | 'ref' | 'status' | 'car_id' | 'category_id' | 'hotel_id' | 'room_number'
     | 'start_date' | 'end_date' | 'pickup_at' | 'dropoff_at'
     | 'cust_first' | 'cust_last' | 'cust_phone' | 'cust_dob' | 'exception_status'
-    | 'total_cents' | 'days' | 'collected_cents' | 'pay_method' | 'paid' | 'created_by' | 'created_at'>
+    | 'total' | 'days' | 'collected' | 'pay_method' | 'paid' | 'created_by' | 'created_at'>
 
   const [{ data: car }, { data: hotelsResult }, { data: extras }, { data: contracts }] =
     await Promise.all([
@@ -117,14 +118,14 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
           <div>
             <dt className="text-ink-soft">{t('price')}</dt>
             <dd className="font-semibold text-brand">
-              {row.total_cents !== null ? `€${(row.total_cents / 100).toFixed(2)}` : '—'}
+              {formatEuros(row.total)}
             </dd>
           </div>
           <div>
             <dt className="text-ink-soft">{t('payment')}</dt>
             <dd className="font-medium">
               {row.paid ? t('paid') : t('unpaid')}
-              {row.collected_cents > 0 ? ` · €${(row.collected_cents / 100).toFixed(2)}` : ''}
+              {row.collected > 0 ? ` · ${formatEuros(row.collected)}` : ''}
             </dd>
           </div>
         </dl>

@@ -111,7 +111,7 @@ describe('a deactivated rep whose token has not expired yet', () => {
     expect(await db.asUser(f.repA, () => db.sql(
       `select id from public.cash_handovers`))).toHaveLength(0)
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `insert into public.cash_handovers (rep_id, amount_cents) values ($1, 5000)`,
+      `insert into public.cash_handovers (rep_id, amount) values ($1, 50)`,
       [f.repA])))).toBe('42501')
   })
 

@@ -1,3 +1,4 @@
+import { formatEuros } from '@/lib/money'
 import type { Company } from './company'
 import type { DamageView } from '@/app/(app)/bookings/[id]/CarDiagram'
 import type { Zone } from '@/lib/damage/zones'
@@ -7,8 +8,8 @@ import type { Zone } from '@/lib/damage/zones'
  *
  * The document component is deliberately dumb: it lays out what is in here and
  * makes no decisions, reads no database and formats no money. That keeps the
- * one rule that matters about money — integer cents everywhere, euros only at
- * the render boundary — checkable in one place.
+ * one rule that matters about money — a whole euro integer everywhere,
+ * formatted only at the render boundary — checkable in one place.
  */
 export type ContractDriver = {
   isMain: boolean
@@ -60,8 +61,8 @@ export type ContractData = {
   fuelOutEighths: number | null
   marks: ContractMark[]
 
-  totalCents: number | null
-  collectedCents: number
+  total: number | null
+  collected: number
   payMethod: 'cash' | 'card' | 'transfer' | null
   paid: boolean
 
@@ -71,11 +72,8 @@ export type ContractData = {
   signedAt: string | null
 }
 
-/** Money is integer cents everywhere else; this is the render boundary. */
-export function euros(cents: number | null | undefined): string {
-  if (cents === null || cents === undefined) return '—'
-  return `€${(cents / 100).toFixed(2)}`
-}
+/** The render boundary for money — see src/lib/money.ts. */
+export const euros = formatEuros
 
 /** A stored timestamptz, printed as the desk reads it. */
 export function athensTime(value: string | null): string {

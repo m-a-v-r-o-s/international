@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 /**
  * A6 · One exception, with the evidence beside it.
  *
- * `charge_cents` and `resolution` are not in any client column grant, so they
+ * `charge` and `resolution` are not in any client column grant, so they
  * arrive through admin_exception_detail(), which re-checks app.is_admin()
  * itself. Everything else on this page is the evidence the rep recorded — the
  * two fuel readings and the marks on the diagram — rendered here with
@@ -172,7 +172,7 @@ export default async function ExceptionDetailPage({ params }: { params: Promise<
         <p className="mb-3 text-[0.875rem] text-ink-soft">{t('resolveHint')}</p>
         <ResolveForm
           exceptionId={exception.id}
-          chargeCents={exception.charge_cents}
+          charge={exception.charge}
           resolution={exception.resolution}
           resolvedAt={exception.resolved_at}
         />

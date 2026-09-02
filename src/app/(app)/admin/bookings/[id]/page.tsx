@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { requireAdmin } from '@/lib/auth/session'
+import { formatEuros } from '@/lib/money'
 import { supabaseServer } from '@/lib/supabase/server'
 import { AdminEditBookingForm } from './AdminEditBookingForm'
 import { PriceForm } from './PriceForm'
@@ -17,12 +18,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 const COLUMNS =
   'id, ref, status, car_id, hotel_id, room_number, start_date, end_date, ' +
   'pickup_at, dropoff_at, cust_first, cust_last, cust_phone, cust_dob, cust_email, ' +
-  'total_cents, days, collected_cents, pay_method, paid, created_by, created_at'
+  'total, days, collected, pay_method, paid, created_by, created_at'
 
 type Row = Pick<BookingRow,
   'id' | 'ref' | 'status' | 'car_id' | 'hotel_id' | 'room_number' | 'start_date' | 'end_date'
   | 'pickup_at' | 'dropoff_at' | 'cust_first' | 'cust_last' | 'cust_phone' | 'cust_dob' | 'cust_email'
-  | 'total_cents' | 'days' | 'collected_cents' | 'pay_method' | 'paid' | 'created_by' | 'created_at'>
+  | 'total' | 'days' | 'collected' | 'pay_method' | 'paid' | 'created_by' | 'created_at'>
 
 /**
  * A5 · One booking, full edit rights at any stage (docs/04-SCREENS.md and
@@ -79,7 +80,7 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
           <div>
             <dt className="text-ink-soft">{tb('price')}</dt>
             <dd className="font-semibold text-brand">
-              {row.total_cents !== null ? `€${(row.total_cents / 100).toFixed(2)}` : '—'}
+              {formatEuros(row.total)}
             </dd>
           </div>
           <div>
@@ -110,7 +111,7 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
       <section className="ir-card p-4">
         <h2 className="mb-3 text-[1.0625rem] font-semibold">{t('priceTitle')}</h2>
         <p className="mb-3 text-[0.875rem] text-ink-soft">{t('priceHint')}</p>
-        <PriceForm bookingId={row.id} totalCents={row.total_cents} />
+        <PriceForm bookingId={row.id} total={row.total} />
       </section>
     </div>
   )

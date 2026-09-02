@@ -25,20 +25,20 @@ describe('R3 · creating a booking with exactly the fields the form sends', () =
   test('the fields the screen omits are still filled in correctly by the guard trigger', async () => {
     const booking = await db.asUser(f.repA, () => db.one<{
       id: string; ref: string; kind: string; status: string
-      created_by: string; days: number; total_cents: number; period_id: string
+      created_by: string; days: number; total: number; period_id: string
     }>(
       `insert into public.bookings
          (car_id, hotel_id, room_number, start_date, end_date,
           cust_first, cust_last, cust_phone, cust_dob)
        values ($1, $2, '304', '2026-07-06', '2026-07-08', 'Anna', 'Guest', '+306900000001', '1990-05-01')
-       returning id, ref, kind, status, created_by, days, total_cents, period_id`,
+       returning id, ref, kind, status, created_by, days, total, period_id`,
       [f.car1, f.hotelA]))
 
     expect(booking.kind).toBe('rental')
     expect(booking.status).toBe('booked')
     expect(booking.created_by).toBe(f.repA)
     expect(booking.days).toBe(3)
-    expect(booking.total_cents).toBe(9000)   // fixture's 3-day low/catA total
+    expect(booking.total).toBe(90)   // fixture's 3-day low/catA total
     expect(booking.ref).toMatch(/^\d{4}-\d{4}$/)
     expect(booking.period_id).toBe(f.low)
   })
@@ -75,9 +75,9 @@ describe('R3 · creating a booking with exactly the fields the form sends', () =
     await db.asUser(f.repA, () => db.sql(
       `insert into public.booking_extras (booking_id, seat) values ($1, 'infant')`, [booking.id]))
 
-    const priced = await db.one<{ total_cents: number }>(
-      `select total_cents from public.bookings where id = $1`, [booking.id])
-    expect(priced.total_cents).toBe(9000)   // unchanged — extras add nothing
+    const priced = await db.one<{ total: number }>(
+      `select total from public.bookings where id = $1`, [booking.id])
+    expect(priced.total).toBe(90)   // unchanged — extras add nothing
   })
 })
 
@@ -146,11 +146,11 @@ describe('R7 · extend after pickup, with same-category swap', () => {
     await db.asUser(f.repA, () => db.sql(
       `update public.bookings set end_date = '2026-07-10' where id = $1`, [bookingId]))
 
-    const after = await db.one<{ end_date: string; days: number; total_cents: number }>(
-      `select end_date, days, total_cents from public.bookings where id = $1`, [bookingId])
+    const after = await db.one<{ end_date: string; days: number; total: number }>(
+      `select end_date, days, total from public.bookings where id = $1`, [bookingId])
     expect(after.end_date).toBe('2026-07-10')
     expect(after.days).toBe(5)
-    expect(after.total_cents).toBe(14000)   // fixture's 5-day low/catA total
+    expect(after.total).toBe(140)   // fixture's 5-day low/catA total
   })
 
   test('shortening an in-progress rental is refused (IR110), not silently clamped', async () => {

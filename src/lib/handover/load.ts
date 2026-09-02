@@ -11,7 +11,7 @@ import { sqlNull } from '@/lib/supabase/args'
 /**
  * Everything R4 and R5 need about one booking, in one place.
  *
- * `select *` is refused on `bookings` — `block_reason` and `total_cents` are
+ * `select *` is refused on `bookings` — `block_reason` and `total` are
  * withheld from `authenticated` by column grant — so every column is named
  * (docs/06-IMPLEMENTATION-NOTES.md). RLS decides whether any of this comes
  * back at all: a rep reaching for a booking that is neither theirs nor their
@@ -20,14 +20,14 @@ import { sqlNull } from '@/lib/supabase/args'
 const BOOKING_COLUMNS =
   'id, ref, status, car_id, category_id, hotel_id, room_number, start_date, end_date, ' +
   'pickup_at, dropoff_at, cust_first, cust_last, cust_phone, cust_dob, exception_status, ' +
-  'total_cents, days, collected_cents, pay_method, paid, created_by, returned_at, ' +
+  'total, days, collected, pay_method, paid, created_by, returned_at, ' +
   'eligibility_override_at'
 
 export type HandoverBooking = Pick<BookingRow,
   'id' | 'ref' | 'status' | 'car_id' | 'category_id' | 'hotel_id' | 'room_number'
   | 'start_date' | 'end_date' | 'pickup_at' | 'dropoff_at'
   | 'cust_first' | 'cust_last' | 'cust_phone' | 'cust_dob' | 'exception_status'
-  | 'total_cents' | 'days' | 'collected_cents' | 'pay_method' | 'paid' | 'created_by'
+  | 'total' | 'days' | 'collected' | 'pay_method' | 'paid' | 'created_by'
   | 'returned_at' | 'eligibility_override_at'>
 
 export type HandoverContext = {

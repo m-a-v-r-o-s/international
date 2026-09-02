@@ -8,19 +8,15 @@ import { adminSetBookingPrice, type FormState } from '../actions'
 
 /**
  * A5 · Price amendment (docs/01-DECISIONS.md §6). The only path is
- * admin_set_booking_price() — total_cents is not in the update column grant
+ * admin_set_booking_price() — total is not in the update column grant
  * even for admin — and every call is audit-logged by the same trigger as any
  * other write, so this screen adds no logging of its own.
  */
-export function PriceForm({ bookingId, totalCents }: { bookingId: string; totalCents: number | null }) {
+export function PriceForm({ bookingId, total }: { bookingId: string; total: number | null }) {
   const t = useTranslations('admin.bookings')
   const tc = useTranslations('common')
   const te = useTranslations('errors')
-  const [state, formAction] = useActionState<FormState, FormData>(async (_prev, formData) => {
-    const euros = formData.get('total_euros')
-    formData.set('total_cents', String(Math.round(Number.parseFloat(String(euros || '0')) * 100)))
-    return adminSetBookingPrice(_prev, formData)
-  }, undefined)
+  const [state, formAction] = useActionState<FormState, FormData>(adminSetBookingPrice, undefined)
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -31,9 +27,9 @@ export function PriceForm({ bookingId, totalCents }: { bookingId: string; totalC
       ) : null}
 
       <Field
-        id="total_euros" name="total_euros" type="number" min={0} step={0.01} inputMode="decimal"
+        id="total" name="total" type="number" min={0} step={1} inputMode="numeric"
         label={t('newPrice')}
-        defaultValue={totalCents !== null ? (totalCents / 100).toFixed(2) : undefined}
+        defaultValue={total ?? undefined}
         required
       />
 

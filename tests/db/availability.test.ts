@@ -184,8 +184,8 @@ describe('what frees a car', () => {
     })
     await addDriver(id)
 
-    const before = await db.one<{ total_cents: number; days: number }>(
-      `select total_cents, days from public.bookings where id = $1`, [id])
+    const before = await db.one<{ total: number; days: number }>(
+      `select total, days from public.bookings where id = $1`, [id])
 
     await db.asUser(f.repA, () => db.sql(
       `update public.bookings set status = 'out' where id = $1`, [id]))
@@ -195,9 +195,9 @@ describe('what frees a car', () => {
 
     expect(await occupied(f.car1, '2026-07-01', '2026-07-31')).toEqual([])
 
-    const after = await db.one<{ total_cents: number; days: number }>(
-      `select total_cents, days from public.bookings where id = $1`, [id])
-    expect(after.total_cents).toBe(before.total_cents)
+    const after = await db.one<{ total: number; days: number }>(
+      `select total, days from public.bookings where id = $1`, [id])
+    expect(after.total).toBe(before.total)
     expect(after.days).toBe(before.days)
 
     // …and the car can be re-let immediately, with no turnaround gap.

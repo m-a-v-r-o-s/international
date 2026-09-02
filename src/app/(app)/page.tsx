@@ -106,8 +106,8 @@ export default async function HomePage() {
       </div>
 
       <CashStrip
-        cents={typeof cash === 'number' ? cash : 0}
-        readyCents={typeof ready === 'number' ? ready : 0}
+        cash={typeof cash === 'number' ? cash : 0}
+        ready={typeof ready === 'number' ? ready : 0}
       />
     </div>
   )

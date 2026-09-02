@@ -27,7 +27,7 @@ export async function sendNewBookingConfirmation(
 
   try {
     const { data: booking } = await supabase.from('bookings')
-      .select('ref, car_id, hotel_id, room_number, pickup_at, dropoff_at, total_cents, category_id')
+      .select('ref, car_id, hotel_id, room_number, pickup_at, dropoff_at, total, category_id')
       .eq('id', input.bookingId).maybeSingle()
     if (!booking) return
 
@@ -59,7 +59,7 @@ export async function sendNewBookingConfirmation(
       roomNumber: booking.room_number,
       pickupAt: booking.pickup_at,
       dropoffAt: booking.dropoff_at,
-      totalCents: booking.total_cents,
+      total: booking.total,
       category: category
         ? {
             nameEl: category.name_el,

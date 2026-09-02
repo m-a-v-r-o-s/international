@@ -7,7 +7,7 @@ import { seed, bookAsRep, type Fixtures } from '../helpers/fixtures'
 //
 // Two rules carry the weight here and both are checked from the rep's side,
 // not the service role's: a fuel shortfall and new damage are RECORDED and
-// FLAGGED and never priced (docs/01-DECISIONS.md §14) — charge_cents and
+// FLAGGED and never priced (docs/01-DECISIONS.md §14) — charge and
 // resolution are outside the rep's column grant entirely — and an early return
 // reopens the remaining dates immediately while the price stays put (§4).
 
@@ -80,28 +80,28 @@ describe('R5 step 1 · fuel in, and the shortfall the rep never prices', () => {
     expect(raised?.raised_by).toBe(f.repA)
 
     // The one thing the rep must never do with it.
-    const [row] = await db.sql<{ charge_cents: number | null; resolution: string | null }>(
-      `select charge_cents, resolution from public.exceptions where booking_id = $1`, [bookingId])
-    expect(row?.charge_cents).toBeNull()
+    const [row] = await db.sql<{ charge: number | null; resolution: string | null }>(
+      `select charge, resolution from public.exceptions where booking_id = $1`, [bookingId])
+    expect(row?.charge).toBeNull()
     expect(row?.resolution).toBeNull()
   })
 
-  test('a rep cannot set charge_cents or resolution — they are not in the grant at all', async () => {
+  test('a rep cannot set charge or resolution — they are not in the grant at all', async () => {
     const { bookingId } = await rentalOut(f.repA, f.car1, f.hotelA, '2026-07-06', '2026-07-08')
 
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `insert into public.exceptions (booking_id, type, raised_by, charge_cents)
-       values ($1, 'fuel_short', $2, 5000)`, [bookingId, f.repA])))).toBe('42501')
+      `insert into public.exceptions (booking_id, type, raised_by, charge)
+       values ($1, 'fuel_short', $2, 50)`, [bookingId, f.repA])))).toBe('42501')
 
     await db.asUser(f.repA, () => db.sql(
       `insert into public.exceptions (booking_id, type, raised_by)
        values ($1, 'fuel_short', $2)`, [bookingId, f.repA]))
 
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `update public.exceptions set charge_cents = 5000 where booking_id = $1`, [bookingId]))))
+      `update public.exceptions set charge = 50 where booking_id = $1`, [bookingId]))))
       .toBe('42501')
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `select charge_cents from public.exceptions where booking_id = $1`, [bookingId]))))
+      `select charge from public.exceptions where booking_id = $1`, [bookingId]))))
       .toBe('42501')
   })
 
@@ -190,8 +190,8 @@ describe('R5 confirm · out → returned', () => {
     // Booked Mon 6th → Fri 10th; brought back on the Wednesday.
     const { bookingId } = await rentalOut(f.repA, f.car1, f.hotelA, '2026-07-06', '2026-07-10')
 
-    const priceBefore = await db.one<{ total_cents: number; days: number }>(
-      `select total_cents, days from public.bookings where id = $1`, [bookingId])
+    const priceBefore = await db.one<{ total: number; days: number }>(
+      `select total, days from public.bookings where id = $1`, [bookingId])
 
     const before = await db.asUser(f.repB, () => db.one<{ occupied_dates: string[] }>(
       `select occupied_dates from public.availability('2026-07-01', '2026-07-31') where car_id = $1`,
@@ -208,9 +208,9 @@ describe('R5 confirm · out → returned', () => {
     expect(after.occupied_dates).toEqual([])
 
     // Early return earns no refund: the full booked duration stays charged.
-    const priceAfter = await db.one<{ total_cents: number; days: number }>(
-      `select total_cents, days from public.bookings where id = $1`, [bookingId])
-    expect(priceAfter.total_cents).toBe(priceBefore.total_cents)
+    const priceAfter = await db.one<{ total: number; days: number }>(
+      `select total, days from public.bookings where id = $1`, [bookingId])
+    expect(priceAfter.total).toBe(priceBefore.total)
     expect(priceAfter.days).toBe(priceBefore.days)
   })
 
@@ -235,7 +235,7 @@ describe('R5 confirm · out → returned', () => {
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
       `update public.bookings set status = 'returned' where id = $1`, [bookingId])))).toBe('IR108')
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `update public.bookings set collected_cents = 1 where id = $1`, [bookingId])))).toBe('IR108')
+      `update public.bookings set collected = 1 where id = $1`, [bookingId])))).toBe('IR108')
   })
 
   test('a rep cannot return another rep\'s rental', async () => {

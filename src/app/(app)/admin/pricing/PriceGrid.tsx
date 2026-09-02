@@ -9,19 +9,15 @@ import type { CategoryRow } from '@/lib/supabase/database.types'
 
 const DAYS = [1, 2, 3, 4, 5, 6, 7] as const
 
-export type PriceRowData = { category_id: string; days: number; total_cents: number }
-export type ExtraDayData = { category_id: string; cents: number }
-
-function toEuros(cents: number | undefined): string {
-  return cents === undefined ? '' : (cents / 100).toFixed(2)
-}
+export type PriceRowData = { category_id: string; days: number; total: number }
+export type ExtraDayData = { category_id: string; price: number }
 
 /**
  * The 8×7 grid of totals plus the extra-day rate (docs/04-SCREENS.md, A4).
  * One row per category, one save per row — pasting 56 numbers across 56
  * separate taps is not a real workflow, so each category's week is one form.
- * Every total is typed in euros and converted to cents on submit; the app
- * never stores or displays a float.
+ * Every total is a whole euro integer, on screen and in the database — never
+ * cents, never a fraction.
  */
 export function PriceGridRow({
   periodId, category, rows, extra,
@@ -33,29 +29,26 @@ export function PriceGridRow({
 }) {
   const t = useTranslations('admin.pricing')
   const te = useTranslations('errors')
-  const byDay = new Map(rows.map((r) => [r.days, r.total_cents]))
+  const byDay = new Map(rows.map((r) => [r.days, r.total]))
 
   const [state, formAction] = useActionState<FormState, FormData>(async (_prev, formData) => {
     // One submit writes all 7 day totals, then the extra-day rate — the
     // engine reads them as independent rows, but the admin edits a week at once.
     for (const day of DAYS) {
       const value = formData.get(`day-${day}`)
-      const cents = Math.round(Number.parseFloat(String(value)) * 100)
       const fd = new FormData()
       fd.set('period_id', periodId)
       fd.set('category_id', category.id)
       fd.set('days', String(day))
-      fd.set('total_cents', String(cents))
+      fd.set('total', String(value))
       const result = await setPriceRow(undefined, fd)
       if (result?.error) return result
     }
 
-    const extraValue = formData.get('extra')
-    const extraCents = Math.round(Number.parseFloat(String(extraValue)) * 100)
     const fd = new FormData()
     fd.set('period_id', periodId)
     fd.set('category_id', category.id)
-    fd.set('cents', String(extraCents))
+    fd.set('price', String(formData.get('extra')))
     return setExtraDayRate(undefined, fd)
   }, undefined)
 
@@ -77,8 +70,8 @@ export function PriceGridRow({
           <label key={day} className="flex flex-col gap-1">
             <span className="text-[0.75rem] text-ink-soft">{t('day', { n: day })}</span>
             <input
-              type="number" step="0.01" min={0} name={`day-${day}`}
-              defaultValue={toEuros(byDay.get(day))}
+              type="number" step={1} min={0} name={`day-${day}`}
+              defaultValue={byDay.get(day)}
               aria-label={t('totalForDays', { n: day, category: category.code })}
               className="ir-field !min-h-10 !px-2 !text-[0.9375rem]"
             />
@@ -87,8 +80,8 @@ export function PriceGridRow({
         <label className="flex flex-col gap-1">
           <span className="text-[0.75rem] text-ink-soft">{t('extraShort')}</span>
           <input
-            type="number" step="0.01" min={0} name="extra"
-            defaultValue={toEuros(extra?.cents)}
+            type="number" step={1} min={0} name="extra"
+            defaultValue={extra?.price}
             aria-label={t('extraDayRateFor', { category: category.code })}
             className="ir-field !min-h-10 !px-2 !text-[0.9375rem]"
           />
@@ -137,9 +130,9 @@ export function PricePreview({ categories }: { categories: CategoryRow[] }) {
         {state?.error ? (
           <p className="ir-notice border-danger bg-danger-tint text-danger" role="alert">{te(state.error)}</p>
         ) : null}
-        {state?.totalCents !== undefined ? (
+        {state?.total !== undefined ? (
           <p className="ir-notice border-ok bg-ok-tint text-ok" role="status">
-            {t('previewResult', { days: state.days ?? 0, total: (state.totalCents / 100).toFixed(2) })}
+            {t('previewResult', { days: state.days ?? 0, total: state.total })}
           </p>
         ) : null}
       </form>

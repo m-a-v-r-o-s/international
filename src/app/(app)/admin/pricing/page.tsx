@@ -19,8 +19,8 @@ export async function generateMetadata(): Promise<Metadata> {
  * A4 · Pricing periods, the 8×7 grid of totals, and the extra-day rate
  * (docs/04-SCREENS.md). Built ahead of the client's real numbers arriving —
  * this screen is what unblocks them sending the price tables at all
- * (HANDOFF.md). Every total on screen is euros; the database only ever holds
- * integer cents, converted at the form boundary and nowhere else.
+ * (HANDOFF.md). Every total on screen and in the database is a whole euro
+ * integer — never cents, never a fraction.
  */
 export default async function PricingPage() {
   await requireAdmin()
@@ -52,8 +52,8 @@ export default async function PricingPage() {
   const periodIds = allPeriods.map((p) => p.id)
   const [{ data: rows }, { data: extras }] = periodIds.length > 0
     ? await Promise.all([
-        supabase.from('price_rows').select('period_id, category_id, days, total_cents').in('period_id', periodIds),
-        supabase.from('price_extra_day').select('period_id, category_id, cents').in('period_id', periodIds),
+        supabase.from('price_rows').select('period_id, category_id, days, total').in('period_id', periodIds),
+        supabase.from('price_extra_day').select('period_id, category_id, price').in('period_id', periodIds),
       ])
     : [{ data: [] }, { data: [] }]
 

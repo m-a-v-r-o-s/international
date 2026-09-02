@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { requireAdmin } from '@/lib/auth/session'
+import { formatEuros } from '@/lib/money'
 import { supabaseServer } from '@/lib/supabase/server'
 import { searchAllBookings } from './actions'
 import type { BookingRow } from '@/lib/supabase/database.types'
@@ -13,11 +14,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const COLUMNS =
   'id, ref, status, car_id, hotel_id, room_number, start_date, end_date, ' +
-  'cust_first, cust_last, total_cents, created_by, created_at'
+  'cust_first, cust_last, total, created_by, created_at'
 
 type Row = Pick<BookingRow,
   'id' | 'ref' | 'status' | 'car_id' | 'hotel_id' | 'room_number' | 'start_date' | 'end_date'
-  | 'cust_first' | 'cust_last' | 'total_cents' | 'created_by' | 'created_at'>
+  | 'cust_first' | 'cust_last' | 'total' | 'created_by' | 'created_at'>
 
 /**
  * A5 · Bookings (docs/04-SCREENS.md) — every booking, every rep, every hotel.
@@ -125,8 +126,8 @@ export default async function AdminBookingsPage({
                     {' · '}{repById.get(booking.created_by) ?? '—'}
                   </p>
                 </div>
-                {booking.total_cents !== null ? (
-                  <span className="shrink-0 font-semibold">€{(booking.total_cents / 100).toFixed(2)}</span>
+                {booking.total !== null ? (
+                  <span className="shrink-0 font-semibold">{formatEuros(booking.total)}</span>
                 ) : null}
               </Link>
             </li>

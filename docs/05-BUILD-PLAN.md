@@ -112,7 +112,7 @@ feature — do not spend it early.
 - `availability()` output contains no rep, hotel, price, reason or booking id.
 - No API response reachable by a rep contains an aggregate other than their own daily cash.
 - A rep cannot read `block_reason`, the price tables, the audit log or another hotel's rows.
-- A rep POSTing `total_cents`, `role` or `created_by` has those fields ignored, not applied.
+- A rep POSTing `total`, `role` or `created_by` has those fields ignored, not applied.
 - A rep's signed URL for their own licence image does not grant another booking's image.
 
 **Eligibility**

@@ -18,7 +18,7 @@ export type QuoteState = {
   error?: ErrorKey
   days?: number
   periodId?: string
-  totalCents?: number
+  total?: number
 } | undefined
 
 /**
@@ -52,7 +52,7 @@ export async function previewBookingQuote(_prev: QuoteState, formData: FormData)
   const row = data?.[0]
   if (!row) return { error: 'unknown' }
 
-  return { days: row.days, periodId: row.period_id, totalCents: row.total_cents }
+  return { days: row.days, periodId: row.period_id, total: row.total }
 }
 
 /**

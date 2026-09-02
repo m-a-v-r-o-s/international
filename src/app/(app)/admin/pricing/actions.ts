@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
 import { errorKey, type ErrorKey } from '@/lib/errors'
+import { euroAmountSchema } from '@/lib/money'
 import { parseBulkPaste } from '@/lib/pricing/bulk-paste'
 
 export type FormState = { error?: ErrorKey } | undefined
@@ -13,7 +14,6 @@ const uuidSchema = z.string().uuid()
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 const yearSchema = z.coerce.number().int().min(2020).max(2100)
 const nameSchema = z.string().trim().min(1).max(60)
-const centsSchema = z.coerce.number().int().min(0).max(100_000_00)
 
 /**
  * A4 · Pricing periods — arbitrary date ranges, re-editable every season
@@ -79,7 +79,7 @@ export async function updatePeriod(_prev: FormState, formData: FormData): Promis
 
 /**
  * Editing a price table does not alter any existing booking's stored total —
- * `total_cents` and `period_id` are frozen on the booking at the time it was
+ * `total` and `period_id` are frozen on the booking at the time it was
  * priced (docs/05-BUILD-PLAN.md, "Pricing" tests). This action only ever
  * touches `price_rows` / `price_extra_day`, never `bookings`.
  */
@@ -105,12 +105,12 @@ export async function setPriceRow(_prev: FormState, formData: FormData): Promise
     period_id: uuidSchema,
     category_id: uuidSchema,
     days: z.coerce.number().int().min(1).max(7),
-    total_cents: centsSchema,
+    total: euroAmountSchema,
   }).safeParse({
     period_id: formData.get('period_id'),
     category_id: formData.get('category_id'),
     days: formData.get('days'),
-    total_cents: formData.get('total_cents'),
+    total: formData.get('total'),
   })
   if (!parsed.success) return { error: 'IR104' }
 
@@ -131,11 +131,11 @@ export async function setExtraDayRate(_prev: FormState, formData: FormData): Pro
   const parsed = z.object({
     period_id: uuidSchema,
     category_id: uuidSchema,
-    cents: centsSchema,
+    price: euroAmountSchema,
   }).safeParse({
     period_id: formData.get('period_id'),
     category_id: formData.get('category_id'),
-    cents: formData.get('cents'),
+    price: formData.get('price'),
   })
   if (!parsed.success) return { error: 'IR104' }
 
@@ -149,7 +149,7 @@ export async function setExtraDayRate(_prev: FormState, formData: FormData): Pro
   return undefined
 }
 
-export type PreviewState = { error?: ErrorKey; totalCents?: number; days?: number } | undefined
+export type PreviewState = { error?: ErrorKey; total?: number; days?: number } | undefined
 
 /**
  * A preview of what a sample rental would cost (docs/04-SCREENS.md, A4). This
@@ -185,7 +185,7 @@ export async function previewQuote(_prev: PreviewState, formData: FormData): Pro
   const row = data?.[0]
   if (!row) return { error: 'unknown' }
 
-  return { totalCents: row.total_cents, days: row.days }
+  return { total: row.total, days: row.days }
 }
 
 /**
@@ -215,15 +215,15 @@ export async function bulkPastePrices(
   const parsed = parseBulkPaste(text.data, new Set(byCode.keys()))
   if (!parsed.ok) return { error: 'IR104', badLine: parsed.badLine }
 
-  const rows: { period_id: string; category_id: string; days: number; total_cents: number }[] = []
-  const extras: { period_id: string; category_id: string; cents: number }[] = []
+  const rows: { period_id: string; category_id: string; days: number; total: number }[] = []
+  const extras: { period_id: string; category_id: string; price: number }[] = []
 
   for (const row of parsed.rows) {
     const categoryId = byCode.get(row.categoryCode)!
     for (let day = 1; day <= 7; day++) {
-      rows.push({ period_id: periodId.data, category_id: categoryId, days: day, total_cents: row.cents[day - 1]! })
+      rows.push({ period_id: periodId.data, category_id: categoryId, days: day, total: row.euros[day - 1]! })
     }
-    extras.push({ period_id: periodId.data, category_id: categoryId, cents: row.cents[7] })
+    extras.push({ period_id: periodId.data, category_id: categoryId, price: row.euros[7] })
   }
 
   const { error: rowsErr } = await supabase.from('price_rows')

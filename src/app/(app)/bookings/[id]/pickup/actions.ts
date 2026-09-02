@@ -10,6 +10,7 @@ import { readLicence, type LicenceExtraction } from '@/lib/ocr/licence'
 import { mergeExtraction, type ExistingDriver } from '@/lib/ocr/merge'
 import { sniffType, IMAGE_TYPES, type SniffedType } from '@/lib/storage/sniff'
 import { uploadBookingFile, MAX_UPLOAD_BYTES } from '@/lib/storage/booking-files'
+import { euroAmountSchema } from '@/lib/money'
 
 export type PickupState = { error?: ErrorKey; saved?: boolean } | undefined
 
@@ -29,7 +30,6 @@ export type CaptureState = {
 const uuidSchema = z.string().uuid()
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 const nameSchema = z.string().trim().min(1).max(80)
-const centsSchema = z.coerce.number().int().min(0).max(100_000_00)
 
 /**
  * R4 step 1 — driver entry, manual.
@@ -261,7 +261,7 @@ export async function saveFuelOut(_prev: HandoverState, formData: FormData): Pro
  * R4 step 7 — payment. Amount collected, method, paid/unpaid
  * (docs/01-DECISIONS.md §15). No deposit is taken and none is built.
  *
- * A rep never sets the PRICE — `total_cents` is not in their column grant and
+ * A rep never sets the PRICE — `total` is not in their column grant and
  * the guard trigger would revert it anyway. What they record here is what the
  * guest actually handed over, which is a different number and the only money
  * field a rep may write.
@@ -271,12 +271,12 @@ export async function savePayment(_prev: PickupState, formData: FormData): Promi
 
   const parsed = z.object({
     booking_id: uuidSchema,
-    collected_cents: centsSchema,
+    collected: euroAmountSchema,
     pay_method: z.enum(['cash', 'card', 'transfer']).nullable(),
     paid: z.coerce.boolean(),
   }).safeParse({
     booking_id: formData.get('booking_id'),
-    collected_cents: formData.get('collected_cents') || 0,
+    collected: formData.get('collected') || 0,
     pay_method: formData.get('pay_method') || null,
     paid: formData.get('paid') === 'on',
   })

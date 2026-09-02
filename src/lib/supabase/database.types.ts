@@ -138,7 +138,7 @@ export type DamageMarkRow = Omit<Row<'damage_marks'>, 'view' | 'mark_type'> & {
  * The generated `Insert` requires `ref` and `created_by`, because both are NOT
  * NULL with no column default — which is true of the TABLE and wrong about the
  * GRANT. 20260830091100_rls.sql's insert grant omits both, along with `kind`,
- * `status`, `days`, `category_id`, `period_id`, `total_cents`, `block_reason`,
+ * `status`, `days`, `category_id`, `period_id`, `total`, `block_reason`,
  * `returned_at` and `cash_handover_id`; app.bookings_before_write() derives
  * every one of them, and a rep who sends one is refused at the privilege check
  * before any policy runs. So the app cannot send what the generated type

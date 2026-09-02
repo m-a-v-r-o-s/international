@@ -67,8 +67,8 @@ function contract(over: Partial<ContractData> = {}): ContractData {
       { view: 'front', x: 0.25, y: 0.5, zone: 'midLeft', markType: 'scratch', note: 'bumper', index: 1 },
       { view: 'left', x: 0.7, y: 0.3, zone: 'topRight', markType: 'dent', note: null, index: 2 },
     ],
-    totalCents: 9000,
-    collectedCents: 9000,
+    total: 90,
+    collected: 90,
     payMethod: 'cash',
     paid: true,
     signature: new Uint8Array(signaturePng),
@@ -161,10 +161,10 @@ describe('both languages are on the same document', () => {
 })
 
 describe('the render boundary', () => {
-  test('money is integer cents until exactly here', () => {
-    expect(euros(9000)).toBe('€90.00')
-    expect(euros(5)).toBe('€0.05')
-    expect(euros(0)).toBe('€0.00')
+  test('money is a whole euro integer until exactly here', () => {
+    expect(euros(90)).toBe('€90')
+    expect(euros(5)).toBe('€5')
+    expect(euros(0)).toBe('€0')
     expect(euros(null)).toBe('—')
   })
 

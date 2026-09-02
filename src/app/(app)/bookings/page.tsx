@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { requireUnlocked } from '@/lib/auth/session'
+import { formatEuros } from '@/lib/money'
 import { supabaseServer } from '@/lib/supabase/server'
 import { searchMyBookings } from './actions'
 import type { BookingRow } from '@/lib/supabase/database.types'
@@ -34,14 +35,14 @@ export default async function MyBookingsPage({
   // building a PostgREST .or() filter string out of raw user input, where a
   // comma or period in the query could otherwise be read as filter syntax.
   const { data: bookings } = await supabase.from('bookings')
-    .select('id, ref, status, car_id, start_date, end_date, cust_first, cust_last, total_cents, created_at')
+    .select('id, ref, status, car_id, start_date, end_date, cust_first, cust_last, total, created_at')
     .eq('kind', 'rental')
     .order('start_date', { ascending: false })
     .limit(500)
 
   let rows = (bookings ?? []) as Pick<
     BookingRow, 'id' | 'ref' | 'status' | 'car_id' | 'start_date' | 'end_date'
-    | 'cust_first' | 'cust_last' | 'total_cents' | 'created_at'
+    | 'cust_first' | 'cust_last' | 'total' | 'created_at'
   >[]
 
   const carIds = [...new Set(rows.map((r) => r.car_id))]
@@ -90,8 +91,8 @@ export default async function MyBookingsPage({
                     {booking.start_date} → {booking.end_date} · {t(`status.${booking.status}`)}
                   </p>
                 </div>
-                {booking.total_cents !== null ? (
-                  <span className="shrink-0 font-semibold">€{(booking.total_cents / 100).toFixed(2)}</span>
+                {booking.total !== null ? (
+                  <span className="shrink-0 font-semibold">{formatEuros(booking.total)}</span>
                 ) : null}
               </Link>
             </li>

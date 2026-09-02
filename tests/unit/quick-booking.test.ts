@@ -141,14 +141,14 @@ describe('the fields it will not carry at all', () => {
       start_date: '2026-07-06',
       end_date: '2026-07-08',
       cust_phone: '+306900000001',
-      total_cents: 1,
+      total: 1,
       status: 'out',
       created_by: '33333333-3333-4333-a333-333333333333',
       block_reason: 'mine',
     })
     expect(parsed.success).toBe(true)
     if (!parsed.success) return
-    expect(parsed.data).not.toHaveProperty('total_cents')
+    expect(parsed.data).not.toHaveProperty('total')
     expect(parsed.data).not.toHaveProperty('status')
     expect(parsed.data).not.toHaveProperty('created_by')
     expect(parsed.data).not.toHaveProperty('block_reason')

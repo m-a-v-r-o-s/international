@@ -870,7 +870,7 @@ that page — and only that page — should get proper locale routing.
 **Column grants plus admin RPCs, rather than admin-only tables.** An admin holds
 the same `authenticated` database role as a rep, so a column grant cannot tell
 them apart. The fields a rep must never receive — `cars.notes`,
-`bookings.block_reason`, `exceptions.charge_cents`, `exceptions.resolution`,
+`bookings.block_reason`, `exceptions.charge`, `exceptions.resolution`,
 `profiles.pin_hash`, and `role`/`active` on update — are withheld from
 `authenticated` entirely, and admins reach them through `SECURITY DEFINER` RPCs
 that check `app.is_admin()` themselves. The cost: `select *` is refused on

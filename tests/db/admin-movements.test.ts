@@ -141,32 +141,32 @@ describe('A5 · bookings — full search and full edit rights for the admin', ()
     const bookingId = await bookAsRep(db, f.repA, {
       carId: f.car1, hotelId: f.hotelA, start: '2026-07-06', end: '2026-07-08',
     })
-    const before = await db.one<{ total_cents: number }>(
-      `select total_cents from public.bookings where id = $1`, [bookingId])
-    expect(before.total_cents).toBe(9000)
+    const before = await db.one<{ total: number }>(
+      `select total from public.bookings where id = $1`, [bookingId])
+    expect(before.total).toBe(90)
 
     await db.asUser(f.admin, () => db.sql(
-      `select public.admin_set_booking_price($1, 12345)`, [bookingId]))
+      `select public.admin_set_booking_price($1, 123)`, [bookingId]))
 
-    const after = await db.one<{ total_cents: number }>(
-      `select total_cents from public.bookings where id = $1`, [bookingId])
-    expect(after.total_cents).toBe(12345)
+    const after = await db.one<{ total: number }>(
+      `select total from public.bookings where id = $1`, [bookingId])
+    expect(after.total).toBe(123)
 
-    const [log] = await db.asUser(f.admin, () => db.sql<{ action: string; before: { total_cents: number }; after: { total_cents: number } }>(
+    const [log] = await db.asUser(f.admin, () => db.sql<{ action: string; before: { total: number }; after: { total: number } }>(
       `select action, before, after from public.audit_log
        where entity = 'bookings' and entity_id = $1 and action = 'update'
        order by at desc limit 1`, [bookingId]))
-    expect(log?.before?.total_cents).toBe(9000)
-    expect(log?.after?.total_cents).toBe(12345)
+    expect(log?.before?.total).toBe(90)
+    expect(log?.after?.total).toBe(123)
   })
 
-  test('a rep cannot reach total_cents directly, insert or update, even on their own booking', async () => {
+  test('a rep cannot reach total directly, insert or update, even on their own booking', async () => {
     const bookingId = await bookAsRep(db, f.repA, {
       carId: f.car1, hotelId: f.hotelA, start: '2026-07-06', end: '2026-07-08',
     })
 
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `update public.bookings set total_cents = 1 where id = $1`, [bookingId])))).toBe('42501')
+      `update public.bookings set total = 1 where id = $1`, [bookingId])))).toBe('42501')
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
       `select public.admin_set_booking_price($1, 1)`, [bookingId])))).toBe('IR001')
   })

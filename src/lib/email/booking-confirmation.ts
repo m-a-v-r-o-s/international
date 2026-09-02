@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { athensDateTime } from '@/lib/contract/data'
+import { formatEuros } from '@/lib/money'
 import { mailConfigured, send, type MailResult } from './mailer'
 
 export type ConfirmationCategory = {
@@ -18,7 +19,7 @@ export type BookingConfirmationInput = {
   roomNumber: string | null
   pickupAt: string | null
   dropoffAt: string | null
-  totalCents: number | null
+  total: number | null
   category: ConfirmationCategory | null
 }
 
@@ -45,7 +46,7 @@ export type BookingConfirmationInput = {
 export async function sendBookingConfirmation(input: BookingConfirmationInput): Promise<MailResult> {
   if (!mailConfigured()) return { sent: false, reason: 'not_configured' }
 
-  const money = input.totalCents !== null ? `€${(input.totalCents / 100).toFixed(2)}` : '—'
+  const money = formatEuros(input.total)
   const licenceLine = input.category
     ? [
         `Ελάχιστη ηλικία οδηγού: ${input.category.minDriverAge}. ` +

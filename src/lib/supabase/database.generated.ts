@@ -182,7 +182,7 @@ export type Database = {
           car_id: string
           cash_handover_id: string | null
           category_id: string | null
-          collected_cents: number
+          collected: number
           created_at: string
           created_by: string
           cust_dob: string | null
@@ -210,7 +210,7 @@ export type Database = {
           room_number: string | null
           start_date: string
           status: Database["public"]["Enums"]["booking_status"]
-          total_cents: number | null
+          total: number | null
           updated_at: string
           window_override: boolean
         }
@@ -219,7 +219,7 @@ export type Database = {
           car_id: string
           cash_handover_id?: string | null
           category_id?: string | null
-          collected_cents?: number
+          collected?: number
           created_at?: string
           created_by: string
           cust_dob?: string | null
@@ -247,7 +247,7 @@ export type Database = {
           room_number?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["booking_status"]
-          total_cents?: number | null
+          total?: number | null
           updated_at?: string
           window_override?: boolean
         }
@@ -256,7 +256,7 @@ export type Database = {
           car_id?: string
           cash_handover_id?: string | null
           category_id?: string | null
-          collected_cents?: number
+          collected?: number
           created_at?: string
           created_by?: string
           cust_dob?: string | null
@@ -284,7 +284,7 @@ export type Database = {
           room_number?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["booking_status"]
-          total_cents?: number | null
+          total?: number | null
           updated_at?: string
           window_override?: boolean
         }
@@ -439,21 +439,21 @@ export type Database = {
       }
       cash_handovers: {
         Row: {
-          amount_cents: number
+          amount: number
           confirmed_by: string | null
           handed_at: string
           id: string
           rep_id: string
         }
         Insert: {
-          amount_cents: number
+          amount: number
           confirmed_by?: string | null
           handed_at?: string
           id?: string
           rep_id: string
         }
         Update: {
-          amount_cents?: number
+          amount?: number
           confirmed_by?: string | null
           handed_at?: string
           id?: string
@@ -718,7 +718,7 @@ export type Database = {
       exceptions: {
         Row: {
           booking_id: string
-          charge_cents: number | null
+          charge: number | null
           detail: string | null
           id: string
           notified_at: string | null
@@ -731,7 +731,7 @@ export type Database = {
         }
         Insert: {
           booking_id: string
-          charge_cents?: number | null
+          charge?: number | null
           detail?: string | null
           id?: string
           notified_at?: string | null
@@ -744,7 +744,7 @@ export type Database = {
         }
         Update: {
           booking_id?: string
-          charge_cents?: number | null
+          charge?: number | null
           detail?: string | null
           id?: string
           notified_at?: string | null
@@ -887,18 +887,18 @@ export type Database = {
       price_extra_day: {
         Row: {
           category_id: string
-          cents: number
           period_id: string
+          price: number
         }
         Insert: {
           category_id: string
-          cents: number
           period_id: string
+          price: number
         }
         Update: {
           category_id?: string
-          cents?: number
           period_id?: string
+          price?: number
         }
         Relationships: [
           {
@@ -922,19 +922,19 @@ export type Database = {
           category_id: string
           days: number
           period_id: string
-          total_cents: number
+          total: number
         }
         Insert: {
           category_id: string
           days: number
           period_id: string
-          total_cents: number
+          total: number
         }
         Update: {
           category_id?: string
           days?: number
           period_id?: string
-          total_cents?: number
+          total?: number
         }
         Relationships: [
           {
@@ -1177,7 +1177,7 @@ export type Database = {
         Args: { p_id: string }
         Returns: {
           booking_id: string
-          charge_cents: number
+          charge: number
           detail: string
           id: string
           raised_at: string
@@ -1221,7 +1221,7 @@ export type Database = {
       admin_pending_cash_handovers: {
         Args: never
         Returns: {
-          amount_cents: number
+          amount: number
           handed_at: string
           id: string
           rep_id: string
@@ -1229,11 +1229,11 @@ export type Database = {
         }[]
       }
       admin_resolve_exception: {
-        Args: { p_charge_cents: number; p_id: string; p_resolution: string }
+        Args: { p_charge: number; p_id: string; p_resolution: string }
         Returns: undefined
       }
       admin_set_booking_price: {
-        Args: { p_booking_id: string; p_total_cents: number }
+        Args: { p_booking_id: string; p_total: number }
         Returns: undefined
       }
       admin_set_car_notes: {
@@ -1362,7 +1362,7 @@ export type Database = {
       my_hand_over_cash: {
         Args: never
         Returns: {
-          amount_cents: number
+          amount: number
           handover_id: string
         }[]
       }
@@ -1390,7 +1390,7 @@ export type Database = {
         Returns: {
           days: number
           period_id: string
-          total_cents: number
+          total: number
         }[]
       }
       rate_limit_hit: {

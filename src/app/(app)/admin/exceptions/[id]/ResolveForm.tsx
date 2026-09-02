@@ -9,26 +9,22 @@ import { resolveException, type FormState } from '../actions'
 /**
  * A6 · Set the charge and close the item.
  *
- * Euros in, integer cents out, converted at this boundary and nowhere else —
- * the same as A4's price grid and A5's price amendment. An EMPTY amount is
- * kept empty rather than turned into 0: "seen, nothing to charge" and "charged
- * zero euros" read the same on a screen and differently on a record.
+ * Whole euros, no conversion needed at this boundary — the same as A4's price
+ * grid and A5's price amendment. An EMPTY amount is kept empty rather than
+ * turned into 0: "seen, nothing to charge" and "charged zero euros" read the
+ * same on a screen and differently on a record.
  */
 export function ResolveForm({
-  exceptionId, chargeCents, resolution, resolvedAt,
+  exceptionId, charge, resolution, resolvedAt,
 }: {
   exceptionId: string
-  chargeCents: number | null
+  charge: number | null
   resolution: string | null
   resolvedAt: string | null
 }) {
   const t = useTranslations('admin.exceptions')
   const te = useTranslations('errors')
-  const [state, formAction] = useActionState<FormState, FormData>(async (prev, formData) => {
-    const euros = String(formData.get('charge_euros') ?? '').trim()
-    formData.set('charge_cents', euros === '' ? '' : String(Math.round(Number.parseFloat(euros) * 100)))
-    return resolveException(prev, formData)
-  }, undefined)
+  const [state, formAction] = useActionState<FormState, FormData>(resolveException, undefined)
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -39,9 +35,9 @@ export function ResolveForm({
       ) : null}
 
       <Field
-        id="charge_euros" name="charge_euros" type="number" min={0} step={0.01} inputMode="decimal"
+        id="charge" name="charge" type="number" min={0} step={1} inputMode="numeric"
         label={t('chargeLabel')} hint={t('chargeHint')}
-        defaultValue={chargeCents !== null ? (chargeCents / 100).toFixed(2) : ''}
+        defaultValue={charge ?? ''}
       />
 
       <div>

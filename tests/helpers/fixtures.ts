@@ -53,13 +53,13 @@ export async function seed(db: TestDb) {
   const low = await insertPeriod(db, 2026, 'Low', '2026-06-01', '2026-07-31')
   const peak = await insertPeriod(db, 2026, 'Peak', '2026-08-01', '2026-09-30')
 
-  //                       1d    2d    3d     4d     5d     6d     7d      extra
-  await insertPrices(db, low,  catA, [3500, 6500, 9000, 11500, 14000, 16000, 18000], 2500)
-  await insertPrices(db, low,  catB, [4000, 7500, 10500, 13500, 16500, 19000, 21500], 3000)
-  await insertPrices(db, low,  catC, [6000, 11500, 16500, 21000, 25500, 29500, 33500], 4500)
-  await insertPrices(db, peak, catA, [5500, 10500, 15000, 19000, 23000, 26500, 30000], 4000)
-  await insertPrices(db, peak, catB, [6500, 12500, 18000, 23000, 28000, 32500, 36500], 4800)
-  await insertPrices(db, peak, catC, [9000, 17500, 25500, 32500, 39500, 45500, 51500], 7000)
+  //                       1d   2d   3d   4d   5d   6d   7d   extra
+  await insertPrices(db, low,  catA, [35, 65, 90, 115, 140, 160, 180], 25)
+  await insertPrices(db, low,  catB, [40, 75, 105, 135, 165, 190, 215], 30)
+  await insertPrices(db, low,  catC, [60, 115, 165, 210, 255, 295, 335], 45)
+  await insertPrices(db, peak, catA, [55, 105, 150, 190, 230, 265, 300], 40)
+  await insertPrices(db, peak, catB, [65, 125, 180, 230, 280, 325, 365], 48)
+  await insertPrices(db, peak, catC, [90, 175, 255, 325, 395, 455, 515], 70)
 
   return {
     admin, repA, repB, repCover, inactive,
@@ -116,12 +116,12 @@ async function insertPrices(
 ) {
   for (let i = 0; i < totals.length; i++) {
     await db.sql(
-      `insert into public.price_rows (period_id, category_id, days, total_cents)
+      `insert into public.price_rows (period_id, category_id, days, total)
        values ($1, $2, $3, $4)`,
       [periodId, categoryId, i + 1, totals[i]])
   }
   await db.sql(
-    `insert into public.price_extra_day (period_id, category_id, cents) values ($1, $2, $3)`,
+    `insert into public.price_extra_day (period_id, category_id, price) values ($1, $2, $3)`,
     [periodId, categoryId, extraDay])
 }
 

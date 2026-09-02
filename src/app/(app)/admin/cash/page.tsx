@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { requireAdmin } from '@/lib/auth/session'
+import { formatEuros } from '@/lib/money'
 import { supabaseServer } from '@/lib/supabase/server'
 import { ConfirmForm } from './ConfirmForm'
 
@@ -60,7 +61,7 @@ export default async function CashPage() {
               {rows.map((row) => (
                 <tr key={row.id} className="border-b border-line last:border-0">
                   <td className="py-2 pr-3 font-medium">{row.rep_name ?? '—'}</td>
-                  <td className="py-2 pr-3 tabular-nums">€{(row.amount_cents / 100).toFixed(2)}</td>
+                  <td className="py-2 pr-3 tabular-nums">{formatEuros(row.amount)}</td>
                   <td className="py-2 pr-3 text-ink-soft tabular-nums">{fmtTime(row.handed_at)}</td>
                   <td className="py-2 pr-3">
                     <ConfirmForm id={row.id} />

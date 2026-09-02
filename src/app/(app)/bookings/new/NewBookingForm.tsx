@@ -10,6 +10,7 @@ import {
 } from './actions'
 import type { CarWithSpecs } from '@/lib/availability/types'
 import type { BookingWindows, Hotel } from '@/lib/bookings/types'
+import { formatEuros } from '@/lib/money'
 
 const SEAT_TYPES = ['infant', 'child', 'booster'] as const
 
@@ -312,10 +313,10 @@ export function NewBookingForm({
           <p className="text-ink-soft">{tc('loading')}</p>
         ) : quote?.error ? (
           <p className="ir-notice border-danger bg-danger-tint text-danger" role="alert">{te(quote.error)}</p>
-        ) : quote?.totalCents !== undefined ? (
+        ) : quote?.total !== undefined ? (
           <p className="text-[1.25rem] font-semibold">
             {t('priceBreakdown', { days: quote.days ?? 0 })}
-            <span className="ml-2 text-brand">€{(quote.totalCents / 100).toFixed(2)}</span>
+            <span className="ml-2 text-brand">{formatEuros(quote.total)}</span>
           </p>
         ) : (
           <p className="text-ink-soft">{tc('loading')}</p>

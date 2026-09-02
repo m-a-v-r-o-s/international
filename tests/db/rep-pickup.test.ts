@@ -156,15 +156,15 @@ describe('R4 step 1 · drivers, typed in by hand', () => {
     const bookingId = await bookAsRep(db, f.repA, {
       carId: f.car1, hotelId: f.hotelA, start: '2026-07-06', end: '2026-07-08',
     })
-    const before = await db.one<{ total_cents: number }>(
-      `select total_cents from public.bookings where id = $1`, [bookingId])
+    const before = await db.one<{ total: number }>(
+      `select total from public.bookings where id = $1`, [bookingId])
 
     await addDriver(f.repA, bookingId)
     await addDriver(f.repA, bookingId, { is_main: false, first: 'Second', last: 'Driver' })
 
-    const after = await db.one<{ total_cents: number }>(
-      `select total_cents from public.bookings where id = $1`, [bookingId])
-    expect(after.total_cents).toBe(before.total_cents)   // §9: free of charge
+    const after = await db.one<{ total: number }>(
+      `select total from public.bookings where id = $1`, [bookingId])
+    expect(after.total).toBe(before.total)   // §9: free of charge
   })
 
   test('a rep cannot attach a driver to another rep\'s booking', async () => {
@@ -453,24 +453,24 @@ describe('R4 step 7 · payment, and the money a rep may not touch', () => {
     })
 
     await db.asUser(f.repA, () => db.sql(
-      `update public.bookings set collected_cents = 9000, pay_method = 'cash', paid = true
+      `update public.bookings set collected = 90, pay_method = 'cash', paid = true
        where id = $1`, [bookingId]))
 
-    const after = await db.one<{ collected_cents: number; pay_method: string; paid: boolean; total_cents: number }>(
-      `select collected_cents, pay_method, paid, total_cents from public.bookings where id = $1`,
+    const after = await db.one<{ collected: number; pay_method: string; paid: boolean; total: number }>(
+      `select collected, pay_method, paid, total from public.bookings where id = $1`,
       [bookingId])
-    expect(after.collected_cents).toBe(9000)
+    expect(after.collected).toBe(90)
     expect(after.pay_method).toBe('cash')
     expect(after.paid).toBe(true)
-    expect(after.total_cents).toBe(9000)   // set by the engine, never by this screen
+    expect(after.total).toBe(90)   // set by the engine, never by this screen
   })
 
-  test('a rep sending total_cents alongside the payment is refused outright', async () => {
+  test('a rep sending total alongside the payment is refused outright', async () => {
     const bookingId = await bookAsRep(db, f.repA, {
       carId: f.car1, hotelId: f.hotelA, start: '2026-07-06', end: '2026-07-08',
     })
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `update public.bookings set collected_cents = 100, total_cents = 100 where id = $1`,
+      `update public.bookings set collected = 100, total = 100 where id = $1`,
       [bookingId])))).toBe('42501')
   })
 })
@@ -486,7 +486,7 @@ describe('R4 confirm · booked → out, the whole flow in one run', () => {
       `insert into public.damage_marks (handover_id, car_id, view, x, y, mark_type, pre_existing)
        values ($1, $2, 'front', 0.4, 0.4, 'chip', true)`, [handover.id, f.car1]))
     await db.asUser(f.repA, () => db.sql(
-      `update public.bookings set collected_cents = 9000, pay_method = 'cash', paid = true
+      `update public.bookings set collected = 90, pay_method = 'cash', paid = true
        where id = $1`, [bookingId]))
     await db.asUser(f.repA, () => db.sql(
       `update public.bookings set status = 'out' where id = $1`, [bookingId]))

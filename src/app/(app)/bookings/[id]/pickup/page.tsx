@@ -9,6 +9,7 @@ import { loadContractSource } from '@/lib/contract/load'
 import { mailConfigured } from '@/lib/email/mailer'
 import { athensDateTime } from '@/lib/contract/data'
 import { loadHandoverContext, checkDriverEligibility } from '@/lib/handover/load'
+import { formatEuros } from '@/lib/money'
 import { DamageDiagram } from '../DamageDiagram'
 import { FuelSlider } from '../FuelSlider'
 import { ConfirmTransition } from '../ConfirmTransition'
@@ -151,7 +152,7 @@ export default async function PickupPage({
     damage: pickup !== null,
     agreement: signed !== null,
     copy: signed?.emailed_to !== null && signed !== null,
-    payment: booking.pay_method !== null || booking.collected_cents > 0,
+    payment: booking.pay_method !== null || booking.collected > 0,
     confirm: false,
   }
 
@@ -459,8 +460,8 @@ export default async function PickupPage({
           <div className="ir-card p-4">
             <PaymentForm
               bookingId={booking.id}
-              totalCents={booking.total_cents}
-              collectedCents={booking.collected_cents}
+              total={booking.total}
+              collected={booking.collected}
               payMethod={booking.pay_method}
               paid={booking.paid}
             />
@@ -497,7 +498,7 @@ export default async function PickupPage({
             <div>
               <dt className="text-ink-soft">{t('collectedSummary')}</dt>
               <dd className="font-medium">
-                €{(booking.collected_cents / 100).toFixed(2)} · {booking.paid ? tb('paid') : tb('unpaid')}
+                {formatEuros(booking.collected)} · {booking.paid ? tb('paid') : tb('unpaid')}
               </dd>
             </div>
           </dl>

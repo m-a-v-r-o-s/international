@@ -15,11 +15,11 @@ beforeEach(async () => {
   await db.sql(`delete from public.bookings`)
 })
 
-type Quote = { days: number; period_id: string; total_cents: number }
+type Quote = { days: number; period_id: string; total: number }
 
 async function quote(categoryId: string, start: string, end: string, as = f.repA): Promise<Quote> {
   return db.asUser(as, () => db.one<Quote>(
-    `select days, period_id, total_cents from public.quote($1, $2, $3)`,
+    `select days, period_id, total from public.quote($1, $2, $3)`,
     [categoryId, start, end]))
 }
 
@@ -27,14 +27,14 @@ async function quote(categoryId: string, start: string, end: string, as = f.repA
 // these numbers unchanged for 1–7 days: the +€5 first-day premium is already
 // inside them and the app adds nothing of its own.
 const LOW = {
-  A: [3500, 6500, 9000, 11500, 14000, 16000, 18000], extraA: 2500,
-  B: [4000, 7500, 10500, 13500, 16500, 19000, 21500],
-  C: [6000, 11500, 16500, 21000, 25500, 29500, 33500],
+  A: [35, 65, 90, 115, 140, 160, 180], extraA: 25,
+  B: [40, 75, 105, 135, 165, 190, 215],
+  C: [60, 115, 165, 210, 255, 295, 335],
 }
 const PEAK = {
-  A: [5500, 10500, 15000, 19000, 23000, 26500, 30000], extraA: 4000,
-  B: [6500, 12500, 18000, 23000, 28000, 32500, 36500],
-  C: [9000, 17500, 25500, 32500, 39500, 45500, 51500],
+  A: [55, 105, 150, 190, 230, 265, 300], extraA: 40,
+  B: [65, 125, 180, 230, 280, 325, 365],
+  C: [90, 175, 255, 325, 395, 455, 515],
 }
 
 describe('1 to 7 days is the total the admin typed', () => {
@@ -43,22 +43,22 @@ describe('1 to 7 days is the total the admin typed', () => {
       const start = '2026-07-06'
       const end = addDays(start, days - 1)
       expect(await quote(f.catA, start, end)).toMatchObject(
-        { days, total_cents: LOW.A[days - 1] })
+        { days, total: LOW.A[days - 1] })
       expect(await quote(f.catB, start, end)).toMatchObject(
-        { days, total_cents: LOW.B[days - 1] })
+        { days, total: LOW.B[days - 1] })
       expect(await quote(f.catC, start, end)).toMatchObject(
-        { days, total_cents: LOW.C[days - 1] })
+        { days, total: LOW.C[days - 1] })
     })
 
     test(`${days} day(s) in the peak period, every category`, async () => {
       const start = '2026-08-10'
       const end = addDays(start, days - 1)
       expect(await quote(f.catA, start, end)).toMatchObject(
-        { days, total_cents: PEAK.A[days - 1] })
+        { days, total: PEAK.A[days - 1] })
       expect(await quote(f.catB, start, end)).toMatchObject(
-        { days, total_cents: PEAK.B[days - 1] })
+        { days, total: PEAK.B[days - 1] })
       expect(await quote(f.catC, start, end)).toMatchObject(
-        { days, total_cents: PEAK.C[days - 1] })
+        { days, total: PEAK.C[days - 1] })
     })
   }
 })
@@ -72,14 +72,14 @@ describe('8 days and beyond', () => {
     const start = '2026-06-02'
     const q = await quote(f.catA, start, addDays(start, days - 1))
     expect(q.days).toBe(days)
-    expect(q.total_cents).toBe(expected)
+    expect(q.total).toBe(expected)
   })
 
   test('the extra-day rate is the period the rental started in', async () => {
     // 10 days from 25 Jul: starts in Low, ends in Peak. Low prices throughout.
     const q = await quote(f.catA, '2026-07-25', '2026-08-03')
     expect(q.days).toBe(10)
-    expect(q.total_cents).toBe(LOW.A[6]! + 3 * LOW.extraA)
+    expect(q.total).toBe(LOW.A[6]! + 3 * LOW.extraA)
     expect(q.period_id).toBe(f.low)
   })
 })
@@ -89,15 +89,15 @@ describe('crossing a period boundary', () => {
     const q = await quote(f.catA, '2026-07-29', '2026-08-02')
     expect(q.days).toBe(5)
     expect(q.period_id).toBe(f.low)
-    expect(q.total_cents).toBe(LOW.A[4])          // low, not peak
-    expect(q.total_cents).not.toBe(PEAK.A[4])
+    expect(q.total).toBe(LOW.A[4])          // low, not peak
+    expect(q.total).not.toBe(PEAK.A[4])
   })
 
   test('and equally into a cheaper one', async () => {
     const q = await quote(f.catA, '2026-09-29', '2026-10-03')
     expect(q.days).toBe(5)
     expect(q.period_id).toBe(f.peak)
-    expect(q.total_cents).toBe(PEAK.A[4])
+    expect(q.total).toBe(PEAK.A[4])
   })
 })
 
@@ -122,7 +122,7 @@ describe('quoting fails loudly rather than guessing', () => {
       [f.low, f.catB])
     expect(await errcode(() => quote(f.catB, '2026-07-06', '2026-07-08'))).toBe('IR102')
     await db.sql(
-      `insert into public.price_rows (period_id, category_id, days, total_cents)
+      `insert into public.price_rows (period_id, category_id, days, total)
        values ($1, $2, 3, $3)`, [f.low, f.catB, LOW.B[2]])
   })
 
@@ -132,7 +132,7 @@ describe('quoting fails loudly rather than guessing', () => {
       [f.low, f.catC])
     expect(await errcode(() => quote(f.catC, '2026-07-06', '2026-07-16'))).toBe('IR103')
     await db.sql(
-      `insert into public.price_extra_day (period_id, category_id, cents) values ($1, $2, 4500)`,
+      `insert into public.price_extra_day (period_id, category_id, price) values ($1, $2, 45)`,
       [f.low, f.catC])
   })
 
@@ -144,17 +144,17 @@ describe('quoting fails loudly rather than guessing', () => {
 })
 
 describe('the price on a booking', () => {
-  test('is the server\'s, is stored with the period that produced it, and is in cents', async () => {
+  test('is the server\'s, is stored with the period that produced it, and is a whole euro integer', async () => {
     const id = await bookAsRep(db, f.repA, {
       carId: f.car1, hotelId: f.hotelA, start: '2026-07-06', end: '2026-07-08',
     })
-    const row = await db.one<{ total_cents: number; period_id: string; days: number; category_id: string }>(
-      `select total_cents, period_id, days, category_id from public.bookings where id = $1`, [id])
+    const row = await db.one<{ total: number; period_id: string; days: number; category_id: string }>(
+      `select total, period_id, days, category_id from public.bookings where id = $1`, [id])
 
     expect(row).toMatchObject({
-      total_cents: LOW.A[2], period_id: f.low, days: 3, category_id: f.catA,
+      total: LOW.A[2], period_id: f.low, days: 3, category_id: f.catA,
     })
-    expect(Number.isInteger(row.total_cents)).toBe(true)
+    expect(Number.isInteger(row.total)).toBe(true)
   })
 
   test('editing the price table afterwards does not rewrite it', async () => {
@@ -163,15 +163,15 @@ describe('the price on a booking', () => {
     })
 
     await db.asUser(f.admin, () => db.sql(
-      `update public.price_rows set total_cents = 99900
+      `update public.price_rows set total = 999
         where period_id = $1 and category_id = $2 and days = 3`, [f.low, f.catA]))
 
-    const row = await db.one<{ total_cents: number }>(
-      `select total_cents from public.bookings where id = $1`, [id])
-    expect(row.total_cents).toBe(LOW.A[2])
+    const row = await db.one<{ total: number }>(
+      `select total from public.bookings where id = $1`, [id])
+    expect(row.total).toBe(LOW.A[2])
 
     await db.sql(
-      `update public.price_rows set total_cents = $3
+      `update public.price_rows set total = $3
         where period_id = $1 and category_id = $2 and days = 3`, [f.low, f.catA, LOW.A[2]])
   })
 
@@ -179,8 +179,8 @@ describe('the price on a booking', () => {
     const id = await bookAsRep(db, f.repA, {
       carId: f.car1, hotelId: f.hotelA, start: '2026-07-06', end: '2026-07-08',
     })
-    const before = await db.one<{ total_cents: number }>(
-      `select total_cents from public.bookings where id = $1`, [id])
+    const before = await db.one<{ total: number }>(
+      `select total from public.bookings where id = $1`, [id])
 
     await db.asUser(f.repA, async () => {
       await db.sql(
@@ -192,9 +192,9 @@ describe('the price on a booking', () => {
          values ($1, false, 'Second', 'Driver', '1988-03-03')`, [id])
     })
 
-    const after = await db.one<{ total_cents: number }>(
-      `select total_cents from public.bookings where id = $1`, [id])
-    expect(after.total_cents).toBe(before.total_cents)
+    const after = await db.one<{ total: number }>(
+      `select total from public.bookings where id = $1`, [id])
+    expect(after.total).toBe(before.total)
   })
 
   test('changing the dates before pickup re-prices the booking', async () => {
@@ -204,9 +204,9 @@ describe('the price on a booking', () => {
     await db.asUser(f.repA, () => db.sql(
       `update public.bookings set end_date = '2026-07-10' where id = $1`, [id]))
 
-    const row = await db.one<{ total_cents: number; days: number }>(
-      `select total_cents, days from public.bookings where id = $1`, [id])
-    expect(row).toMatchObject({ days: 5, total_cents: LOW.A[4] })
+    const row = await db.one<{ total: number; days: number }>(
+      `select total, days from public.bookings where id = $1`, [id])
+    expect(row).toMatchObject({ days: 5, total: LOW.A[4] })
   })
 
   test('an extension re-prices from the original pickup date\'s period', async () => {
@@ -221,10 +221,10 @@ describe('the price on a booking', () => {
     await db.asUser(f.repA, () => db.sql(
       `update public.bookings set end_date = '2026-08-05' where id = $1`, [id]))
 
-    const row = await db.one<{ total_cents: number; days: number; period_id: string }>(
-      `select total_cents, days, period_id from public.bookings where id = $1`, [id])
+    const row = await db.one<{ total: number; days: number; period_id: string }>(
+      `select total, days, period_id from public.bookings where id = $1`, [id])
     expect(row).toMatchObject({ days: 8, period_id: f.low })
-    expect(row.total_cents).toBe(LOW.A[6]! + 1 * LOW.extraA)
+    expect(row.total).toBe(LOW.A[6]! + 1 * LOW.extraA)
   })
 
   test('a booking whose pickup date has no price cannot be created at all', async () => {

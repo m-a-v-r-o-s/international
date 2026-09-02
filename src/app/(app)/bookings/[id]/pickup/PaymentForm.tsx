@@ -4,6 +4,7 @@ import { useActionState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
 import { SubmitButton } from '@/components/SubmitButton'
+import { formatEuros } from '@/lib/money'
 import { savePayment, type PickupState } from './actions'
 
 /**
@@ -11,19 +12,19 @@ import { savePayment, type PickupState } from './actions'
  * paid or not. No security deposit is taken and none is built.
  *
  * The price is shown here, read-only, and is not an input: a rep cannot
- * discount, override or negotiate it (§6), `total_cents` is absent from their
+ * discount, override or negotiate it (§6), `total` is absent from their
  * column grant, and the guard trigger reverts it even if it were sent. What
  * they type is what the guest actually handed over — a different number.
  *
- * Euros in, integer cents out, converted at this boundary and nowhere else,
- * the same as A4's price grid and A5's price amendment.
+ * Whole euros, both sides — the input rejects a decimal outright rather than
+ * rounding it away.
  */
 export function PaymentForm({
-  bookingId, totalCents, collectedCents, payMethod, paid,
+  bookingId, total, collected, payMethod, paid,
 }: {
   bookingId: string
-  totalCents: number | null
-  collectedCents: number
+  total: number | null
+  collected: number
   payMethod: 'cash' | 'card' | 'transfer' | null
   paid: boolean
 }) {
@@ -32,11 +33,7 @@ export function PaymentForm({
   const tc = useTranslations('common')
   const te = useTranslations('errors')
 
-  const [state, formAction] = useActionState<PickupState, FormData>(async (prev, formData) => {
-    const euros = formData.get('collected_euros')
-    formData.set('collected_cents', String(Math.round(Number.parseFloat(String(euros || '0')) * 100)))
-    return savePayment(prev, formData)
-  }, undefined)
+  const [state, formAction] = useActionState<PickupState, FormData>(savePayment, undefined)
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -48,14 +45,12 @@ export function PaymentForm({
 
       <p className="ir-notice border-line bg-canvas">
         {t('priceDue')}{' '}
-        <span className="font-semibold text-brand">
-          {totalCents !== null ? `€${(totalCents / 100).toFixed(2)}` : '—'}
-        </span>
+        <span className="font-semibold text-brand">{formatEuros(total)}</span>
       </p>
 
       <Field
-        id="collected_euros" name="collected_euros" type="number" min={0} step={0.01} inputMode="decimal"
-        label={t('collected')} defaultValue={(collectedCents / 100).toFixed(2)} required
+        id="collected" name="collected" type="number" min={0} step={1} inputMode="numeric"
+        label={t('collected')} defaultValue={collected} required
       />
 
       <div>

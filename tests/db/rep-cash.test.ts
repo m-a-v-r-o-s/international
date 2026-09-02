@@ -32,7 +32,7 @@ async function pickedUpAndPaid(
   rep: string,
   carId: string,
   hotelId: string,
-  opts: { cents: number; method: 'cash' | 'card' | 'transfer'; pickedUpDaysAgo?: number } ,
+  opts: { amount: number; method: 'cash' | 'card' | 'transfer'; pickedUpDaysAgo?: number } ,
 ) {
   const bookingId = await bookAsRep(db, rep, {
     carId, hotelId, start: '2026-07-06', end: '2026-07-08',
@@ -53,8 +53,8 @@ async function pickedUpAndPaid(
 
   await db.asUser(rep, () => db.sql(
     `update public.bookings
-        set collected_cents = $2, pay_method = $3::public.pay_method, paid = true, status = 'out'
-      where id = $1`, [bookingId, opts.cents, opts.method]))
+        set collected = $2, pay_method = $3::public.pay_method, paid = true, status = 'out'
+      where id = $1`, [bookingId, opts.amount, opts.method]))
 
   return bookingId
 }
@@ -67,25 +67,25 @@ const readyOf = (rep: string) =>
 
 describe('the one aggregate a rep may see', () => {
   test('cash collected today on their own pickups, and nothing else', async () => {
-    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { cents: 9000, method: 'cash' })
-    await pickedUpAndPaid(f.repA, f.car2, f.hotelA, { cents: 10500, method: 'card' })
+    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { amount: 90, method: 'cash' })
+    await pickedUpAndPaid(f.repA, f.car2, f.hotelA, { amount: 105, method: 'card' })
 
-    expect(await cashOf(f.repA)).toBe(9000)   // the card takings are not cash in hand
+    expect(await cashOf(f.repA)).toBe(90)   // the card takings are not cash in hand
   })
 
   test('another rep\'s cash is never in it — not even a covering colleague\'s', async () => {
-    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { cents: 9000, method: 'cash' })
-    await pickedUpAndPaid(f.repB, f.car3, f.hotelB, { cents: 4000, method: 'cash' })
+    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { amount: 90, method: 'cash' })
+    await pickedUpAndPaid(f.repB, f.car3, f.hotelB, { amount: 40, method: 'cash' })
 
-    expect(await cashOf(f.repA)).toBe(9000)
-    expect(await cashOf(f.repB)).toBe(4000)
+    expect(await cashOf(f.repA)).toBe(90)
+    expect(await cashOf(f.repB)).toBe(40)
     // repCover covers Hotel Alpha and can READ repA's booking — but the money
     // is repA's, not the hotel's.
     expect(await cashOf(f.repCover)).toBe(0)
   })
 
   test('cash taken on an earlier day has already left the figure', async () => {
-    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { cents: 9000, method: 'cash', pickedUpDaysAgo: 2 })
+    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { amount: 90, method: 'cash', pickedUpDaysAgo: 2 })
     expect(await cashOf(f.repA)).toBe(0)
   })
 
@@ -94,7 +94,7 @@ describe('the one aggregate a rep may see', () => {
       carId: f.car1, hotelId: f.hotelA, start: '2026-07-06', end: '2026-07-08',
     })
     await db.asUser(f.repA, () => db.sql(
-      `update public.bookings set collected_cents = 9000, pay_method = 'cash', paid = true
+      `update public.bookings set collected = 90, pay_method = 'cash', paid = true
        where id = $1`, [bookingId]))
 
     expect(await cashOf(f.repA)).toBe(0)
@@ -103,25 +103,25 @@ describe('the one aggregate a rep may see', () => {
 
 describe('handing it over', () => {
   test('my_hand_over_cash() records the receipt but leaves the figure until the boss confirms it', async () => {
-    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { cents: 9000, method: 'cash' })
-    await pickedUpAndPaid(f.repA, f.car2, f.hotelA, { cents: 3500, method: 'cash' })
-    expect(await cashOf(f.repA)).toBe(12500)
+    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { amount: 90, method: 'cash' })
+    await pickedUpAndPaid(f.repA, f.car2, f.hotelA, { amount: 35, method: 'cash' })
+    expect(await cashOf(f.repA)).toBe(125)
 
-    const handed = await db.asUser(f.repA, () => db.one<{ handover_id: string; amount_cents: number }>(
-      `select handover_id, amount_cents from public.my_hand_over_cash()`))
-    expect(handed.amount_cents).toBe(12500)
+    const handed = await db.asUser(f.repA, () => db.one<{ handover_id: string; amount: number }>(
+      `select handover_id, amount from public.my_hand_over_cash()`))
+    expect(handed.amount).toBe(125)
 
     // docs/01-DECISIONS.md §31: only the boss's confirmation clears this, so
     // a rep's own tap leaves their own figure exactly where it was — what
     // changes is that there is nothing left for a second tap to grab.
-    expect(await cashOf(f.repA)).toBe(12500)
+    expect(await cashOf(f.repA)).toBe(125)
     expect(await readyOf(f.repA)).toBe(0)
 
-    const receipt = await db.one<{ rep_id: string; amount_cents: number; confirmed_by: string | null }>(
-      `select rep_id, amount_cents, confirmed_by from public.cash_handovers where id = $1`,
+    const receipt = await db.one<{ rep_id: string; amount: number; confirmed_by: string | null }>(
+      `select rep_id, amount, confirmed_by from public.cash_handovers where id = $1`,
       [handed.handover_id])
     expect(receipt.rep_id).toBe(f.repA)
-    expect(receipt.amount_cents).toBe(12500)
+    expect(receipt.amount).toBe(125)
     expect(receipt.confirmed_by).toBeNull()   // the boss confirms receipt himself
 
     // The receipt is linked to the bookings it actually covers, not just a sum.
@@ -136,21 +136,21 @@ describe('handing it over', () => {
   })
 
   test('cash taken AFTER a hand-over adds to the figure, on top of what is still awaiting confirmation', async () => {
-    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { cents: 9000, method: 'cash' })
+    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { amount: 90, method: 'cash' })
     await db.asUser(f.repA, () => db.sql(`select public.my_hand_over_cash()`))
-    expect(await cashOf(f.repA)).toBe(9000)     // handed over, not yet confirmed
+    expect(await cashOf(f.repA)).toBe(90)     // handed over, not yet confirmed
     expect(await readyOf(f.repA)).toBe(0)       // nothing left for a second tap
 
     // The rare case docs/01-DECISIONS.md §31 exists for: a night-shift pickup
     // or a delayed payment, after the usual end-of-morning hand-over.
-    await pickedUpAndPaid(f.repA, f.car2, f.hotelA, { cents: 4000, method: 'cash' })
-    expect(await cashOf(f.repA)).toBe(13000)
-    expect(await readyOf(f.repA)).toBe(4000)
+    await pickedUpAndPaid(f.repA, f.car2, f.hotelA, { amount: 40, method: 'cash' })
+    expect(await cashOf(f.repA)).toBe(130)
+    expect(await readyOf(f.repA)).toBe(40)
 
-    const handedAgain = await db.asUser(f.repA, () => db.one<{ amount_cents: number }>(
-      `select amount_cents from public.my_hand_over_cash()`))
-    expect(handedAgain.amount_cents).toBe(4000)   // only the new cash — the first batch is a separate receipt
-    expect(await cashOf(f.repA)).toBe(13000)      // still owed until the boss confirms either one
+    const handedAgain = await db.asUser(f.repA, () => db.one<{ amount: number }>(
+      `select amount from public.my_hand_over_cash()`))
+    expect(handedAgain.amount).toBe(40)   // only the new cash — the first batch is a separate receipt
+    expect(await cashOf(f.repA)).toBe(130)      // still owed until the boss confirms either one
     expect(await readyOf(f.repA)).toBe(0)
   })
 
@@ -163,7 +163,7 @@ describe('handing it over', () => {
   })
 
   test('a double-tap cannot hand the same cash over twice', async () => {
-    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { cents: 9000, method: 'cash' })
+    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { amount: 90, method: 'cash' })
     await db.asUser(f.repA, () => db.sql(`select public.my_hand_over_cash()`))
 
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
@@ -175,40 +175,40 @@ describe('handing it over', () => {
   })
 
   test('a rep can only ever hand over their OWN cash — the RPC takes no arguments', async () => {
-    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { cents: 9000, method: 'cash' })
-    await pickedUpAndPaid(f.repB, f.car3, f.hotelB, { cents: 4000, method: 'cash' })
+    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { amount: 90, method: 'cash' })
+    await pickedUpAndPaid(f.repB, f.car3, f.hotelB, { amount: 40, method: 'cash' })
 
-    const handed = await db.asUser(f.repB, () => db.one<{ amount_cents: number }>(
-      `select amount_cents from public.my_hand_over_cash()`))
-    expect(handed.amount_cents).toBe(4000)
+    const handed = await db.asUser(f.repB, () => db.one<{ amount: number }>(
+      `select amount from public.my_hand_over_cash()`))
+    expect(handed.amount).toBe(40)
 
-    expect(await cashOf(f.repA)).toBe(9000)   // untouched
+    expect(await cashOf(f.repA)).toBe(90)   // untouched
   })
 
   test('a rep sees only their own receipts', async () => {
-    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { cents: 9000, method: 'cash' })
-    await pickedUpAndPaid(f.repB, f.car3, f.hotelB, { cents: 4000, method: 'cash' })
+    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { amount: 90, method: 'cash' })
+    await pickedUpAndPaid(f.repB, f.car3, f.hotelB, { amount: 40, method: 'cash' })
     await db.asUser(f.repA, () => db.sql(`select public.my_hand_over_cash()`))
     await db.asUser(f.repB, () => db.sql(`select public.my_hand_over_cash()`))
 
-    const seenByA = await db.asUser(f.repA, () => db.sql<{ amount_cents: number }>(
-      `select id, rep_id, amount_cents, handed_at from public.cash_handovers`))
-    expect(seenByA.map((r) => r.amount_cents)).toEqual([9000])
+    const seenByA = await db.asUser(f.repA, () => db.sql<{ amount: number }>(
+      `select id, rep_id, amount, handed_at from public.cash_handovers`))
+    expect(seenByA.map((r) => r.amount)).toEqual([90])
 
     const seenByAdmin = await db.asUser(f.admin, () => db.sql(
-      `select id, rep_id, amount_cents, handed_at from public.cash_handovers`))
+      `select id, rep_id, amount, handed_at from public.cash_handovers`))
     expect(seenByAdmin).toHaveLength(2)
   })
 
   test('the admin confirms receipt; a rep cannot confirm their own', async () => {
-    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { cents: 9000, method: 'cash' })
+    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { amount: 90, method: 'cash' })
     const handed = await db.asUser(f.repA, () => db.one<{ handover_id: string }>(
       `select handover_id from public.my_hand_over_cash()`))
-    expect(await cashOf(f.repA)).toBe(9000)   // a rep confirming their own would zero it early — see below
+    expect(await cashOf(f.repA)).toBe(90)   // a rep confirming their own would zero it early — see below
 
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
       `select public.admin_confirm_cash_handover($1)`, [handed.handover_id])))).toBe('IR001')
-    expect(await cashOf(f.repA)).toBe(9000)   // the refused attempt moved nothing
+    expect(await cashOf(f.repA)).toBe(90)   // the refused attempt moved nothing
 
     await db.asUser(f.admin, () => db.sql(
       `select public.admin_confirm_cash_handover($1)`, [handed.handover_id]))
@@ -220,8 +220,8 @@ describe('handing it over', () => {
   })
 
   test('admin_pending_cash_handovers() lists what nobody has confirmed yet, and only for the admin', async () => {
-    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { cents: 9000, method: 'cash' })
-    await pickedUpAndPaid(f.repB, f.car3, f.hotelB, { cents: 4000, method: 'cash' })
+    await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { amount: 90, method: 'cash' })
+    await pickedUpAndPaid(f.repB, f.car3, f.hotelB, { amount: 40, method: 'cash' })
     const handedA = await db.asUser(f.repA, () => db.one<{ handover_id: string }>(
       `select handover_id from public.my_hand_over_cash()`))
     await db.asUser(f.repB, () => db.sql(`select public.my_hand_over_cash()`))
@@ -229,36 +229,36 @@ describe('handing it over', () => {
     expect(await errcode(() => db.asUser(f.repA, () =>
       db.sql(`select * from public.admin_pending_cash_handovers()`)))).toBe('IR001')
 
-    const pending = await db.asUser(f.admin, () => db.sql<{ id: string; rep_name: string; amount_cents: number }>(
-      `select id, rep_name, amount_cents from public.admin_pending_cash_handovers()`))
+    const pending = await db.asUser(f.admin, () => db.sql<{ id: string; rep_name: string; amount: number }>(
+      `select id, rep_name, amount from public.admin_pending_cash_handovers()`))
     expect(pending).toHaveLength(2)
-    expect(pending.map((r) => r.amount_cents).sort()).toEqual([4000, 9000])
+    expect(pending.map((r) => r.amount).sort()).toEqual([40, 90])
 
     // Confirming one receipt drops only that one off the queue.
     await db.asUser(f.admin, () => db.sql(
       `select public.admin_confirm_cash_handover($1)`, [handedA.handover_id]))
-    const remaining = await db.asUser(f.admin, () => db.sql<{ amount_cents: number }>(
-      `select amount_cents from public.admin_pending_cash_handovers()`))
-    expect(remaining.map((r) => r.amount_cents)).toEqual([4000])
+    const remaining = await db.asUser(f.admin, () => db.sql<{ amount: number }>(
+      `select amount from public.admin_pending_cash_handovers()`))
+    expect(remaining.map((r) => r.amount)).toEqual([40])
   })
 })
 
 describe('the stamp the hand-over leaves is one-way, and only through the RPC', () => {
   test('a rep still cannot write cash_handover_id directly — the grant refuses it', async () => {
-    const bookingId = await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { cents: 9000, method: 'cash' })
+    const bookingId = await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { amount: 90, method: 'cash' })
     const receipt = await db.asUser(f.repA, () => db.one<{ id: string }>(
-      `insert into public.cash_handovers (rep_id, amount_cents) values ($1, 1) returning id`,
+      `insert into public.cash_handovers (rep_id, amount) values ($1, 1) returning id`,
       [f.repA]))
 
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
       `update public.bookings set cash_handover_id = $2 where id = $1`, [bookingId, receipt.id]))))
       .toBe('42501')
 
-    expect(await cashOf(f.repA)).toBe(9000)   // the figure did not move
+    expect(await cashOf(f.repA)).toBe(90)   // the figure did not move
   })
 
   test('the guard reverts a clear or a re-point even when the column grant is bypassed', async () => {
-    const bookingId = await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { cents: 9000, method: 'cash' })
+    const bookingId = await pickedUpAndPaid(f.repA, f.car1, f.hotelA, { amount: 90, method: 'cash' })
     await db.asUser(f.repA, () => db.sql(`select public.my_hand_over_cash()`))
 
     const stamped = await db.one<{ cash_handover_id: string }>(
@@ -275,7 +275,7 @@ describe('the stamp the hand-over leaves is one-way, and only through the RPC', 
     expect(cleared.cash_handover_id).toBe(stamped.cash_handover_id)
 
     const other = await db.asUser(f.repB, () => db.one<{ id: string }>(
-      `insert into public.cash_handovers (rep_id, amount_cents) values ($1, 1) returning id`,
+      `insert into public.cash_handovers (rep_id, amount) values ($1, 1) returning id`,
       [f.repB]))
     await db.sql(
       `update public.bookings set cash_handover_id = $2 where id = $1`, [bookingId, other.id])
@@ -285,8 +285,8 @@ describe('the stamp the hand-over leaves is one-way, and only through the RPC', 
 
     // The stamp survived every bypass attempt, so there is still nothing for
     // a second tap to grab — even though the boss has not confirmed it yet,
-    // which is why the whole figure, not just the ready slice, is still 9000.
+    // which is why the whole figure, not just the ready slice, is still 90.
     expect(await readyOf(f.repA)).toBe(0)
-    expect(await cashOf(f.repA)).toBe(9000)
+    expect(await cashOf(f.repA)).toBe(90)
   })
 })

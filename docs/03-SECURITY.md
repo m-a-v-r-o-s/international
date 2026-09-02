@@ -60,8 +60,8 @@ category-adjacent personal data under GDPR. A breach here is a reportable incide
 8. **Licence images: private bucket, signed URLs, short TTL**, issued only after re-checking
    the caller may see that booking. Never a public URL, never a permanent one.
 9. **Mass-assignment blocked.** Whitelist writable fields per endpoint. A rep POSTing
-   `{total_cents: 1}` must be rejected, not obeyed.
-10. **Money is integer cents.** No floats anywhere in pricing or payment.
+   `{total: 1}` must be rejected, not obeyed.
+10. **Money is a whole euro integer.** No cents, no floats anywhere in pricing or payment.
 
 ## Standing-profile checklist applied here
 

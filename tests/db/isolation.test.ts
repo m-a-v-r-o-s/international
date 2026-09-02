@@ -40,7 +40,7 @@ beforeEach(async () => {
 describe("rep A reaching for rep B's booking", () => {
   test('reading it returns nothing', async () => {
     const rows = await db.asUser(f.repA, () => db.sql(
-      `select id, cust_first, total_cents from public.bookings where id = $1`, [repBBooking]))
+      `select id, cust_first, total from public.bookings where id = $1`, [repBBooking]))
     expect(rows).toEqual([])
   })
 
@@ -160,7 +160,7 @@ describe("rep A reaching for rep B's booking", () => {
 describe('the cover-shift exception', () => {
   test("a hotel's other rep sees its bookings — that is the one way in", async () => {
     const rows = await db.asUser(f.repCover, () => db.sql<{ id: string }>(
-      `select id, cust_first, total_cents from public.bookings where id = $1`, [repABooking]))
+      `select id, cust_first, total from public.bookings where id = $1`, [repABooking]))
     expect(rows).toHaveLength(1)
   })
 
@@ -222,9 +222,9 @@ describe('no aggregate reaches a rep', () => {
 
   test('summing revenue sums only their own bookings', async () => {
     const { s } = await db.asUser(f.repA, () => db.one<{ s: string }>(
-      `select coalesce(sum(total_cents), 0)::text as s from public.bookings`))
+      `select coalesce(sum(total), 0)::text as s from public.bookings`))
     const own = await db.one<{ s: string }>(
-      `select total_cents::text as s from public.bookings where id = $1`, [repABooking])
+      `select total::text as s from public.bookings where id = $1`, [repABooking])
     expect(s).toBe(own.s)
   })
 
@@ -234,7 +234,7 @@ describe('no aggregate reaches a rep', () => {
       expect(await db.sql(`select * from public.price_extra_day`)).toEqual([])
       expect(await db.sql(`select * from public.pricing_periods`)).toEqual([])
       expect(await db.sql(
-        `select coalesce(sum(total_cents), 0)::int as s from public.price_rows`))
+        `select coalesce(sum(total), 0)::int as s from public.price_rows`))
         .toEqual([{ s: 0 }])
     })
   })
@@ -246,9 +246,9 @@ describe('no aggregate reaches a rep', () => {
   })
 
   test('the only figure they get is their own cash in hand, today', async () => {
-    // Rep A collected 50.00 cash at pickup today; Rep B collected 90.00.
-    for (const [booking, rep, cents] of [
-      [repABooking, f.repA, 5000], [repBBooking, f.repB, 9000],
+    // Rep A collected €50 cash at pickup today; Rep B collected €90.
+    for (const [booking, rep, amount] of [
+      [repABooking, f.repA, 50], [repBBooking, f.repB, 90],
     ] as const) {
       await db.sql(
         `insert into public.booking_drivers
@@ -258,8 +258,8 @@ describe('no aggregate reaches a rep', () => {
         [booking])
       await db.asUser(rep, () => db.sql(
         `update public.bookings
-            set status = 'out', pay_method = 'cash', collected_cents = $2, paid = true
-          where id = $1`, [booking, cents]))
+            set status = 'out', pay_method = 'cash', collected = $2, paid = true
+          where id = $1`, [booking, amount]))
       await db.sql(
         `insert into public.handovers (booking_id, kind, by_profile, fuel_eighths)
          values ($1, 'pickup', $2, 8)`, [booking, rep])
@@ -270,8 +270,8 @@ describe('no aggregate reaches a rep', () => {
     const b = await db.asUser(f.repB, () => db.one<{ v: number }>(
       `select public.my_cash_in_hand() as v`))
 
-    expect(a.v).toBe(5000)
-    expect(b.v).toBe(9000)
+    expect(a.v).toBe(50)
+    expect(b.v).toBe(90)
   })
 
   test('yesterday\'s cash, and cash already handed over, are not in it', async () => {
@@ -283,7 +283,7 @@ describe('no aggregate reaches a rep', () => {
       [repABooking])
     await db.asUser(f.repA, () => db.sql(
       `update public.bookings
-          set status = 'out', pay_method = 'cash', collected_cents = 5000, paid = true
+          set status = 'out', pay_method = 'cash', collected = 50, paid = true
         where id = $1`, [repABooking]))
     await db.sql(
       `insert into public.handovers (booking_id, kind, by_profile, occurred_at)
@@ -296,10 +296,10 @@ describe('no aggregate reaches a rep', () => {
 })
 
 describe('what a rep may write is decided in the database', () => {
-  test('a rep POSTing total_cents, created_by or kind is refused outright', async () => {
+  test('a rep POSTing total, created_by or kind is refused outright', async () => {
     await db.asUser(f.repA, async () => {
       expect(await errcode(() => db.sql(
-        `insert into public.bookings (car_id, start_date, end_date, total_cents)
+        `insert into public.bookings (car_id, start_date, end_date, total)
          values ($1, '2026-07-15', '2026-07-16', 1)`, [f.car1]))).toBe('42501')
       expect(await errcode(() => db.sql(
         `insert into public.bookings (car_id, start_date, end_date, created_by)
@@ -308,7 +308,7 @@ describe('what a rep may write is decided in the database', () => {
         `insert into public.bookings (car_id, start_date, end_date, kind, block_reason)
          values ($1, '2026-07-15', '2026-07-16', 'block', 'mine')`, [f.car1]))).toBe('42501')
       expect(await errcode(() => db.sql(
-        `update public.bookings set total_cents = 1 where id = $1`, [repABooking]))).toBe('42501')
+        `update public.bookings set total = 1 where id = $1`, [repABooking]))).toBe('42501')
     })
   })
 
@@ -318,20 +318,20 @@ describe('what a rep may write is decided in the database', () => {
     // rather than trusting them.
     await db.sql(`select set_config('request.jwt.claims', $1, false)`, [
       JSON.stringify({ sub: f.repA, role: 'authenticated' })])
-    const row = await db.one<{ created_by: string; total_cents: number; kind: string; status: string }>(
+    const row = await db.one<{ created_by: string; total: number; kind: string; status: string }>(
       `insert into public.bookings
          (car_id, hotel_id, start_date, end_date, kind, status,
-          created_by, total_cents, block_reason, collected_cents, paid)
+          created_by, total, block_reason, collected, paid)
        values ($1, $2, '2026-07-15', '2026-07-16', 'block', 'blocked',
-               $3, 1, 'i am the boss', 999, true)
-       returning created_by, total_cents, kind, status`,
+               $3, 1, 'i am the boss', 9, true)
+       returning created_by, total, kind, status`,
       [f.car1, f.hotelA, f.repB])
     await db.sql(`select set_config('request.jwt.claims', '', false)`)
 
     expect(row.created_by).toBe(f.repA)     // not rep B
     expect(row.kind).toBe('rental')         // not a block
     expect(row.status).toBe('booked')
-    expect(row.total_cents).toBe(6500)      // the engine's 2-day low-season price
+    expect(row.total).toBe(65)              // the engine's 2-day low-season price
   })
 
   test('a rep cannot promote themselves to admin', async () => {
@@ -351,7 +351,7 @@ describe('what a rep may write is decided in the database', () => {
       expect(await db.sql(
         `update public.cars set plate = 'HACKED' where id = $1 returning id`, [f.car1])).toEqual([])
       expect(await db.sql(
-        `update public.price_rows set total_cents = 1 returning days`)).toEqual([])
+        `update public.price_rows set total = 1 returning days`)).toEqual([])
       expect(await db.sql(
         `update public.categories set min_driver_age = 18 returning code`)).toEqual([])
       // An UPDATE the policy hides simply matches nothing; an INSERT the policy

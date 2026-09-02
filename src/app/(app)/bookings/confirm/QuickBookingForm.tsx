@@ -12,6 +12,7 @@ import {
 } from '../new/actions'
 import type { CarWithSpecs } from '@/lib/availability/types'
 import type { BookingWindows, Hotel } from '@/lib/bookings/types'
+import { formatEuros } from '@/lib/money'
 
 /**
  * R3b · Booking confirmation (docs/04-SCREENS.md, docs/01-DECISIONS.md §30).
@@ -301,10 +302,10 @@ export function QuickBookingForm({
           <p className="text-ink-soft">{tc('loading')}</p>
         ) : quote?.error ? (
           <p className="ir-notice border-danger bg-danger-tint text-danger" role="alert">{te(quote.error)}</p>
-        ) : quote?.totalCents !== undefined ? (
+        ) : quote?.total !== undefined ? (
           <p className="text-[1.25rem] font-semibold">
             {tn('priceBreakdown', { days: quote.days ?? 0 })}
-            <span className="ml-2 text-brand">€{(quote.totalCents / 100).toFixed(2)}</span>
+            <span className="ml-2 text-brand">{formatEuros(quote.total)}</span>
           </p>
         ) : (
           <p className="text-ink-soft">{tc('loading')}</p>

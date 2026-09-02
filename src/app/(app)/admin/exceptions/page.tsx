@@ -23,7 +23,7 @@ const TYPES: ExceptionType[] = [
  *
  * Read-heavy over rows that already exist, same shape as A1/A2/A5: no new RLS
  * policy and no new engine logic. Note what is NOT selected here —
- * `charge_cents` and `resolution` are withheld from `authenticated` by column
+ * `charge` and `resolution` are withheld from `authenticated` by column
  * grant, admin included, so `select *` is refused and the list shows only
  * whether an item is open or closed. The amount itself comes from
  * admin_exception_detail() on the item's own screen.

@@ -189,7 +189,7 @@ describe("a rep's digest is their own day, and nothing more", () => {
 
     const names = columns.map((c) => c.parameter_name)
     expect(names).toEqual(['kind', 'booking_id', 'at', 'plate', 'guest', 'room'])
-    for (const forbidden of ['total_cents', 'price', 'count', 'total', 'sum']) {
+    for (const forbidden of ['price', 'count', 'total', 'sum']) {
       expect(names).not.toContain(forbidden)
     }
   })

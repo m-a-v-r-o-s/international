@@ -133,8 +133,8 @@ begin
       new.block_reason    := null;
       new.period_id       := null;
       new.days            := null;
-      new.total_cents     := null;
-      new.collected_cents := 0;
+      new.total            := null;
+      new.collected        := 0;
       new.pay_method      := null;
       new.paid            := false;
       new.returned_at     := null;
@@ -160,11 +160,11 @@ begin
 
       -- The price comes from the engine. An admin may type a total instead —
       -- that is the only way a price is ever set by hand, and it is audited.
-      if new.total_cents is null then
-        select q.period_id, q.total_cents into v_period, v_total
+      if new.total is null then
+        select q.period_id, q.total into v_period, v_total
         from public.quote(new.category_id, new.start_date, new.end_date) q;
         new.period_id   := v_period;
-        new.total_cents := v_total;
+        new.total       := v_total;
       end if;
     else
       new.category_id := null;
@@ -187,7 +187,7 @@ begin
     new.eligibility_override_by := old.eligibility_override_by;
     new.eligibility_override_at := old.eligibility_override_at;
     new.period_id        := old.period_id;
-    new.total_cents      := old.total_cents;
+    new.total            := old.total;
 
     -- `cash_handover_id` is the ONE derived field a rep's own action moves,
     -- and only in one direction: from null to a `cash_handovers` row that
@@ -236,7 +236,7 @@ begin
       new.cust_phone      := old.cust_phone;
       new.cust_dob        := old.cust_dob;
       new.pickup_at       := old.pickup_at;
-      new.collected_cents := old.collected_cents;
+      new.collected        := old.collected;
       new.pay_method      := old.pay_method;
       new.paid            := old.paid;
     else
@@ -294,11 +294,11 @@ begin
     -- Re-price when the shape of the rental changed — including an extension,
     -- which still uses the ORIGINAL pickup date's period. If an admin typed a
     -- new total themselves, theirs stands.
-    if v_reprice and new.total_cents is not distinct from old.total_cents then
-      select q.period_id, q.total_cents into v_period, v_total
+    if v_reprice and new.total is not distinct from old.total then
+      select q.period_id, q.total into v_period, v_total
       from public.quote(new.category_id, new.start_date, new.end_date) q;
       new.period_id   := v_period;
-      new.total_cents := v_total;
+      new.total       := v_total;
     end if;
   end if;
 

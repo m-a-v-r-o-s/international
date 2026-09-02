@@ -6,7 +6,7 @@ import { seed, bookAsRep, type Fixtures } from '../helpers/fixtures'
 // as A1/A2/A5 — no new policy, no new engine logic — so what is under test is
 // the boundary the screen sits on: an admin can see every rep's items and the
 // amounts, a rep can see neither the amounts nor another rep's items, and the
-// only door to charge_cents and resolution is admin_resolve_exception().
+// only door to charge and resolution is admin_resolve_exception().
 
 let db: TestDb
 let f: Fixtures
@@ -52,14 +52,14 @@ describe('A6 · the list the screen runs', () => {
     expect(seen.map((r) => r.type)).toEqual(['fuel_short'])
   })
 
-  test('`select *` is refused even for the admin — charge_cents is in no client grant', async () => {
+  test('`select *` is refused even for the admin — charge is in no client grant', async () => {
     const a = await bookAsRep(db, f.repA, { carId: f.car1, hotelId: f.hotelA, start: '2026-07-06', end: '2026-07-08' })
     await raise(f.repA, a, 'fuel_short')
 
     expect(await errcode(() => db.asUser(f.admin, () => db.sql(
       `select * from public.exceptions`)))).toBe('42501')
     expect(await errcode(() => db.asUser(f.admin, () => db.sql(
-      `select charge_cents from public.exceptions`)))).toBe('42501')
+      `select charge from public.exceptions`)))).toBe('42501')
   })
 
   test('the open/closed filter the screen applies is resolved_at, which IS granted', async () => {
@@ -68,7 +68,7 @@ describe('A6 · the list the screen runs', () => {
     const closing = await raise(f.repA, a, 'new_damage')
 
     await db.asUser(f.admin, () => db.sql(
-      `select public.admin_resolve_exception($1, 4000, 'billed to the card on file')`, [closing.id]))
+      `select public.admin_resolve_exception($1, 40, 'billed to the card on file')`, [closing.id]))
 
     const stillOpen = await db.asUser(f.admin, () => db.sql<{ id: string }>(
       `select id from public.exceptions where resolved_at is null`))
@@ -82,11 +82,11 @@ describe('A6 · opening one item', () => {
     const raised = await raise(f.repA, a, 'fuel_short', '8/8 → 6/8 (−2/8 ≈ 9.5 L)')
 
     const before = await db.asUser(f.admin, () => db.one<{
-      type: string; detail: string; charge_cents: number | null; resolution: string | null
-    }>(`select type, detail, charge_cents, resolution from public.admin_exception_detail($1)`, [raised.id]))
+      type: string; detail: string; charge: number | null; resolution: string | null
+    }>(`select type, detail, charge, resolution from public.admin_exception_detail($1)`, [raised.id]))
     expect(before.type).toBe('fuel_short')
     expect(before.detail).toContain('−2/8')
-    expect(before.charge_cents).toBeNull()
+    expect(before.charge).toBeNull()
   })
 
   test('a rep calling admin_exception_detail is refused (IR001)', async () => {
@@ -104,14 +104,14 @@ describe('A6 · setting the charge and closing the item', () => {
     const raised = await raise(f.repA, a, 'new_damage', '1: rear/dent')
 
     await db.asUser(f.admin, () => db.sql(
-      `select public.admin_resolve_exception($1, 12000, 'panel respray, quoted at the garage')`,
+      `select public.admin_resolve_exception($1, 120, 'panel respray, quoted at the garage')`,
       [raised.id]))
 
     const after = await db.one<{
-      charge_cents: number; resolution: string; resolved_by: string; resolved_at: string | null
-    }>(`select charge_cents, resolution, resolved_by, resolved_at
+      charge: number; resolution: string; resolved_by: string; resolved_at: string | null
+    }>(`select charge, resolution, resolved_by, resolved_at
         from public.exceptions where id = $1`, [raised.id])
-    expect(after.charge_cents).toBe(12000)
+    expect(after.charge).toBe(120)
     expect(after.resolution).toBe('panel respray, quoted at the garage')
     expect(after.resolved_by).toBe(f.admin)
     expect(after.resolved_at).not.toBeNull()
@@ -124,9 +124,9 @@ describe('A6 · setting the charge and closing the item', () => {
     await db.asUser(f.admin, () => db.sql(
       `select public.admin_resolve_exception($1, null, 'let it go, regular guest')`, [raised.id]))
 
-    const after = await db.one<{ charge_cents: number | null; resolved_at: string | null }>(
-      `select charge_cents, resolved_at from public.exceptions where id = $1`, [raised.id])
-    expect(after.charge_cents).toBeNull()
+    const after = await db.one<{ charge: number | null; resolved_at: string | null }>(
+      `select charge, resolved_at from public.exceptions where id = $1`, [raised.id])
+    expect(after.charge).toBeNull()
     expect(after.resolved_at).not.toBeNull()   // closed all the same
   })
 
@@ -135,7 +135,7 @@ describe('A6 · setting the charge and closing the item', () => {
     const raised = await raise(f.repA, a, 'fuel_short')
 
     expect(await errcode(() => db.asUser(f.admin, () => db.sql(
-      `select public.admin_resolve_exception($1, -100, 'oops')`, [raised.id])))).toBe('IR104')
+      `select public.admin_resolve_exception($1, -1, 'oops')`, [raised.id])))).toBe('IR104')
   })
 
   test('a rep cannot resolve anything, including their own item (IR001)', async () => {
@@ -143,11 +143,11 @@ describe('A6 · setting the charge and closing the item', () => {
     const raised = await raise(f.repA, a, 'fuel_short')
 
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `select public.admin_resolve_exception($1, 5000, 'I settled it')`, [raised.id])))).toBe('IR001')
+      `select public.admin_resolve_exception($1, 50, 'I settled it')`, [raised.id])))).toBe('IR001')
 
     // And the resolved item stays invisible to them field-by-field afterwards.
     await db.asUser(f.admin, () => db.sql(
-      `select public.admin_resolve_exception($1, 5000, 'settled')`, [raised.id]))
+      `select public.admin_resolve_exception($1, 50, 'settled')`, [raised.id]))
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
       `select resolution from public.exceptions where id = $1`, [raised.id])))).toBe('42501')
   })
@@ -157,16 +157,16 @@ describe('A6 · setting the charge and closing the item', () => {
     const raised = await raise(f.repA, a, 'new_damage')
 
     await db.asUser(f.admin, () => db.sql(
-      `select public.admin_resolve_exception($1, 7500, 'bumper')`, [raised.id]))
+      `select public.admin_resolve_exception($1, 75, 'bumper')`, [raised.id]))
 
     const [log] = await db.asUser(f.admin, () => db.sql<{
-      actor_id: string; before: { charge_cents: number | null }; after: { charge_cents: number | null }
+      actor_id: string; before: { charge: number | null }; after: { charge: number | null }
     }>(`select actor_id, before, after from public.audit_log
         where entity = 'exceptions' and entity_id = $1 and action = 'update'
         order by at desc limit 1`, [raised.id]))
     expect(log?.actor_id).toBe(f.admin)
-    expect(log?.before?.charge_cents).toBeNull()
-    expect(log?.after?.charge_cents).toBe(7500)
+    expect(log?.before?.charge).toBeNull()
+    expect(log?.after?.charge).toBe(75)
   })
 
   test('a resolved item can be reopened in amount by the admin, and that is logged too', async () => {
@@ -174,13 +174,13 @@ describe('A6 · setting the charge and closing the item', () => {
     const raised = await raise(f.repA, a, 'new_damage')
 
     await db.asUser(f.admin, () => db.sql(
-      `select public.admin_resolve_exception($1, 7500, 'bumper')`, [raised.id]))
+      `select public.admin_resolve_exception($1, 75, 'bumper')`, [raised.id]))
     await db.asUser(f.admin, () => db.sql(
-      `select public.admin_resolve_exception($1, 5000, 'bumper, discounted')`, [raised.id]))
+      `select public.admin_resolve_exception($1, 50, 'bumper, discounted')`, [raised.id]))
 
-    const after = await db.one<{ charge_cents: number }>(
-      `select charge_cents from public.exceptions where id = $1`, [raised.id])
-    expect(after.charge_cents).toBe(5000)
+    const after = await db.one<{ charge: number }>(
+      `select charge from public.exceptions where id = $1`, [raised.id])
+    expect(after.charge).toBe(50)
 
     const logs = await db.asUser(f.admin, () => db.sql(
       `select id from public.audit_log where entity = 'exceptions' and entity_id = $1 and action = 'update'`,

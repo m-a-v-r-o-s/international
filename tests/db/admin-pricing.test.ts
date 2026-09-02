@@ -26,10 +26,10 @@ describe('a rep cannot touch pricing at all', () => {
         `insert into public.pricing_periods (season_year, name, start_date, end_date)
          values (2026, 'Mine', '2026-10-01', '2026-10-31')`))).toBe('42501')
       expect(await errcode(() => db.sql(
-        `insert into public.price_rows (period_id, category_id, days, total_cents)
+        `insert into public.price_rows (period_id, category_id, days, total)
          values ($1, $2, 1, 1)`, [f.low, f.catA]))).toBe('42501')
       expect(await errcode(() => db.sql(
-        `insert into public.price_extra_day (period_id, category_id, cents)
+        `insert into public.price_extra_day (period_id, category_id, price)
          values ($1, $2, 1)`, [f.low, f.catA]))).toBe('42501')
     })
   })
@@ -43,34 +43,34 @@ describe('the admin can manage periods and the grid', () => {
 
     for (let day = 1; day <= 7; day++) {
       await db.asUser(f.admin, () => db.sql(
-        `insert into public.price_rows (period_id, category_id, days, total_cents)
+        `insert into public.price_rows (period_id, category_id, days, total)
          values ($1, $2, $3, $4)`,
-        [period.id, f.catA, day, 3000 + day * 500]))
+        [period.id, f.catA, day, 30 + day * 5]))
     }
     await db.asUser(f.admin, () => db.sql(
-      `insert into public.price_extra_day (period_id, category_id, cents) values ($1, $2, 2200)`,
+      `insert into public.price_extra_day (period_id, category_id, price) values ($1, $2, 22)`,
       [period.id, f.catA]))
 
-    const quote3 = await db.asUser(f.admin, () => db.one<{ total_cents: number }>(
-      `select total_cents from public.quote($1, '2027-06-05', '2027-06-07')`, [f.catA]))
-    expect(quote3.total_cents).toBe(3000 + 3 * 500)   // the 3-day row, verbatim
+    const quote3 = await db.asUser(f.admin, () => db.one<{ total: number }>(
+      `select total from public.quote($1, '2027-06-05', '2027-06-07')`, [f.catA]))
+    expect(quote3.total).toBe(30 + 3 * 5)   // the 3-day row, verbatim
 
-    const quote10 = await db.asUser(f.admin, () => db.one<{ total_cents: number }>(
-      `select total_cents from public.quote($1, '2027-06-01', '2027-06-10')`, [f.catA]))
-    expect(quote10.total_cents).toBe((3000 + 7 * 500) + 3 * 2200)   // 7-day total + 3 extra days
+    const quote10 = await db.asUser(f.admin, () => db.one<{ total: number }>(
+      `select total from public.quote($1, '2027-06-01', '2027-06-10')`, [f.catA]))
+    expect(quote10.total).toBe((30 + 7 * 5) + 3 * 22)   // 7-day total + 3 extra days
   })
 
   test('upsert semantics: writing the same period/category/days cell again replaces it', async () => {
     await db.asUser(f.admin, () => db.sql(
-      `insert into public.price_rows (period_id, category_id, days, total_cents)
-       values ($1, $2, 1, 4000)
-       on conflict (period_id, category_id, days) do update set total_cents = excluded.total_cents`,
+      `insert into public.price_rows (period_id, category_id, days, total)
+       values ($1, $2, 1, 40)
+       on conflict (period_id, category_id, days) do update set total = excluded.total`,
       [f.low, f.catB]))
 
-    const row = await db.one<{ total_cents: number }>(
-      `select total_cents from public.price_rows where period_id = $1 and category_id = $2 and days = 1`,
+    const row = await db.one<{ total: number }>(
+      `select total from public.price_rows where period_id = $1 and category_id = $2 and days = 1`,
       [f.low, f.catB])
-    expect(row.total_cents).toBe(4000)
+    expect(row.total).toBe(40)
   })
 
   test('two periods in the same season cannot overlap', async () => {
@@ -92,23 +92,23 @@ describe('editing a price table never rewrites a booking already priced from it'
     const bookingId = await bookAsRep(db, f.repA, {
       carId: f.car1, hotelId: f.hotelA, start: '2026-07-01', end: '2026-07-03',
     })
-    const before = await db.one<{ total_cents: number; period_id: string }>(
-      `select total_cents, period_id from public.bookings where id = $1`, [bookingId])
-    expect(before.total_cents).toBe(9000)   // the 3-day low/catA total from the fixture
+    const before = await db.one<{ total: number; period_id: string }>(
+      `select total, period_id from public.bookings where id = $1`, [bookingId])
+    expect(before.total).toBe(90)   // the 3-day low/catA total from the fixture
     expect(before.period_id).toBe(f.low)
 
     await db.asUser(f.admin, () => db.sql(
-      `update public.price_rows set total_cents = 1 where period_id = $1 and category_id = $2 and days = 3`,
+      `update public.price_rows set total = 1 where period_id = $1 and category_id = $2 and days = 3`,
       [f.low, f.catA]))
 
-    const after = await db.one<{ total_cents: number }>(
-      `select total_cents from public.bookings where id = $1`, [bookingId])
-    expect(after.total_cents).toBe(9000)   // unchanged — the booking's price is frozen at creation
+    const after = await db.one<{ total: number }>(
+      `select total from public.bookings where id = $1`, [bookingId])
+    expect(after.total).toBe(90)   // unchanged — the booking's price is frozen at creation
 
     // A fresh quote for the same shape now reflects the new price.
-    const fresh = await db.asUser(f.admin, () => db.one<{ total_cents: number }>(
-      `select total_cents from public.quote($1, '2026-07-01', '2026-07-03')`, [f.catA]))
-    expect(fresh.total_cents).toBe(1)
+    const fresh = await db.asUser(f.admin, () => db.one<{ total: number }>(
+      `select total from public.quote($1, '2026-07-01', '2026-07-03')`, [f.catA]))
+    expect(fresh.total).toBe(1)
   })
 })
 
