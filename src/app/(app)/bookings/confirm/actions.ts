@@ -32,17 +32,19 @@ export type QuickBookingState = { error?: ErrorKey } | undefined
 export async function createQuickBooking(
   _prev: QuickBookingState, formData: FormData,
 ): Promise<QuickBookingState> {
-  await requireUnlocked()
+  const staff = await requireUnlocked()
 
   const parsed = parseQuickBooking(formData)
   if (!parsed.ok) return { error: 'IR104' }
   const input = parsed.data
 
-  // Same gate as R3 (docs/01-DECISIONS.md, "Exception bookings wait for the
-  // boss"): required and checked on an ordinary call-in, waived entirely once
-  // the rep has ticked the exception box.
+  // Same two rules as R3 (docs/01-DECISIONS.md §37): the exception is the
+  // boss's to record, and it is what waives the email — required and checked
+  // on every ordinary call-in.
+  const exception = staff.role === 'admin' && input.pickup_exception
+
   let email: string | null = null
-  if (!input.pickup_exception) {
+  if (!exception) {
     if (!input.cust_email) return { error: 'emailInvalid' }
     const check = await verifyEmail(input.cust_email)
     if (!check.ok) return { error: check.reason }
@@ -67,8 +69,8 @@ export async function createQuickBooking(
     cust_email: email,
     pickup_at: athensInstant(input.start_date, input.pickup_time),
     dropoff_at: athensInstant(input.end_date, input.dropoff_time),
-    pickup_exception: input.pickup_exception,
-    pickup_exception_reason: input.pickup_exception_reason,
+    pickup_exception: exception,
+    pickup_exception_reason: exception ? input.pickup_exception_reason : null,
   }
 
   const { data: booking, error } = await supabase.from('bookings')
@@ -85,11 +87,9 @@ export async function createQuickBooking(
       seatExtras.map((e) => ({ booking_id: booking.id, seat: e.seat, qty: e.qty })))
   }
 
-  // As in R3: an exception booking is not live yet, so its confirmation waits
-  // for the manager's approval rather than going out now.
-  if (!input.pickup_exception) {
-    await sendNewBookingConfirmation(supabase, { bookingId: booking.id, email })
-  }
+  // As in R3: nothing holds a new booking back any more, so the confirmation
+  // goes out now — and is a no-op if the boss waived the address.
+  await sendNewBookingConfirmation(supabase, { bookingId: booking.id, email })
 
   redirect(input.next === 'pickup'
     ? `/bookings/${booking.id}/pickup`

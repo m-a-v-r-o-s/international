@@ -35,7 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
  * car drives away is the paper problem this app exists to replace.
  */
 export default async function WalkInPage() {
-  await requireUnlocked()
+  const staff = await requireUnlocked()
   const t = await getTranslations('writeContract')
   const supabase = await supabaseServer()
 
@@ -67,6 +67,7 @@ export default async function WalkInPage() {
         // record 08:30 on a rental that left at three in the afternoon.
         pickupTimeDefault={nowTimeAthens()}
         submitLabel={t('walkInSubmit')}
+        isAdmin={staff.role === 'admin'}
       />
     </div>
   )

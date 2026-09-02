@@ -74,17 +74,17 @@ export const quickBookingSchema = z.object({
   cust_first: optionalText(80),
   cust_last: optionalText(80),
   // Required so the confirmation (pickup time, cost, licence requirements)
-  // always has somewhere to go — UNLESS this is an exception booking, in
-  // which case nothing on the form is mandatory (docs/01-DECISIONS.md,
-  // "Exception bookings wait for the boss"). Format and MX-record checking
-  // happen in the action, not here — this schema only shapes the field.
+  // always has somewhere to go — UNLESS the boss is making an exception
+  // booking, in which case nothing on the form is mandatory
+  // (docs/01-DECISIONS.md §37). Format and MX-record checking happen in the
+  // action, not here — this schema only shapes the field.
   cust_email: optionalText(254),
   pickup_time: time,
   dropoff_time: time,
-  // The exception path (docs/01-DECISIONS.md §5): checking the box is the
-  // rep's claim, but the actual gate is app.bookings_enforce_pickup_window()
-  // — an unflagged out-of-window pick-up is refused by the database
-  // regardless of what this schema lets through.
+  // The exception path (docs/01-DECISIONS.md §5, §37). Shaped here, allowed
+  // only for an admin in the action, and forced off for a rep by
+  // app.bookings_before_write() underneath both — an unflagged out-of-window
+  // pick-up is refused by the database regardless.
   pickup_exception: z.boolean().optional().default(false),
   pickup_exception_reason: optionalText(300),
   seats: z.array(z.enum(SEAT_TYPES)).optional().default([]),

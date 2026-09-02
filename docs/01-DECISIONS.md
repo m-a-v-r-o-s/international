@@ -41,9 +41,10 @@ The fleet is **one shared pool** — any rep can book any free car in the compan
 ## 5. Operating windows
 - Pickups **08:30–11:30**, drop-offs **18:00–21:00**, both admin-configurable.
 - **Pick-up is enforced.** A rep cannot record a pick-up outside the window
-  unless the booking is flagged as an **exception booking** with a reason —
-  the flag and reason are required together, and only then is the
-  out-of-window pick-up accepted.
+  at all. The **exception booking** flag is the only door through it, it
+  requires a reason written beside it, and since §37 only the manager can
+  record one — a rep who sends the flag has it dropped and then meets the
+  window rule itself (IR116).
 - **Drop-off stays a default, freely overridable** per booking, exactly as
   before. No exception flag is needed for it.
 - Either time falling outside its window is still recorded on the booking via
@@ -660,7 +661,10 @@ made this call for the phone-booking screen: a rep given no name is not held up 
 form required them; that inconsistency is now closed the other way, toward the screen with the
 guest actually optional.
 
-**3. Exception bookings wait for the boss.** Requiring email creates the same problem §5 already
+**3. Exception bookings wait for the boss.** *(Superseded by §37 the following day: the rep
+lost the tick-box, so the queue this section builds no longer exists. What survives is the
+rest — email required and checked at booking time, and the exception flag waiving it.)*
+Requiring email creates the same problem §5 already
 solved for the pick-up window: sometimes the normal rule cannot be met and the booking still
 has to happen. The existing "exception booking" checkbox is the answer to both — ticking it
 already waives the pick-up window; it now also waives every other requirement on the form,
@@ -830,3 +834,54 @@ See `supabase/migrations/20260902120000_no_aircon_flag.sql`,
 `src/lib/availability/types.ts` (`SEAT_CHOICES`, `matchesSeatChoice`),
 `src/app/(app)/availability/` and `tests/unit/availability-filters.test.ts`.
 
+## 37. The exception is the boss's, and the queue it needed is gone
+
+2 Sep 2026, the same day as §34–§36. §5 gave a rep an escape hatch out of the pick-up
+window. §33 widened that same tick-box to waive the newly-required email as well and —
+because a rep was the one ticking it — parked what came out in an approval queue at
+`/admin/exception-bookings`. The owner's decision reverses the first half, and that deletes
+the second: **only the manager can make an exception booking.**
+
+The queue existed for one reason, which was that somebody had to look at what somebody else
+had waved through. Once the person ticking the box is the person who would approve it, the
+whole apparatus — a `pending` state, two RPCs, a hard block on pickup, a screen, and a
+confirmation email held back until it cleared — stands between the boss and a booking he
+made deliberately. So it is gone, and an exception booking is live the moment it is written,
+like every other booking.
+
+- **A rep now meets the rule instead of the door.** An out-of-window pick-up is refused with
+  IR116 — "pick-ups are 08:30–11:30" — which was always the true answer; the hatch was what
+  let them past it. Email is likewise simply required: the "or tick exception and book
+  without it" half of that error message is gone, because for a rep it no longer exists.
+- **The flag is taken away in the database, not on the screen.** The tick-box is only
+  rendered for an admin and the server action checks the role, but neither is what enforces
+  it: `app.bookings_before_write()` forces `pickup_exception = false` on any non-admin
+  INSERT and carries both columns forward from `old` on any non-admin UPDATE. That is how
+  every other privileged field on this table is handled (`total`, `block_reason`,
+  `period_id`) and it is the only way that works here — the column grants are to
+  `authenticated`, which is the admin too, so revoking them would take the boss's own write
+  with it. A rep can neither tick the box, untick the boss's, nor keep an exception alive by
+  moving the time.
+- **What the boss gets is unchanged, minus the wait.** He ticks it, writes the reason (still
+  required by 0027's CHECK), and nothing on the form is mandatory after that — email
+  included. The booking holds the car, appears on Today and the movements sheet, sends its
+  confirmation immediately, and can be picked up.
+- **The known cost is the afternoon walk-in.** R4b (§30 decision 3) defaults a walk-in's
+  pick-up to *now*, and "now" is outside 08:30–11:30 for most of the working day. A rep
+  taking a walk-in at 15:00 used to tick the exception box; now the time field is bounded to
+  the window and the write is refused (IR116). This is not a regression this decision
+  introduced so much as one it makes visible — under §33 the same rep ticked the box, got a
+  `pending` booking, was sent straight into licence capture by `next="pickup"`, and was
+  stopped there by the approval block. The failure simply moves to the start, where it can
+  be read. There are two ways out, both the owner's to choose — **widen the pick-up window
+  on A10**, which is a setting and needs no code (08:30–20:00 would cover the desk's whole
+  day and leave the rule doing its real job of refusing 03:00 bookings), or exempt the
+  walk-in path from the window, which is a new rule and a migration. Neither has been
+  assumed; the decision above is implemented as given.
+
+See `supabase/migrations/20260902130000_admin_only_exceptions.sql`,
+`src/app/(app)/bookings/new/`, `src/app/(app)/bookings/confirm/`,
+`src/app/(app)/contracts/new/walk-in/page.tsx` and
+`tests/db/exception-bookings.test.ts`. Deleted: `src/app/(app)/admin/exception-bookings/`,
+`bookings.exception_status`, `admin_approve_exception_booking()`,
+`admin_deny_exception_booking()`, `admin_pending_exception_bookings()` and IR123.

@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
  * (§30 decision 1): a call does not wait for the right page to be open.
  */
 export default async function BookingConfirmationPage() {
-  await requireUnlocked()
+  const staff = await requireUnlocked()
   const t = await getTranslations('quickBooking')
   const supabase = await supabaseServer()
 
@@ -44,6 +44,7 @@ export default async function BookingConfirmationPage() {
         windows={windows}
         next="detail"
         submitLabel={t('confirm')}
+        isAdmin={staff.role === 'admin'}
       />
     </div>
   )

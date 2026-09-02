@@ -199,7 +199,6 @@ export type Database = {
           eligibility_override_at: string | null
           eligibility_override_by: string | null
           end_date: string
-          exception_status: string | null
           fuel_charge: number | null
           hotel_id: string | null
           id: string
@@ -238,7 +237,6 @@ export type Database = {
           eligibility_override_at?: string | null
           eligibility_override_by?: string | null
           end_date: string
-          exception_status?: string | null
           fuel_charge?: number | null
           hotel_id?: string | null
           id?: string
@@ -277,7 +275,6 @@ export type Database = {
           eligibility_override_at?: string | null
           eligibility_override_by?: string | null
           end_date?: string
-          exception_status?: string | null
           fuel_charge?: number | null
           hotel_id?: string | null
           id?: string
@@ -1152,10 +1149,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      admin_approve_exception_booking: {
-        Args: { p_booking_id: string }
-        Returns: undefined
-      }
       admin_audit_entities: {
         Args: never
         Returns: {
@@ -1228,10 +1221,6 @@ export type Database = {
         }[]
       }
       admin_delete_block: { Args: { p_id: string }; Returns: undefined }
-      admin_deny_exception_booking: {
-        Args: { p_booking_id: string }
-        Returns: undefined
-      }
       admin_erase_customer: {
         Args: { p_customer_id: string }
         Returns: {
@@ -1291,19 +1280,6 @@ export type Database = {
           id: string
           rep_id: string
           rep_name: string
-        }[]
-      }
-      admin_pending_exception_bookings: {
-        Args: never
-        Returns: {
-          booking_id: string
-          guest: string
-          hotel_name: string
-          pickup_at: string
-          plate: string
-          reason: string
-          ref: string
-          room_number: string
         }[]
       }
       admin_resolve_incident: {

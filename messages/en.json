@@ -164,9 +164,10 @@
     "dropoffTime": "Drop-off time",
     "windowHint": "Usually {from}–{to}",
     "pickupWindowLocked": "Pick-ups are {from}–{to}. For anything outside that, use the exception below.",
+    "pickupWindowLockedRep": "Pick-ups are {from}–{to}. A pick-up outside those hours can only be booked by the manager.",
     "exceptionBooking": "Exception booking — pick-up outside the usual window",
     "exceptionReasonLabel": "Reason for the exception",
-    "exceptionApprovalHint": "An exception booking is not live until the manager approves it: the car is held, but it will not appear on Today, the movements sheet or pickup until then. Nothing else on this form is required when this box is ticked.",
+    "exceptionHint": "Only you can record an exception, and the booking is live as soon as you make it — the car is held, it appears on Today and the movements sheet, and it can be picked up. Nothing else on this form is required when this box is ticked.",
     "returningGuest": "We have rented to this number before ({name}). The fields below were filled in from that rental — check them with the guest and correct anything that has changed."
   },
   "quickBooking": {
@@ -196,7 +197,6 @@
     },
     "editTitle": "Edit",
     "saved": "Saved.",
-    "pendingApproval": "Awaiting the manager's approval — the car is held, but this booking will not appear on Today or the movements sheet, and cannot be picked up, until then.",
     "cancelTitle": "Cancel this booking",
     "cancelAction": "Cancel booking",
     "cancelConfirm": "Cancel this booking? The guest will need a new booking if they still want the car.",
@@ -393,7 +393,6 @@
     "confirmPrompt": "Hand the car over now?",
     "alreadyOut": "This car has already been handed over.",
     "notPickable": "This booking is not open for pickup.",
-    "awaitingApproval": "This is an exception booking and is waiting on the manager's approval. It cannot be picked up until they approve it.",
     "licenceCaptureTitle": "Licence photos",
     "licenceCaptureIntro": "Photograph the licence and the app will fill in what it can read. Check every field afterwards — it is often wrong on a worn card.",
     "licenceFront": "Front of the licence",
@@ -471,7 +470,6 @@
       "pricing": "Pricing",
       "bookings": "Bookings",
       "incidents": "Incidents",
-      "exceptionBookings": "Exception bookings",
       "cash": "Cash",
       "settings": "Settings",
       "users": "Staff",
@@ -680,21 +678,6 @@
       "updateAction": "Update",
       "saved": "Saved."
     },
-    "exceptionBookings": {
-      "title": "Exception bookings",
-      "subtitle": "Bookings a rep flagged as an exception — an out-of-window pick-up, or one made without a checked email. The car is already held; nothing else about the booking happens until you approve or deny it here.",
-      "empty": "Nothing waiting.",
-      "guest": "Guest",
-      "car": "Car",
-      "hotelRoom": "Hotel & room",
-      "pickup": "Pick-up",
-      "reason": "Reason given",
-      "approve": "Approve",
-      "deny": "Deny",
-      "denyConfirm": "Deny this booking? It is cancelled immediately and the car becomes free for those dates again.",
-      "approved": "Approved.",
-      "denied": "Denied and cancelled."
-    },
     "cash": {
       "title": "Cash",
       "subtitle": "What every rep has handed over and you have not confirmed yet. Confirming is what clears it from their own screen — nothing else does.",
@@ -856,7 +839,7 @@
     "IR120": "A driver on this booking does not meet the rules. The manager can override it.",
     "IR121": "Add the driver and their licence before starting the pickup.",
     "IR114": "There is no cash to hand over right now.",
-    "IR116": "Pick-up is outside the manager's window. Tick \"exception booking\" and give a reason to book it anyway.",
+    "IR116": "Pick-up is outside the manager's window. Only the manager can book a pick-up outside those hours.",
     "fileType": "That file is not a photo the app can read. Take the photo again, or choose a JPEG or PNG.",
     "fileTooLarge": "That photo is too large. Take it again at a smaller size.",
     "rateLimited": "Too many attempts just now. Wait a moment, then try again.",
@@ -870,9 +853,8 @@
     "emailInUse": "A staff account already uses that email address.",
     "accountFailed": "The account could not be created. Nothing was saved — try again.",
     "IR122": "Too many customer lookups in a short time. Type the details in by hand and try the lookup again later.",
-    "IR123": "This is an exception booking and the manager has not approved it yet. It cannot be picked up until they do.",
     "emailInvalid": "That does not look like a real email address.",
-    "emailUndeliverable": "That email's domain cannot receive mail — check it for a typo, or tick \"exception booking\" and give a reason to book without it.",
+    "emailUndeliverable": "That email's domain cannot receive mail — check it for a typo.",
     "incidentEmpty": "Write what happened, or add a photo — an empty report tells the manager nothing."
   },
   "eligibility": {
@@ -1008,7 +990,7 @@
       "terms_en": "Terms — English"
     },
     "windowsTitle": "Pick-up and drop-off windows",
-    "windowsHint": "Pick-up is enforced: a rep can only book within these hours unless the booking is flagged as an exception with a reason. Drop-off stays a default — a rep can set any time, and a time outside these hours is recorded on the booking as an override.",
+    "windowsHint": "Pick-up is enforced: a rep can only book within these hours, and only you can book outside them, as an exception with a reason. Drop-off stays a default — a rep can set any time, and a time outside these hours is recorded on the booking as an override.",
     "fuelChargeTitle": "Fuel shortfall",
     "fuelChargeIntro": "What a car costs the guest for every eighth of a tank it comes back short. Applied automatically the moment a return is confirmed — nobody is asked, and the rep cannot change it.",
     "fuelChargeLabel": "Charge per eighth of a tank (€)",

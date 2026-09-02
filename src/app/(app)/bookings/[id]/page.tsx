@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 const BOOKING_COLUMNS =
   'id, ref, status, car_id, category_id, hotel_id, room_number, start_date, end_date, ' +
-  'pickup_at, dropoff_at, cust_first, cust_last, cust_phone, cust_dob, exception_status, ' +
+  'pickup_at, dropoff_at, cust_first, cust_last, cust_phone, cust_dob, ' +
   'total, days, collected, pay_method, paid, created_by, created_at'
 
 /**
@@ -49,7 +49,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
   const row = booking as unknown as Pick<BookingRow,
     'id' | 'ref' | 'status' | 'car_id' | 'category_id' | 'hotel_id' | 'room_number'
     | 'start_date' | 'end_date' | 'pickup_at' | 'dropoff_at'
-    | 'cust_first' | 'cust_last' | 'cust_phone' | 'cust_dob' | 'exception_status'
+    | 'cust_first' | 'cust_last' | 'cust_phone' | 'cust_dob'
     | 'total' | 'days' | 'collected' | 'pay_method' | 'paid' | 'created_by' | 'created_at'>
 
   const [{ data: car }, { data: hotelsResult }, { data: extras }, { data: contracts }] =
@@ -83,12 +83,6 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
           {t(`status.${row.status}`)}
         </span>
       </div>
-
-      {row.exception_status === 'pending' ? (
-        <p className="ir-notice border-warn bg-warn-tint text-warn" role="status">
-          {t('pendingApproval')}
-        </p>
-      ) : null}
 
       <section className="ir-card p-4">
         <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-[0.9375rem]">

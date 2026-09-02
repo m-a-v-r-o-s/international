@@ -137,7 +137,6 @@ make, model, category, year, colour, transmission, fuel, seats, doors, tank litr
 cars carry no status and are not counted or filtered — they keep their own collapsed list at
 the foot. A3's number is kept so every reference to A4-A10 still points where it did.
 
-
 ### A4 · Pricing
 Pricing periods for a season (add, edit, drag the boundaries) with overlap prevented.
 Per period: an 8 × 7 grid of totals, plus the 8+ day per-extra-day rate per category.

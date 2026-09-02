@@ -19,14 +19,14 @@ import { sqlNull } from '@/lib/supabase/args'
  */
 const BOOKING_COLUMNS =
   'id, ref, status, car_id, category_id, hotel_id, room_number, start_date, end_date, ' +
-  'pickup_at, dropoff_at, cust_first, cust_last, cust_phone, cust_dob, exception_status, ' +
+  'pickup_at, dropoff_at, cust_first, cust_last, cust_phone, cust_dob, ' +
   'total, days, collected, pay_method, paid, created_by, returned_at, ' +
   'eligibility_override_at'
 
 export type HandoverBooking = Pick<BookingRow,
   'id' | 'ref' | 'status' | 'car_id' | 'category_id' | 'hotel_id' | 'room_number'
   | 'start_date' | 'end_date' | 'pickup_at' | 'dropoff_at'
-  | 'cust_first' | 'cust_last' | 'cust_phone' | 'cust_dob' | 'exception_status'
+  | 'cust_first' | 'cust_last' | 'cust_phone' | 'cust_dob'
   | 'total' | 'days' | 'collected' | 'pay_method' | 'paid' | 'created_by'
   | 'returned_at' | 'eligibility_override_at'>
 

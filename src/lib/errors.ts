@@ -12,13 +12,13 @@
 const KNOWN_CODES = new Set([
   'IR001', 'IR100', 'IR101', 'IR102', 'IR103', 'IR104', 'IR105', 'IR106',
   'IR107', 'IR108', 'IR109', 'IR110', 'IR111', 'IR112', 'IR113', 'IR114', 'IR115', 'IR116',
-  'IR120', 'IR121', 'IR122', 'IR123',
+  'IR120', 'IR121', 'IR122',
 ])
 
 export type ErrorKey =
   | 'IR001' | 'IR100' | 'IR101' | 'IR102' | 'IR103' | 'IR104' | 'IR105' | 'IR106'
   | 'IR107' | 'IR108' | 'IR109' | 'IR110' | 'IR111' | 'IR112' | 'IR113' | 'IR114' | 'IR115' | 'IR116'
-  | 'IR120' | 'IR121' | 'IR122' | 'IR123'
+  | 'IR120' | 'IR121' | 'IR122'
   | 'forbidden' | 'conflict' | 'unknown' | 'inUse' | 'duplicate'
   // Raised by the app rather than by Postgres: a file the upload path refused
   // before it ever reached the bucket, the caps around the OCR call, and a

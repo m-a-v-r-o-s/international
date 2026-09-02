@@ -126,7 +126,7 @@ create table bookings (
   pickup_at       timestamptz,                  -- default 08:30–11:30, ENFORCED (see below)
   dropoff_at      timestamptz,                  -- default 18:00–21:00, freely overridable
   window_override boolean not null default false,
-  pickup_exception        boolean not null default false,  -- rep-flagged, required to pass the window guard
+  pickup_exception        boolean not null default false,  -- ADMIN-flagged, required to pass the window guard
   pickup_exception_reason text,                             -- required together with the flag above
 
   -- customer (main driver detail lives in booking_drivers)

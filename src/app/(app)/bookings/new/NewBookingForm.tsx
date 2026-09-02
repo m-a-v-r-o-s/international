@@ -14,7 +14,7 @@ import { formatEuros } from '@/lib/money'
 import { MAX_SEAT_QTY, SEAT_TYPES, type SeatType } from '@/lib/bookings/quick'
 
 export function NewBookingForm({
-  cars, hotels, defaultHotelId, preselectedCar, defaultFrom, defaultTo, windows,
+  cars, hotels, defaultHotelId, preselectedCar, defaultFrom, defaultTo, windows, isAdmin,
 }: {
   cars: CarWithSpecs[]
   hotels: Hotel[]
@@ -23,6 +23,13 @@ export function NewBookingForm({
   defaultFrom?: string
   defaultTo?: string
   windows: BookingWindows
+  /**
+   * Whether the exception tick-box is on this form at all
+   * (docs/01-DECISIONS.md §37). It is the boss's alone, and the server does
+   * not take a rep's word for it either: app.bookings_before_write() forces
+   * the flag off for a non-admin whatever the request carries.
+   */
+  isAdmin: boolean
 }) {
   const t = useTranslations('newBooking')
   const tc = useTranslations('common')
@@ -125,10 +132,11 @@ export function NewBookingForm({
         {/*
           * docs/04-SCREENS.md R3 step 1: "pickup time (default 08:30-11:30),
           * drop-off time (default 18:00-21:00)". §5: pick-up is now ENFORCED
-          * — the input is bounded to the admin's window unless the rep flags
-          * this as an exception booking, in which case the bound lifts and a
-          * reason is required. Drop-off is untouched: still a plain field, no
-          * bound, the database only records whether it fell outside (§5).
+          * — the input is bounded to the admin's window, and the only thing
+          * that lifts the bound is the admin's own exception tick-box below
+          * (§37), which then requires a reason. Drop-off is untouched: still a
+          * plain field, no bound, the database only records whether it fell
+          * outside (§5).
           */}
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div>
@@ -142,7 +150,9 @@ export function NewBookingForm({
             <p className="ir-hint" id="pickup_time_hint">
               {pickupException
                 ? t('exceptionBooking')
-                : t('pickupWindowLocked', { from: windows.pickupFrom, to: windows.pickupTo })}
+                : isAdmin
+                  ? t('pickupWindowLocked', { from: windows.pickupFrom, to: windows.pickupTo })
+                  : t('pickupWindowLockedRep', { from: windows.pickupFrom, to: windows.pickupTo })}
             </p>
           </div>
           <div>
@@ -157,28 +167,35 @@ export function NewBookingForm({
           </div>
         </div>
 
-        <div className="mt-3">
-          <label className="flex min-h-11 items-center gap-2.5 text-[1.0625rem] text-ink">
-            <input
-              type="checkbox" name="pickup_exception" checked={pickupException}
-              onChange={(e) => setPickupException(e.target.checked)}
-              className="size-5 rounded border-control"
-            />
-            {t('exceptionBooking')}
-          </label>
-          {pickupException ? (
-            <div className="mt-2">
-              <label className="ir-label" htmlFor="pickup_exception_reason">
-                {t('exceptionReasonLabel')} *
-              </label>
+        {/*
+          * The exception (docs/01-DECISIONS.md §37): the boss's own escape
+          * hatch out of his own window rule, and nobody else's. A rep does not
+          * see it, and the server would drop it if they posted it anyway.
+          */}
+        {isAdmin ? (
+          <div className="mt-3">
+            <label className="flex min-h-11 items-center gap-2.5 text-[1.0625rem] text-ink">
               <input
-                id="pickup_exception_reason" name="pickup_exception_reason"
-                type="text" className="ir-field" maxLength={300} required
+                type="checkbox" name="pickup_exception" checked={pickupException}
+                onChange={(e) => setPickupException(e.target.checked)}
+                className="size-5 rounded border-control"
               />
-              <p className="ir-hint mt-2">{t('exceptionApprovalHint')}</p>
-            </div>
-          ) : null}
-        </div>
+              {t('exceptionBooking')}
+            </label>
+            {pickupException ? (
+              <div className="mt-2">
+                <label className="ir-label" htmlFor="pickup_exception_reason">
+                  {t('exceptionReasonLabel')} *
+                </label>
+                <input
+                  id="pickup_exception_reason" name="pickup_exception_reason"
+                  type="text" className="ir-field" maxLength={300} required
+                />
+                <p className="ir-hint mt-2">{t('exceptionHint')}</p>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         {!validDates && start && end ? (
           <p className="ir-error mt-2" role="alert">
             <span aria-hidden="true">!</span>{te('IR104')}

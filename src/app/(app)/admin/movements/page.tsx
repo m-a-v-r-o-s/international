@@ -39,20 +39,15 @@ export default async function MovementsPage({
   const day = /^\d{4}-\d{2}-\d{2}$/.test(params.day ?? '') ? params.day! : todayAthens()
   const supabase = await supabaseServer()
 
-  // Same rule as R1 (src/lib/movements/data.ts): a pending exception booking
-  // holds the car but is not live yet, so it stays off the day sheet until
-  // the manager approves it (docs/01-DECISIONS.md, "Exception bookings wait
-  // for the boss").
-  const LIVE_EXCEPTION_STATUS = 'exception_status.is.null,exception_status.eq.approved'
+  // Same rule as R1 (src/lib/movements/data.ts): every booking on the day is
+  // on the sheet, exception bookings included — §37 left nothing waiting.
   const [{ data: pickupRows }, { data: returnRows }] = await Promise.all([
     supabase.from('bookings').select(COLUMNS)
       .eq('kind', 'rental').eq('start_date', day)
-      .in('status', ['booked', 'out'])
-      .or(LIVE_EXCEPTION_STATUS),
+      .in('status', ['booked', 'out']),
     supabase.from('bookings').select(COLUMNS)
       .eq('kind', 'rental').eq('end_date', day)
-      .in('status', ['out', 'returned'])
-      .or(LIVE_EXCEPTION_STATUS),
+      .in('status', ['out', 'returned']),
   ])
 
   const pickups = (pickupRows ?? []) as unknown as Movement[]

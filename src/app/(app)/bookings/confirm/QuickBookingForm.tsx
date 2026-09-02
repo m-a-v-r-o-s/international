@@ -29,7 +29,7 @@ import { formatEuros } from '@/lib/money'
  */
 export function QuickBookingForm({
   cars, hotels, defaultHotelId, windows, next, defaultFrom, defaultTo,
-  pickupTimeDefault, submitLabel,
+  pickupTimeDefault, submitLabel, isAdmin,
 }: {
   cars: CarWithSpecs[]
   hotels: Hotel[]
@@ -41,6 +41,8 @@ export function QuickBookingForm({
   /** Overrides the window's opening time — the walk-in is here now. */
   pickupTimeDefault?: string
   submitLabel: string
+  /** As on R3: only the boss may record an exception (docs/01-DECISIONS.md §37). */
+  isAdmin: boolean
 }) {
   const t = useTranslations('quickBooking')
   const tn = useTranslations('newBooking')
@@ -207,8 +209,9 @@ export function QuickBookingForm({
           visible rather than posted invisibly. A phone booking that recorded
           nothing would sort as a blank on the boss's morning sheet, and a
           hidden field that silently sets data is worse than a shown one the
-          rep can correct. Pick-up is bounded to the window unless flagged as
-          an exception (same rule as R3's NewBookingForm); drop-off stays free.
+          rep can correct. Pick-up is bounded to the window unless the boss
+          flags an exception (same rule as R3's NewBookingForm); drop-off stays
+          free.
         */}
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div>
@@ -223,7 +226,9 @@ export function QuickBookingForm({
             <p className="ir-hint" id="pickup_time_hint">
               {pickupException
                 ? tn('exceptionBooking')
-                : tn('pickupWindowLocked', { from: windows.pickupFrom, to: windows.pickupTo })}
+                : isAdmin
+                  ? tn('pickupWindowLocked', { from: windows.pickupFrom, to: windows.pickupTo })
+                  : tn('pickupWindowLockedRep', { from: windows.pickupFrom, to: windows.pickupTo })}
             </p>
           </div>
           <div>
@@ -238,28 +243,31 @@ export function QuickBookingForm({
           </div>
         </div>
 
-        <div className="mt-3">
-          <label className="flex min-h-11 items-center gap-2.5 text-[1.0625rem] text-ink">
-            <input
-              type="checkbox" name="pickup_exception" checked={pickupException}
-              onChange={(e) => setPickupException(e.target.checked)}
-              className="size-5 rounded border-control"
-            />
-            {tn('exceptionBooking')}
-          </label>
-          {pickupException ? (
-            <div className="mt-2">
-              <label className="ir-label" htmlFor="pickup_exception_reason">
-                {tn('exceptionReasonLabel')} *
-              </label>
+        {/* The boss's alone, as on R3 (docs/01-DECISIONS.md §37). */}
+        {isAdmin ? (
+          <div className="mt-3">
+            <label className="flex min-h-11 items-center gap-2.5 text-[1.0625rem] text-ink">
               <input
-                id="pickup_exception_reason" name="pickup_exception_reason"
-                type="text" className="ir-field" maxLength={300} required
+                type="checkbox" name="pickup_exception" checked={pickupException}
+                onChange={(e) => setPickupException(e.target.checked)}
+                className="size-5 rounded border-control"
               />
-              <p className="ir-hint mt-2">{tn('exceptionApprovalHint')}</p>
-            </div>
-          ) : null}
-        </div>
+              {tn('exceptionBooking')}
+            </label>
+            {pickupException ? (
+              <div className="mt-2">
+                <label className="ir-label" htmlFor="pickup_exception_reason">
+                  {tn('exceptionReasonLabel')} *
+                </label>
+                <input
+                  id="pickup_exception_reason" name="pickup_exception_reason"
+                  type="text" className="ir-field" maxLength={300} required
+                />
+                <p className="ir-hint mt-2">{tn('exceptionHint')}</p>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         {!validDates && start && end ? (
           <p className="ir-error mt-2" role="alert">
             <span aria-hidden="true">!</span>{te('IR104')}

@@ -25,7 +25,7 @@ export default async function NewBookingPage({
 }: {
   searchParams: Promise<Record<string, string | undefined>>
 }) {
-  await requireUnlocked()
+  const staff = await requireUnlocked()
   const t = await getTranslations('newBooking')
   const params = await searchParams
   const supabase = await supabaseServer()
@@ -62,6 +62,7 @@ export default async function NewBookingPage({
         defaultFrom={from}
         defaultTo={to}
         windows={windows}
+        isAdmin={staff.role === 'admin'}
       />
     </div>
   )

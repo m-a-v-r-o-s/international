@@ -2,11 +2,14 @@ import { beforeAll, afterAll, beforeEach, describe, expect, test } from 'vitest'
 import { TestDb, errcode } from '../helpers/db'
 import { seed, type Fixtures } from '../helpers/fixtures'
 
-// 0028 · exception bookings wait for the boss (docs/01-DECISIONS.md §33,
-// supabase/migrations/20260901150000_booking_exception_approval.sql). The
-// pickup-window exception flag already existed (0027, tests/db/windows.test.ts);
-// this is what changed about it — it now starts a booking 'pending' rather
-// than live, and only the two admin RPCs below move it out of that state.
+// 0033 · only the boss makes an exception booking (docs/01-DECISIONS.md §37,
+// supabase/migrations/20260902130000_admin_only_exceptions.sql).
+//
+// 0027 gave a rep the tick-box that gets a pick-up past the manager's window,
+// and 0028 parked the result in an approval queue. This is what replaced both:
+// the flag is the admin's alone, forced off on any other write by
+// app.bookings_before_write(), and what it produces is an ordinary live
+// booking with nothing to approve.
 
 let db: TestDb
 let f: Fixtures
@@ -21,220 +24,149 @@ beforeEach(async () => {
   await db.sql(`delete from public.bookings`)
 })
 
-/** An exception booking, made the way a rep makes one: out-of-window, flagged, with a reason. */
-async function bookException(rep: string, opts: { carId?: string; start?: string; end?: string } = {}) {
-  return db.asUser(rep, () => db.one<{ id: string; exception_status: string | null; status: string }>(
+type Row = { id: string; pickup_exception: boolean; pickup_exception_reason: string | null }
+
+const OUT_OF_WINDOW = '2026-07-06 03:00:00 Europe/Athens'
+const IN_WINDOW = '2026-07-06 09:00:00 Europe/Athens'
+
+/** One booking, by whoever, with whatever they claim about the exception. */
+function book(actor: string, opts: {
+  pickup?: string
+  exception?: boolean
+  reason?: string | null
+  carId?: string
+} = {}) {
+  return db.asUser(actor, () => db.one<Row>(
     `insert into public.bookings
        (car_id, hotel_id, room_number, start_date, end_date,
         cust_first, cust_last, cust_phone, cust_dob, pickup_at, dropoff_at,
         pickup_exception, pickup_exception_reason)
-     values ($1, $2, '101', $3, $4, 'Anna', 'Visitor', '+306900000000', '1990-01-01',
-             $5, '2026-07-08 19:00:00 Europe/Athens', true, 'guest landing on a red-eye')
-     returning id, exception_status, status`,
+     values ($1, $2, '101', '2026-07-06', '2026-07-08', 'Anna', 'Visitor',
+             '+306900000000', '1990-01-01', $3, '2026-07-08 19:00:00 Europe/Athens', $4, $5)
+     returning id, pickup_exception, pickup_exception_reason`,
     [
       opts.carId ?? f.car1, f.hotelA,
-      opts.start ?? '2026-07-06', opts.end ?? '2026-07-08',
-      `${opts.start ?? '2026-07-06'} 03:00:00 Europe/Athens`,
+      opts.pickup ?? IN_WINDOW,
+      opts.exception ?? false,
+      opts.reason === undefined ? null : opts.reason,
     ]))
 }
 
-/** An ordinary, in-window booking. */
-async function bookOrdinary(rep: string, opts: { carId?: string; start?: string; end?: string } = {}) {
-  return db.asUser(rep, () => db.one<{ id: string; exception_status: string | null; status: string }>(
-    `insert into public.bookings
-       (car_id, hotel_id, room_number, start_date, end_date,
-        cust_first, cust_last, cust_phone, cust_dob, pickup_at, dropoff_at)
-     values ($1, $2, '101', $3, $4, 'Anna', 'Visitor', '+306900000000', '1990-01-01',
-             $5, $6)
-     returning id, exception_status, status`,
-    [
-      opts.carId ?? f.car1, f.hotelA,
-      opts.start ?? '2026-07-06', opts.end ?? '2026-07-08',
-      `${opts.start ?? '2026-07-06'} 09:00:00 Europe/Athens`,
-      `${opts.end ?? '2026-07-08'} 19:00:00 Europe/Athens`,
-    ]))
-}
-
-describe('the state an exception booking starts in', () => {
-  test('an ordinary booking never gets one', async () => {
-    const b = await bookOrdinary(f.repA)
-    expect(b.exception_status).toBeNull()
+describe('the flag is the boss\'s alone', () => {
+  test('a rep who ticks it is ignored, not obeyed', async () => {
+    const b = await book(f.repA, { exception: true, reason: 'trying it on' })
+    expect(b.pickup_exception).toBe(false)
+    expect(b.pickup_exception_reason).toBeNull()
   })
 
-  test('an exception booking starts pending', async () => {
-    const b = await bookException(f.repA)
-    expect(b.exception_status).toBe('pending')
-    // It is written as a completely ordinary 'booked' row otherwise — the
-    // pending-ness is the one thing that marks it out.
-    expect(b.status).toBe('booked')
+  test('so an out-of-window pick-up is refused however the rep flags it', async () => {
+    // The window guard runs after the guard that drops the claim, so what the
+    // rep meets is IR116 — the pick-up is out of hours — rather than anything
+    // about permissions.
+    expect(await errcode(() => book(f.repA, {
+      pickup: OUT_OF_WINDOW, exception: true, reason: 'guest landing on a red-eye',
+    }))).toBe('IR116')
   })
 
-  test('a rep cannot claim any other value for it — there is no grant on the column', async () => {
-    expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `insert into public.bookings
-         (car_id, hotel_id, room_number, start_date, end_date,
-          cust_first, cust_last, cust_phone, cust_dob, pickup_at,
-          pickup_exception, pickup_exception_reason, exception_status)
-       values ($1, $2, '101', '2026-07-06', '2026-07-08', 'Anna', 'Visitor',
-               '+306900000000', '1990-01-01', '2026-07-06 03:00:00 Europe/Athens',
-               true, 'testing', 'approved')`,
-      [f.car1, f.hotelA])))).toBe('42501')
+  test('the boss books the same thing and it goes through', async () => {
+    const b = await book(f.admin, {
+      pickup: OUT_OF_WINDOW, exception: true, reason: 'guest landing on a red-eye',
+    })
+    expect(b.pickup_exception).toBe(true)
+    expect(b.pickup_exception_reason).toBe('guest landing on a red-eye')
   })
 
-  test('re-ticking the box on an already-decided booking restarts it at pending, not whatever it was', async () => {
-    const b = await bookException(f.repA)
-    await db.asUser(f.admin, () => db.sql(
-      `select public.admin_approve_exception_booking($1)`, [b.id]))
+  test('the boss still needs a reason for it', async () => {
+    expect(await errcode(() => book(f.admin, {
+      pickup: OUT_OF_WINDOW, exception: true, reason: null,
+    }))).toBe('23514')
+  })
 
-    // Untick it (ordinary), then re-tick it — the approval does not survive
-    // a rep turning the flag off and back on.
-    await db.asUser(f.repA, () => db.sql(
-      `update public.bookings set pickup_exception = false, pickup_at = $2 where id = $1`,
-      [b.id, '2026-07-06 09:00:00 Europe/Athens']))
-    let row = await db.one<{ exception_status: string | null }>(
-      `select exception_status from public.bookings where id = $1`, [b.id])
-    expect(row.exception_status).toBeNull()
+  test('and is refused the same as anyone if he does not flag it at all', async () => {
+    expect(await errcode(() => book(f.admin, { pickup: OUT_OF_WINDOW })))
+      .toBe('IR116')
+  })
+})
 
+describe('what a rep may do to a booking that already exists', () => {
+  test('ticking the box afterwards changes nothing', async () => {
+    const b = await book(f.repA)
     await db.asUser(f.repA, () => db.sql(
       `update public.bookings
-          set pickup_exception = true, pickup_exception_reason = 'again',
-              pickup_at = $2
-        where id = $1`,
-      [b.id, '2026-07-06 03:00:00 Europe/Athens']))
-    row = await db.one<{ exception_status: string | null }>(
-      `select exception_status from public.bookings where id = $1`, [b.id])
-    expect(row.exception_status).toBe('pending')
-  })
-})
+          set pickup_exception = true, pickup_exception_reason = 'after the fact'
+        where id = $1`, [b.id]))
 
-describe('the car is held regardless', () => {
-  test('a pending exception booking still blocks a second booking on the same car and dates', async () => {
-    await bookException(f.repA)
-    expect(await errcode(() => bookOrdinary(f.repB, { carId: f.car1 }))).toBe('23P01')
+    const row = await db.one<Row>(
+      `select id, pickup_exception, pickup_exception_reason from public.bookings where id = $1`,
+      [b.id])
+    expect(row.pickup_exception).toBe(false)
+    expect(row.pickup_exception_reason).toBeNull()
   })
-})
 
-describe('it cannot be picked up until approved', () => {
-  test('starting pickup on a pending exception booking is refused', async () => {
-    const b = await bookException(f.repA)
+  test('and neither does moving the pick-up out of hours with it', async () => {
+    const b = await book(f.repA)
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `update public.bookings set status = 'out' where id = $1`, [b.id])))).toBe('IR123')
+      `update public.bookings
+          set pickup_exception = true, pickup_exception_reason = 'after the fact',
+              pickup_at = $2
+        where id = $1`, [b.id, OUT_OF_WINDOW])))).toBe('IR116')
   })
 
-  test('approving it clears the way', async () => {
-    const b = await bookException(f.repA)
-    await db.asUser(f.admin, () => db.sql(
-      `select public.admin_approve_exception_booking($1)`, [b.id]))
+  test('unticking the boss\'s exception is reverted, not obeyed', async () => {
+    const b = await book(f.admin, {
+      pickup: OUT_OF_WINDOW, exception: true, reason: 'guest landing on a red-eye',
+    })
+    // An ordinary rep edit — the room number — carrying a false claim with it.
+    await db.asUser(f.repA, () => db.sql(
+      `update public.bookings set room_number = '204', pickup_exception = false
+        where id = $1`, [b.id]))
 
-    const row = await db.one<{ exception_status: string; status: string }>(
-      `select exception_status, status from public.bookings where id = $1`, [b.id])
-    expect(row.exception_status).toBe('approved')
-    expect(row.status).toBe('booked')
+    const row = await db.one<Row & { room_number: string }>(
+      `select id, room_number, pickup_exception, pickup_exception_reason
+         from public.bookings where id = $1`, [b.id])
+    expect(row.room_number).toBe('204')
+    expect(row.pickup_exception).toBe(true)
+    expect(row.pickup_exception_reason).toBe('guest landing on a red-eye')
+  })
+})
 
-    // The eligibility gate still applies — no driver was ever recorded, so
-    // this now fails on IR121, not IR123. That is the point: approval clears
-    // ONE gate, not every gate a pickup has.
+describe('an exception booking is live the moment it is made', () => {
+  test('it is on the rep\'s day like any other booking', async () => {
+    // rep_day_movements() is called from the push sender on the service role
+    // (src/lib/push/notify.ts), never directly by a rep session.
+    const b = await book(f.admin, {
+      pickup: OUT_OF_WINDOW, exception: true, reason: 'guest landing on a red-eye',
+    })
+    const rows = await db.as({ kind: 'service' }, () => db.sql<{ booking_id: string }>(
+      `select booking_id from public.rep_day_movements($1, '2026-07-06')`, [f.repA]))
+    expect(rows.map((r) => r.booking_id)).toContain(b.id)
+  })
+
+  test('nothing about the exception stands between it and pickup', async () => {
+    const b = await book(f.admin, {
+      pickup: OUT_OF_WINDOW, exception: true, reason: 'guest landing on a red-eye',
+    })
+    // IR121 is the eligibility gate — no driver was ever recorded. That it is
+    // what refuses the transition is the point: the approval block (IR123)
+    // that used to come first is gone.
     expect(await errcode(() => db.asUser(f.repA, () => db.sql(
       `update public.bookings set status = 'out' where id = $1`, [b.id])))).toBe('IR121')
   })
 })
 
-describe('the two ways out of pending', () => {
-  test('a rep cannot approve or deny', async () => {
-    const b = await bookException(f.repA)
-    expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `select public.admin_approve_exception_booking($1)`, [b.id])))).toBe('IR001')
-    expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `select public.admin_deny_exception_booking($1)`, [b.id])))).toBe('IR001')
+describe('the approval machinery is gone', () => {
+  test('the queue and both its RPCs no longer exist', async () => {
+    for (const call of [
+      `select public.admin_pending_exception_bookings()`,
+      `select public.admin_approve_exception_booking('00000000-0000-4000-8000-000000000000')`,
+      `select public.admin_deny_exception_booking('00000000-0000-4000-8000-000000000000')`,
+    ]) {
+      expect(await errcode(() => db.asUser(f.admin, () => db.sql(call)))).toBe('42883')
+    }
   })
 
-  test('denying cancels the booking and frees the car back up', async () => {
-    const b = await bookException(f.repA)
-    await db.asUser(f.admin, () => db.sql(
-      `select public.admin_deny_exception_booking($1)`, [b.id]))
-
-    const row = await db.one<{ exception_status: string; status: string }>(
-      `select exception_status, status from public.bookings where id = $1`, [b.id])
-    expect(row.exception_status).toBe('denied')
-    expect(row.status).toBe('cancelled')
-
-    // Cancelled falls outside the exclusion constraint's predicate — the same
-    // car, same dates, now succeeds for a different rep.
-    await expect(bookOrdinary(f.repB, { carId: f.car1 })).resolves.toBeTruthy()
-  })
-
-  test('approving or denying twice is refused — there is nothing pending left', async () => {
-    const b = await bookException(f.repA)
-    await db.asUser(f.admin, () => db.sql(
-      `select public.admin_approve_exception_booking($1)`, [b.id]))
+  test('and neither does the column they moved', async () => {
     expect(await errcode(() => db.asUser(f.admin, () => db.sql(
-      `select public.admin_approve_exception_booking($1)`, [b.id])))).toBe('IR112')
-    expect(await errcode(() => db.asUser(f.admin, () => db.sql(
-      `select public.admin_deny_exception_booking($1)`, [b.id])))).toBe('IR112')
-  })
-
-  test('a random id is refused the same way', async () => {
-    expect(await errcode(() => db.asUser(f.admin, () => db.sql(
-      `select public.admin_approve_exception_booking('00000000-0000-4000-8000-000000000000')`))))
-      .toBe('IR112')
-  })
-})
-
-describe('what the rest of the day does not see', () => {
-  // rep_day_movements() is called from the push sender on the service role
-  // (src/lib/push/notify.ts), never directly by a rep session — same identity
-  // the real cron uses.
-  test('rep_day_movements excludes a pending pickup but includes an approved one', async () => {
-    const b = await bookException(f.repA, { start: '2026-07-06', end: '2026-07-08' })
-
-    const pending = await db.as({ kind: 'service' }, () => db.sql<{ booking_id: string }>(
-      `select booking_id from public.rep_day_movements($1, '2026-07-06')`, [f.repA]))
-    expect(pending.map((r) => r.booking_id)).not.toContain(b.id)
-
-    await db.asUser(f.admin, () => db.sql(
-      `select public.admin_approve_exception_booking($1)`, [b.id]))
-
-    const approved = await db.as({ kind: 'service' }, () => db.sql<{ booking_id: string }>(
-      `select booking_id from public.rep_day_movements($1, '2026-07-06')`, [f.repA]))
-    expect(approved.map((r) => r.booking_id)).toContain(b.id)
-  })
-
-  test('an ordinary booking is unaffected', async () => {
-    const b = await bookOrdinary(f.repA, { start: '2026-07-06', end: '2026-07-08' })
-    const rows = await db.as({ kind: 'service' }, () => db.sql<{ booking_id: string }>(
-      `select booking_id from public.rep_day_movements($1, '2026-07-06')`, [f.repA]))
-    expect(rows.map((r) => r.booking_id)).toContain(b.id)
-  })
-})
-
-describe('the boss\'s queue', () => {
-  test('lists a pending exception booking with its reason, and nothing else', async () => {
-    const pending = await bookException(f.repA)
-    const ordinary = await bookOrdinary(f.repA, { carId: f.car2 })
-
-    const rows = await db.asUser(f.admin, () => db.sql<{
-      booking_id: string; reason: string | null
-    }>(`select booking_id, reason from public.admin_pending_exception_bookings()`))
-
-    const ids = rows.map((r) => r.booking_id)
-    expect(ids).toContain(pending.id)
-    expect(ids).not.toContain(ordinary.id)
-    expect(rows.find((r) => r.booking_id === pending.id)?.reason).toBe('guest landing on a red-eye')
-  })
-
-  test('drops off the queue once approved', async () => {
-    const b = await bookException(f.repA)
-    await db.asUser(f.admin, () => db.sql(
-      `select public.admin_approve_exception_booking($1)`, [b.id]))
-
-    const rows = await db.asUser(f.admin, () => db.sql<{ booking_id: string }>(
-      `select booking_id from public.admin_pending_exception_bookings()`))
-    expect(rows.map((r) => r.booking_id)).not.toContain(b.id)
-  })
-
-  test('a rep cannot read it', async () => {
-    await bookException(f.repA)
-    expect(await errcode(() => db.asUser(f.repA, () => db.sql(
-      `select * from public.admin_pending_exception_bookings()`)))).toBe('IR001')
+      `select exception_status from public.bookings`)))).toBe('42703')
   })
 })

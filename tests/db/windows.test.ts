@@ -27,15 +27,21 @@ beforeEach(async () => {
         set pickup_window = '08:30-11:30', dropoff_window = '18:00-21:00' where id = 1`)
 })
 
-/** A booking with times, made the way a rep makes one. */
+/**
+ * A booking with times. `actor` defaults to a rep, because that is who makes
+ * most of them — but the exception flag is only obeyed for the admin since
+ * 0033 (docs/01-DECISIONS.md §37, tests/db/exception-bookings.test.ts), so
+ * every case below that needs one books as the boss.
+ */
 async function book(opts: {
   pickup?: string | null
   dropoff?: string | null
   claimOverride?: boolean
   pickupException?: boolean
   pickupExceptionReason?: string | null
+  actor?: string
 } = {}) {
-  return db.asUser(f.repA, () => db.one<{ id: string; window_override: boolean }>(
+  return db.asUser(opts.actor ?? f.repA, () => db.one<{ id: string; window_override: boolean }>(
     `insert into public.bookings
        (car_id, hotel_id, room_number, start_date, end_date,
         cust_first, cust_last, cust_phone, cust_dob, pickup_at, dropoff_at, window_override,
@@ -59,11 +65,12 @@ describe('the times a booking carries', () => {
   })
 
   test('a pick-up before the window opens is', async () => {
-    // Flagged as an exception: an unflagged out-of-window pick-up is refused
-    // outright since 0027, tested in its own describe block below. This test
-    // is only about window_override still being derived once the exception
-    // lets the write through.
+    // Flagged as an exception by the boss: an unflagged out-of-window pick-up
+    // is refused outright since 0027, and since 0033 a rep's flag is not a
+    // flag at all. This test is only about window_override still being
+    // derived once the exception lets the write through.
     const b = await book({
+      actor: f.admin,
       pickup: '2026-07-06 07:15:00 Europe/Athens',
       pickupException: true, pickupExceptionReason: 'testing the derivation',
     })
@@ -143,8 +150,9 @@ describe('pick-up is enforced; drop-off is not (0027)', () => {
       .toBe('IR116')
   })
 
-  test('the same pick-up succeeds when flagged as an exception with a reason', async () => {
+  test('the same pick-up succeeds when the boss flags it as an exception with a reason', async () => {
     const b = await book({
+      actor: f.admin,
       pickup: '2026-07-06 03:00:00 Europe/Athens',
       pickupException: true, pickupExceptionReason: 'guest landing on a red-eye',
     })
@@ -154,12 +162,14 @@ describe('pick-up is enforced; drop-off is not (0027)', () => {
 
   test('checking the exception flag with no reason is refused by the column', async () => {
     expect(await errcode(() => book({
+      actor: f.admin,
       pickup: '2026-07-06 03:00:00 Europe/Athens', pickupException: true,
     }))).toBe('23514')
   })
 
   test('checking the exception flag with a blank reason is refused too', async () => {
     expect(await errcode(() => book({
+      actor: f.admin,
       pickup: '2026-07-06 03:00:00 Europe/Athens',
       pickupException: true, pickupExceptionReason: '   ',
     }))).toBe('23514')
@@ -187,6 +197,7 @@ describe('pick-up is enforced; drop-off is not (0027)', () => {
 describe('the windows are the admin\'s', () => {
   test('widening them makes a previously out-of-hours time ordinary', async () => {
     const early = await book({
+      actor: f.admin,
       pickup: '2026-07-06 07:15:00 Europe/Athens',
       pickupException: true, pickupExceptionReason: 'early flight, guest confirmed by phone',
     })

@@ -12,14 +12,13 @@
  *    for `BookingRow`. The aliases below are that, and nothing more.
  *
  * 2. THE CHECK-CONSTRAINED COLUMNS. `car_models.transmission`,
- *    `car_models.fuel_type`, `handovers.kind`, `damage_marks.view`,
- *    `damage_marks.mark_type` and `bookings.exception_status` are `text` with a
- *    CHECK constraint rather than Postgres enums, so the generator can only
- *    report `string` — a CHECK is invisible to it in a way that a real enum is
- *    not. The database still enforces the value; TypeScript simply cannot see
- *    the enforcement. The unions are declared once here rather than asserted
- *    at each read.
- *    Worth doing properly one day: making these six columns real enums would
+ *    `car_models.fuel_type`, `handovers.kind`, `damage_marks.view` and
+ *    `damage_marks.mark_type` are `text` with a CHECK constraint rather than
+ *    Postgres enums, so the generator can only report `string` — a CHECK is
+ *    invisible to it in a way that a real enum is not. The database still
+ *    enforces the value; TypeScript simply cannot see the enforcement. The
+ *    unions are declared once here rather than asserted at each read.
+ *    Worth doing properly one day: making these five columns real enums would
  *    delete this section and let the generator carry the unions itself. That
  *    is a schema change and wants its own migration, not a provisioning
  *    session — recorded in docs/06-IMPLEMENTATION-NOTES.md.
@@ -53,8 +52,6 @@ export type HandoverKind = 'pickup' | 'return'
 export type DamageViewCol = 'front' | 'rear' | 'left' | 'right' | 'top'
 /** `damage_marks.mark_type` — CHECK in 20260830090600_operations.sql. */
 export type MarkTypeCol = 'scratch' | 'dent' | 'chip' | 'crack' | 'other'
-/** `bookings.exception_status` — CHECK in 20260901150000_booking_exception_approval.sql. */
-export type ExceptionStatus = 'pending' | 'approved' | 'denied'
 
 // ── Row aliases ─────────────────────────────────────────────────────────────
 export type ProfileRow = Row<'profiles'>
@@ -66,10 +63,7 @@ export type CarRow = Row<'cars'>
 export type PricingPeriodRow = Row<'pricing_periods'>
 export type PriceRowRow = Row<'price_rows'>
 export type PriceExtraDayRow = Row<'price_extra_day'>
-/** Narrowed per note 2 above. */
-export type BookingRow = Omit<Row<'bookings'>, 'exception_status'> & {
-  exception_status: ExceptionStatus | null
-}
+export type BookingRow = Row<'bookings'>
 export type BookingExtraRow = Row<'booking_extras'>
 export type BookingDriverRow = Row<'booking_drivers'>
 export type ContractRow = Row<'contracts'>

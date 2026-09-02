@@ -123,7 +123,7 @@ const timeSchema = z.string().trim().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional
 export async function createBooking(
   _prev: CreateBookingState, formData: FormData,
 ): Promise<CreateBookingState> {
-  await requireUnlocked()
+  const staff = await requireUnlocked()
 
   const parsed = z.object({
     car_id: uuidSchema,
@@ -143,10 +143,10 @@ export async function createBooking(
     cust_email: z.string().trim().max(254).optional().transform((v) => v || null),
     pickup_time: timeSchema,
     dropoff_time: timeSchema,
-    // The exception path (docs/01-DECISIONS.md §5): checking the box is the
-    // rep's claim, but the actual gate is app.bookings_enforce_pickup_window()
-    // — an unflagged out-of-window pick-up is refused by the database
-    // regardless of what this schema lets through.
+    // The exception path (docs/01-DECISIONS.md §5, §37). The box is only on
+    // the boss's own form, and only his tick counts — see `exception` below.
+    // The gate itself is app.bookings_enforce_pickup_window(): an unflagged
+    // out-of-window pick-up is refused by the database whoever sent it.
     pickup_exception: z.boolean().optional().default(false),
     pickup_exception_reason: z.string().trim().max(300).optional().transform((v) => v || null),
     seats: z.array(z.enum(SEAT_TYPES)).optional().default([]),
@@ -171,12 +171,18 @@ export async function createBooking(
   if (!parsed.success) return { error: 'IR104' }
   if (parsed.data.end_date < parsed.data.start_date) return { error: 'IR104' }
 
+  // Only the boss makes an exception booking (docs/01-DECISIONS.md §37).
+  // The rep's form does not render the box; this is the same rule enforced
+  // where it counts, on the request rather than on the screen — and again
+  // underneath, in app.bookings_before_write(), which forces the flag off for
+  // any non-admin write.
+  const exception = staff.role === 'admin' && parsed.data.pickup_exception
+
   // §9's email gate: required and checked for an ordinary booking, waived
-  // entirely for an exception one (docs/01-DECISIONS.md, "Exception bookings
-  // wait for the boss") — a rep who ticked the box is not blocked by anything
-  // else on this form, email included.
+  // entirely for an exception one — the boss ticking the box is not blocked
+  // by anything else on this form, email included.
   let email: string | null = null
-  if (!parsed.data.pickup_exception) {
+  if (!exception) {
     if (!parsed.data.cust_email) return { error: 'emailInvalid' }
     const check = await verifyEmail(parsed.data.cust_email)
     if (!check.ok) return { error: check.reason }
@@ -203,8 +209,8 @@ export async function createBooking(
     cust_email: email,
     pickup_at: athensInstant(parsed.data.start_date, parsed.data.pickup_time),
     dropoff_at: athensInstant(parsed.data.end_date, parsed.data.dropoff_time),
-    pickup_exception: parsed.data.pickup_exception,
-    pickup_exception_reason: parsed.data.pickup_exception_reason,
+    pickup_exception: exception,
+    pickup_exception_reason: exception ? parsed.data.pickup_exception_reason : null,
   }
   const { data: booking, error } = await supabase.from('bookings')
     .insert(newBooking as Database['public']['Tables']['bookings']['Insert'])
@@ -221,13 +227,11 @@ export async function createBooking(
       seatExtras.map((e) => ({ booking_id: booking.id, seat: e.seat, qty: e.qty })))
   }
 
-  // An exception booking is not live yet — the confirmation goes out when the
-  // manager approves it (src/app/(app)/admin/exception-bookings/actions.ts),
-  // not now, or the guest would be told about a rental the boss might still
-  // refuse.
-  if (!parsed.data.pickup_exception) {
-    await sendNewBookingConfirmation(supabase, { bookingId: booking.id, email })
-  }
+  // Every booking is live the moment it is written (§37 replaced the approval
+  // queue that used to hold an exception back), so the confirmation goes out
+  // now. On an exception booking the boss may have waived the address
+  // entirely, and sendNewBookingConfirmation() is a no-op for a null one.
+  await sendNewBookingConfirmation(supabase, { bookingId: booking.id, email })
 
   redirect(`/bookings/${booking.id}`)
 }
