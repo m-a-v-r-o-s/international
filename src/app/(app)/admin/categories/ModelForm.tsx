@@ -1,8 +1,9 @@
 'use client'
 
 import { useActionState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
+import { categoryName } from '@/lib/fleet/categories'
 import { FormActions } from '@/components/FormActions'
 import { createModel, updateModel, type FormState } from './actions'
 import type { CarModelRow, CategoryRow } from '@/lib/supabase/database.types'
@@ -15,6 +16,7 @@ export function ModelForm({
   onDone?: () => void
 }) {
   const t = useTranslations('admin.models')
+  const locale = useLocale()
   const tc = useTranslations('common')
   const te = useTranslations('errors')
   const action = model ? updateModel : createModel
@@ -43,7 +45,7 @@ export function ModelForm({
         >
           <option value="" disabled>{t('selectCategory')}</option>
           {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.code} — {c.name_en}</option>
+            <option key={c.id} value={c.id}>{c.code} — {categoryName(c, locale)}</option>
           ))}
         </select>
       </div>

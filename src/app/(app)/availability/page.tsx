@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
+import { getLocale } from '@/i18n/locale'
 import { requireUnlocked } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
 import { loadCarsWithSpecs, loadAvailability } from '@/lib/availability/load'
 import { isFreeForRange, isSeatChoice, matchesSeatChoice } from '@/lib/availability/types'
+import { categoryName } from '@/lib/fleet/categories'
 import { FilterForm } from './FilterForm'
 import type { CategoryRow } from '@/lib/supabase/database.types'
 
@@ -34,6 +36,7 @@ export default async function AvailabilityPage({
 }) {
   await requireUnlocked()
   const t = await getTranslations('availability')
+  const locale = await getLocale()
   const params = await searchParams
   const supabase = await supabaseServer()
 
@@ -78,7 +81,7 @@ export default async function AvailabilityPage({
           {cats.filter((c) => byCategory.has(c.id)).map((category) => (
             <section key={category.id} aria-labelledby={`cat-${category.id}`}>
               <h2 id={`cat-${category.id}`} className="mb-2 text-[1.0625rem] font-semibold">
-                {category.code} — {category.name_en}
+                {category.code} — {categoryName(category, locale)}
               </h2>
               <ul className="flex flex-col gap-2">
                 {byCategory.get(category.id)!.map((car) => {

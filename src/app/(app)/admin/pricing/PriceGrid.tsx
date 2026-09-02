@@ -1,8 +1,9 @@
 'use client'
 
 import { useActionState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
+import { categoryName } from '@/lib/fleet/categories'
 import { SubmitButton } from '@/components/SubmitButton'
 import { FormActions } from '@/components/FormActions'
 import { setPriceRow, setExtraDayRate, previewQuote, type FormState, type PreviewState } from './actions'
@@ -30,6 +31,7 @@ export function PriceGridRow({
 }) {
   const t = useTranslations('admin.pricing')
   const te = useTranslations('errors')
+  const locale = useLocale()
   const byDay = new Map(rows.map((r) => [r.days, r.total]))
 
   const [state, formAction] = useActionState<FormState, FormData>(async (_prev, formData) => {
@@ -57,7 +59,7 @@ export function PriceGridRow({
     <form action={formAction} className="ir-card p-3">
       <div className="mb-2 flex items-baseline justify-between">
         <span className="font-semibold">{category.code}</span>
-        <span className="text-[0.8125rem] text-ink-soft">{category.name_en}</span>
+        <span className="text-[0.8125rem] text-ink-soft">{categoryName(category, locale)}</span>
       </div>
 
       {state?.error ? (

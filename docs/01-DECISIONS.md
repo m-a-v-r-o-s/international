@@ -210,6 +210,12 @@ the Play Store. The boss additionally uses it in a desktop browser.
 ## 24. Language
 Greek and English, switchable per user. Contract always bilingual.
 
+That extends to data the admin translates, not just to interface text. `categories` holds
+`name_el` and `name_en` side by side, and every screen but the category editor itself shows
+whichever one matches the reader's own locale — `categoryName()` in
+`src/lib/fleet/categories.ts`. The editor is the exception on purpose: it shows both,
+because both are what it edits.
+
 ## 25. Data retention (GDPR)
 Licence images are **auto-deleted** after an admin-set window (default **24 months** after
 the rental ends). The booking record, contract PDF and typed licence number are retained.
