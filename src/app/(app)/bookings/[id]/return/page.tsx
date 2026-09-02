@@ -53,6 +53,7 @@ export default async function ReturnPage({
   const t = await getTranslations('returnFlow')
   const th = await getTranslations('handover')
   const tb = await getTranslations('bookingDetail')
+  const tp = await getTranslations('admin.bookings')
   const supabase = await supabaseServer()
 
   const ctx = await loadHandoverContext(supabase, id, staff.id)
@@ -180,7 +181,47 @@ export default async function ReturnPage({
             action={completeReturn}
             label={t('confirmAction')}
             confirmMessage={t('confirmPrompt')}
-          />
+          >
+            {/*
+              Only when there is something to take. The amount is pre-filled
+              with what the rule says and stays editable, because what the rep
+              writes is what actually crossed the desk — a guest who argued it
+              down is a fact for the boss to see, not an error to refuse.
+            */}
+            {shortfall > 0 ? (
+              <fieldset className="ir-card flex flex-col gap-3 p-4">
+                <legend className="px-1 text-[0.9375rem] font-semibold">
+                  {t('fuelPaymentTitle')}
+                </legend>
+
+                <div>
+                  <label className="ir-label" htmlFor="fuel_collected">
+                    {t('fuelCollected')}
+                  </label>
+                  <input
+                    id="fuel_collected" name="fuel_collected" type="number"
+                    min={0} step={1} inputMode="numeric" className="ir-field"
+                    defaultValue={shortfall * rate}
+                  />
+                  <p className="ir-hint">{t('fuelCollectedHint')}</p>
+                </div>
+
+                <div>
+                  <label className="ir-label" htmlFor="fuel_pay_method">
+                    {tp('payMethod')}
+                  </label>
+                  <select
+                    id="fuel_pay_method" name="fuel_pay_method" className="ir-field"
+                    defaultValue="cash"
+                  >
+                    <option value="cash">{tp('payMethodCash')}</option>
+                    <option value="card">{tp('payMethodCard')}</option>
+                    <option value="transfer">{tp('payMethodTransfer')}</option>
+                  </select>
+                </div>
+              </fieldset>
+            ) : null}
+          </ConfirmTransition>
         </section>
       ) : null}
     </div>

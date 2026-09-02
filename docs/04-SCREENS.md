@@ -78,7 +78,10 @@ Sequential, one thing per screen, resumable if the app is closed.
 ### R5 · Return flow
 1. **Fuel in** — eighths slider. A shortfall is priced by the database on confirm, at the
    admin-set rate per missing eighth; the screen states the amount before the rep confirms.
-2. **Confirm** → `Returned`. Remaining dates reopen in availability immediately.
+2. **Confirm** → `Returned`. Where there is a shortfall, the amount taken from the guest and
+   how they paid it are recorded here, in the same tap — pre-filled with what is owed and
+   editable, because what the rep writes is what actually crossed the desk. Cash lands in
+   their own cash in hand (§7). Remaining dates reopen in availability immediately.
 
 There is no damage step. Anything wrong with the returning car is reported as an incident
 (R9), in words and photographs, which is how damage is actually described.

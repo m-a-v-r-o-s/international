@@ -453,7 +453,10 @@
     "alreadyReturned": "This rental has already been returned.",
     "notReturnable": "This booking is not out, so there is nothing to return.",
     "fuelCharge": "Back {n}/8 short — €{amount} will be added to this booking.",
-    "damageGoesToIncidents": "Anything wrong with the car — damage, mess, something missing — is reported separately under Incidents, with photos."
+    "damageGoesToIncidents": "Anything wrong with the car — damage, mess, something missing — is reported separately under Incidents, with photos.",
+    "fuelPaymentTitle": "Fuel taken from the guest",
+    "fuelCollected": "Amount taken (€)",
+    "fuelCollectedHint": "Pre-filled with what is owed. Change it if the guest paid something else, or 0 if they paid nothing — the manager sees both figures."
   },
   "admin": {
     "navLabel": "Admin sections",
@@ -539,7 +542,9 @@
         "returned": "Returned",
         "cancelled": "Cancelled",
         "no_show": "No-show"
-      }
+      },
+      "fuelCharge": "Fuel shortfall",
+      "fuelTaken": "Taken by the rep"
     },
     "cars": {
       "title": "Car management",

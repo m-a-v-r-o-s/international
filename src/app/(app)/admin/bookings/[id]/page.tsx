@@ -18,12 +18,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 const COLUMNS =
   'id, ref, status, car_id, hotel_id, room_number, start_date, end_date, ' +
   'pickup_at, dropoff_at, cust_first, cust_last, cust_phone, cust_dob, cust_email, ' +
-  'total, days, collected, pay_method, paid, created_by, created_at'
+  'total, days, collected, pay_method, paid, created_by, created_at, fuel_charge'
 
 type Row = Pick<BookingRow,
   'id' | 'ref' | 'status' | 'car_id' | 'hotel_id' | 'room_number' | 'start_date' | 'end_date'
   | 'pickup_at' | 'dropoff_at' | 'cust_first' | 'cust_last' | 'cust_phone' | 'cust_dob' | 'cust_email'
-  | 'total' | 'days' | 'collected' | 'pay_method' | 'paid' | 'created_by' | 'created_at'>
+  | 'total' | 'days' | 'collected' | 'pay_method' | 'paid' | 'created_by' | 'created_at'
+  | 'fuel_charge'>
 
 /**
  * A5 · One booking, full edit rights at any stage (docs/04-SCREENS.md and
@@ -39,6 +40,7 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
   const { id } = await params
   const t = await getTranslations('admin.bookings')
   const tb = await getTranslations('bookingDetail')
+  const tp = t
   const supabase = await supabaseServer()
 
   const { data: booking } = await supabase.from('bookings')
@@ -47,13 +49,23 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
   if (!booking) notFound()
   const row = booking as unknown as Row
 
-  const [{ data: car }, { data: hotels }, { data: cars }, { data: extras }, { data: rep }] = await Promise.all([
+  const [
+    { data: car }, { data: hotels }, { data: cars }, { data: extras }, { data: rep },
+    { data: ret },
+  ] = await Promise.all([
     supabase.from('cars').select('id, plate, model_id').eq('id', row.car_id).maybeSingle(),
     supabase.from('hotels').select('id, name, area').order('name'),
     supabase.from('cars').select('id, plate, model_id').is('archived_at', null).order('plate'),
     supabase.from('booking_extras').select('id, seat, qty').eq('booking_id', row.id),
     supabase.from('profiles').select('id, full_name').eq('id', row.created_by).maybeSingle(),
+    // The fuel money lives on the return handover, not on the booking (0031).
+    supabase.from('handovers')
+      .select('fuel_collected, fuel_pay_method')
+      .eq('booking_id', row.id).eq('kind', 'return').maybeSingle(),
   ])
+
+  const fuelCollected = ret?.fuel_collected ?? 0
+  const fuelPayMethod = ret?.fuel_pay_method ?? null
 
   return (
     <div className="flex flex-col gap-6">
@@ -88,6 +100,36 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
             <dd className="font-medium">{row.days ?? '—'}</dd>
           </div>
         </dl>
+
+        {/*
+          The fuel shortfall, and what the rep actually took for it (0030,
+          0031). Deliberately its own line rather than folded into the price:
+          `total` is the figure on the agreement the guest signed. The two
+          numbers are shown side by side precisely WHEN they disagree, because
+          a guest who argued the charge down is the thing the boss wants to
+          see — a charge that was paid in full says everything by matching.
+        */}
+        {row.fuel_charge ? (
+          <div className="mt-4 border-t border-line pt-3">
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-[0.9375rem]">
+              <div>
+                <dt className="text-ink-soft">{t('fuelCharge')}</dt>
+                <dd className="font-medium">{formatEuros(row.fuel_charge)}</dd>
+              </div>
+              <div>
+                <dt className="text-ink-soft">{t('fuelTaken')}</dt>
+                <dd className={`font-medium ${
+                  fuelCollected < row.fuel_charge ? 'text-warn' : ''
+                }`}>
+                  {formatEuros(fuelCollected)}
+                  {fuelPayMethod ? ` · ${tp(`payMethod${
+                    fuelPayMethod === 'cash' ? 'Cash' : fuelPayMethod === 'card' ? 'Card' : 'Transfer'
+                  }`)}` : ''}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        ) : null}
 
         {(extras ?? []).length > 0 ? (
           <div className="mt-4 border-t border-line pt-3">

@@ -37,20 +37,21 @@ import type { Database as GeneratedDatabase } from './database.generated'
  * `database.generated` directly), so what is added below is what the app sees.
  * Each block names the migration it stands in for.
  *
- * STATUS, 2 Sep 2026. Every migration in `supabase/migrations` is now applied
- * to the project — `20260902100000_incidents.sql` included — so the schema
- * this file describes and the schema that is actually deployed agree, and
- * every declaration below has been checked field by field against the real
- * generated output for that schema. Two things are deliberately kept rather
- * than folded away, and both are improvements on what the generator emits:
- * `bookings.exception_status` is narrowed to its four real values (per note 2
- * above; the generator can only see `string`), and the `Insert`/`Update` on
- * `incidents` are the GRANT rather than the table (per note 3).
+ * STATUS, 2 Sep 2026. Every migration in `supabase/migrations` is applied to
+ * the project, `20260902110000_fuel_payment.sql` included, so what is declared
+ * below and what is deployed agree. Everything up to
+ * `20260902100000_incidents.sql` was additionally checked field by field
+ * against the real generated output for that schema. Two of those declarations
+ * are kept deliberately rather than folded away, because both are better than
+ * what the generator emits: `bookings.exception_status` is narrowed to its four
+ * real values (per note 2 above — the generator can only see `string`), and
+ * `incidents`'s `Insert`/`Update` describe the GRANT rather than the table
+ * (per note 3).
  *
- * `database.generated.ts` itself is still the file from before that migration.
- * Regenerating it needs network access to the project, which is why it did not
- * happen here: from the machine this was written on, the pooler's SSL probe
- * times out and the direct host answers only on IPv6. Run
+ * `database.generated.ts` itself predates all of it. Regenerating it needs network
+ * access to the project, which is why it did not happen here — from the
+ * machine this was written on the pooler's SSL probe times out and the direct
+ * host answers only on IPv6. Run
  * `supabase gen types typescript --project-id jhjzcrypzpvevxouuejm` from
  * somewhere that can reach it, and everything below except those two
  * narrowings can then be deleted.
@@ -127,7 +128,7 @@ export type Database = Omit<GeneratedDatabase, 'public'> & {
   public: Omit<GenPublic, 'Functions' | 'Tables'> & {
     Tables: Omit<
       GenPublic['Tables'],
-      'exceptions' | 'bookings' | 'app_settings' | 'profiles'
+      'exceptions' | 'bookings' | 'app_settings' | 'profiles' | 'handovers'
     > & {
       incidents: IncidentsTable
       incident_photos: IncidentPhotosTable
@@ -145,6 +146,13 @@ export type Database = Omit<GeneratedDatabase, 'public'> & {
         GenPublic['Tables']['profiles'], 'notify_exceptions',
         { notify_incidents: boolean }
       >
+      // 20260902110000_fuel_payment.sql. The money the rep took at the desk
+      // when the car came back, on the event where it changed hands.
+      handovers: WithColumns<GenPublic['Tables']['handovers'], {
+        fuel_collected: number
+        fuel_pay_method: 'cash' | 'card' | 'transfer' | null
+        fuel_cash_handover_id: string | null
+      }>
     }
     Functions: Omit<
       GenPublic['Functions'],

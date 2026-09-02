@@ -31,6 +31,8 @@ category-adjacent personal data under GDPR. A breach here is a reportable incide
 | Change a price | ✓ | ✗ | ✗ |
 | Override eligibility block | ✓ | ✗ | ✗ |
 | Resolve an incident / set a charge | ✓ | ✗ | ✗ |
+| Record fuel money taken at a return | ✓ | ✓ | ✗ |
+| Re-date or re-attribute a handover | ✓ | ✗ | ✗ |
 | Add / archive / delete a car | ✓ | ✗ | ✗ |
 | Block a car's dates / see block reason | ✓ | ✗ | ✗ |
 | Edit price tables & pricing periods | ✓ | ✗ | ✗ |

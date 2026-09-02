@@ -69,7 +69,10 @@ The fleet is **one shared pool** — any rep can book any free car in the compan
 ## 7. What a rep sees about money
 - The price on **their own** bookings. Nothing else.
 - **One** aggregate only: **today's own cash in hand** — cash they have collected today and
-  not yet **confirmed received by the boss** (see §31), with a "hand over" action.
+  not yet **confirmed received by the boss** (see §31), with a "hand over" action. It counts
+  **two streams** (§35): the rental cash they took at their own pickups, and the fuel money
+  they took at the returns they processed — which are often somebody else's bookings, on a
+  different day.
 - No revenue history, no monthly totals, no averages, no company figures, no other rep's
   anything. **Not even indirectly** (no totals row, no counts that imply revenue, no
   "cars rented today" company-wide).
@@ -144,7 +147,10 @@ that actually needs a person:
 - **A fuel shortfall is not sent to anybody.** It is arithmetic — €10 per missing eighth by
   default, an admin-set rate — applied by the database the moment a return is confirmed. It
   lands on `bookings.fuel_charge`, beside the total rather than inside it, so the figure on
-  the signed agreement stays the figure that was signed.
+  the signed agreement stays the figure that was signed. **The rep takes this money from the
+  guest at the desk** and records what they took (§35) — it is the one charge in this
+  section they do collect, because it is the one that is settled while the customer is still
+  standing there.
 - **A late return and a no-show raise nothing.** A rental that has not come back is one the
   booking's own status already says is out; a no-show is a status the boss sets on the
   booking.
@@ -736,3 +742,53 @@ live, and the cron service that sweeps the boss's inbox now runs
 `npm run notify -- --incidents` (the old `--exceptions` flag no longer exists). The service is
 still named `notify-exceptions` in Railway, which is cosmetic. See docs/07-SEASON-ROUTINE.md
 §1, which also corrects a schedule this repo had recorded wrongly.
+## 35. The rep takes the fuel money, so the app counts it
+
+§34 made the fuel shortfall a real charge and stopped there: the figure was computed and
+displayed, and nothing could record that anybody had paid it. The owner answered the question
+that decides it (2 Sep 2026): **yes, a rep does take the fuel money from customers**, in cash,
+at the desk, when the car comes back.
+
+That makes it cash, and cash is not just a number on a booking here. §7 gives a rep exactly one
+aggregate — today's own cash in hand — and §31 makes the boss's confirmation what clears it.
+Fuel money the app did not know about would be money a rep is holding that never appears in
+that figure and is never handed over: the reconciliation goes quietly wrong, which is worse
+than not collecting it at all.
+
+**It is recorded on the return handover, not on the booking.** That is the whole design, and
+it is not where the rental money lives. Rental cash is a fact about a booking —
+`bookings.collected`, taken by `created_by` at the pickup. Fuel cash is a fact about an
+*event*, and the row describing that event already carries the two things this needs and the
+booking does not:
+
+- **Whose it is.** `handovers.by_profile` — the rep who processed the return, which is
+  routinely not the rep who made the booking. Reps cover for each other (§8) and the guest
+  hands the keys to whoever is on the desk.
+- **Which day it is.** `handovers.occurred_at` — a rental picked up on Monday can come back on
+  Friday. Its rental cash is Monday's; its fuel cash is Friday's.
+
+**What the rep records is what they actually took**, not what was owed. The amount is
+pre-filled with the charge and stays editable, and may be less, or nothing. A guest who argued
+it down is a fact for the boss to see — both figures sit side by side on A5 — rather than a
+state the app refuses to record. §14's rule that a rep never *prices* anything is untouched:
+the price is the database's, and the rep only says what crossed the desk.
+
+One hand-over still covers everything. `my_hand_over_cash()` sweeps both streams into a single
+`cash_handovers` row, because it is one envelope going across one desk; what makes them two
+columns is which day and which rep each was earned by, not that they travel separately.
+
+**A grant had to be narrowed to make this safe.** 0011 gave `authenticated` a table-level
+UPDATE on `handovers`, which was survivable while a handover held a fuel reading and some
+notes. It is not survivable once `by_profile` and `occurred_at` decide whose cash a payment is
+and which day it belongs to: a rep could have re-attributed their takings to a colleague, or
+moved them to a day the boss had already settled. The grant is now column-by-column, and a
+trigger settles `by_profile` at insert from `auth.uid()` for anyone who is not the boss.
+
+Not built, and deliberately: **incident charges still cannot be collected** (§14). §15 takes no
+deposit and there is no card on file, so a guest who has flown home cannot be charged at all —
+the boss's queue records what a thing cost, not a payment. If that ever changes, this pair of
+columns becomes a payments ledger; building one now on the strength of a case that does not
+exist would be building it twice.
+
+See `supabase/migrations/20260902110000_fuel_payment.sql`,
+`src/app/(app)/bookings/[id]/return/` and `tests/db/rep-cash.test.ts`.

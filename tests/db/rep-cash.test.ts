@@ -8,6 +8,12 @@ import { seed, bookAsRep, type Fixtures } from '../helpers/fixtures'
 // tests here are as much about what the number must NOT include as about the
 // arithmetic: nobody else's cash, no card or transfer takings, nothing from a
 // booking that has not been picked up, and nothing already handed over.
+//
+// Since 0031 it counts TWO streams: rental cash taken at a pickup by the rep
+// who made the booking, and fuel cash taken at a return by the rep who
+// processed it. The second block at the bottom is about the seam between them,
+// because that is where this can go wrong — the two are earned on different
+// days by different people and are stamped by different columns.
 
 let db: TestDb
 let f: Fixtures
@@ -41,15 +47,13 @@ async function pickedUpAndPaid(
     `insert into public.booking_drivers (booking_id, is_main, first_name, last_name, dob,
        licence_number, licence_country, licence_issued_on, licence_expires_on)
      values ($1, true, 'A', 'B', '1985-01-01', 'X', 'GR', '2010-01-01', '2032-01-01')`, [bookingId]))
+  // The date goes on at INSERT. Since 0031 a handover's `occurred_at` is
+  // which DAY its cash belongs to, so the guard there refuses to let any
+  // later statement move it — including this one.
   await db.asUser(rep, () => db.sql(
-    `insert into public.handovers (booking_id, kind, by_profile, fuel_eighths)
-     values ($1, 'pickup', $2, 8)`, [bookingId, rep]))
-
-  if (opts.pickedUpDaysAgo) {
-    await db.sql(
-      `update public.handovers set occurred_at = now() - make_interval(days => $2)
-       where booking_id = $1 and kind = 'pickup'`, [bookingId, opts.pickedUpDaysAgo])
-  }
+    `insert into public.handovers (booking_id, kind, by_profile, fuel_eighths, occurred_at)
+     values ($1, 'pickup', $2, 8, now() - make_interval(days => $3))`,
+    [bookingId, rep, opts.pickedUpDaysAgo ?? 0]))
 
   await db.asUser(rep, () => db.sql(
     `update public.bookings
@@ -288,5 +292,162 @@ describe('the stamp the hand-over leaves is one-way, and only through the RPC', 
     // which is why the whole figure, not just the ready slice, is still 90.
     expect(await readyOf(f.repA)).toBe(0)
     expect(await cashOf(f.repA)).toBe(90)
+  })
+})
+
+describe('fuel cash belongs to whoever took the return', () => {
+  /** A rental that goes out with a full tank and comes back short. */
+  async function returnedShort(
+    bookedBy: string, returnedBy: string, carId: string, hotelId: string,
+    opts: {
+      collected: number; method: 'cash' | 'card' | 'transfer'
+      back?: number; daysAgo?: number
+    },
+  ) {
+    const bookingId = await pickedUpAndPaid(bookedBy, carId, hotelId,
+      { amount: 0, method: 'card' })
+
+    const ret = await db.asUser(returnedBy, () => db.one<{ id: string }>(
+      `insert into public.handovers (booking_id, kind, by_profile, fuel_eighths, occurred_at)
+       values ($1, 'return', $2, $3, now() - make_interval(days => $4)) returning id`,
+      [bookingId, returnedBy, opts.back ?? 6, opts.daysAgo ?? 0]))
+
+    await db.asUser(returnedBy, () => db.sql(
+      `update public.handovers
+          set fuel_collected = $2, fuel_pay_method = $3::public.pay_method
+        where id = $1`, [ret.id, opts.collected, opts.method]))
+
+    await db.asUser(returnedBy, () => db.sql(
+      `update public.bookings set status = 'returned' where id = $1`, [bookingId]))
+
+    return { bookingId, returnId: ret.id }
+  }
+
+  test('the returning rep holds it, and the booking\'s own rep does not', async () => {
+    // repCover covers Hotel Alpha, so they can process repA's return.
+    await returnedShort(f.repA, f.repCover, f.car1, f.hotelA,
+      { collected: 20, method: 'cash' })
+
+    expect(await cashOf(f.repCover)).toBe(20)
+    expect(await cashOf(f.repA)).toBe(0)
+  })
+
+  test('it adds to the same figure as rental cash, not a separate one', async () => {
+    await pickedUpAndPaid(f.repA, f.car2, f.hotelA, { amount: 90, method: 'cash' })
+    await returnedShort(f.repA, f.repA, f.car1, f.hotelA, { collected: 20, method: 'cash' })
+
+    expect(await cashOf(f.repA)).toBe(110)
+  })
+
+  test('a card payment for fuel is not cash in anybody\'s hand', async () => {
+    await returnedShort(f.repA, f.repA, f.car1, f.hotelA, { collected: 20, method: 'card' })
+    expect(await cashOf(f.repA)).toBe(0)
+  })
+
+  test('what the rep actually took is what counts, not what was charged', async () => {
+    // Two eighths short at €10 is a €20 charge; the guest argued and paid 5.
+    const { bookingId, returnId } = await returnedShort(f.repA, f.repA, f.car1, f.hotelA,
+      { collected: 5, method: 'cash' })
+
+    expect((await db.one<{ fuel_charge: number }>(
+      `select fuel_charge from public.bookings where id = $1`, [bookingId])).fuel_charge)
+      .toBe(20)   // what the rule says
+    expect((await db.one<{ fuel_collected: number }>(
+      `select fuel_collected from public.handovers where id = $1`, [returnId])).fuel_collected)
+      .toBe(5)    // what came across the desk
+
+    expect(await cashOf(f.repA)).toBe(5)
+  })
+
+  test('there is nowhere to record fuel money at a pickup', async () => {
+    const bookingId = await bookAsRep(db, f.repA, {
+      carId: f.car1, hotelId: f.hotelA, start: '2026-07-06', end: '2026-07-08',
+    })
+    const pickup = await db.asUser(f.repA, () => db.one<{ id: string }>(
+      `insert into public.handovers (booking_id, kind, by_profile, fuel_eighths)
+       values ($1, 'pickup', $2, 8) returning id`, [bookingId, f.repA]))
+
+    // The check constraint, not a trigger: a pickup row cannot carry fuel
+    // money at all, so there is nothing to park an amount on in advance.
+    expect(await errcode(() => db.asUser(f.repA, () => db.sql(
+      `update public.handovers
+          set fuel_collected = 500, fuel_pay_method = 'cash'::public.pay_method
+        where id = $1`, [pickup.id])))).toBe('23514')
+
+    expect(await cashOf(f.repA)).toBe(0)
+  })
+
+  test('one hand-over covers both streams, and clears both', async () => {
+    await pickedUpAndPaid(f.repA, f.car2, f.hotelA, { amount: 90, method: 'cash' })
+    const { returnId } = await returnedShort(f.repA, f.repA, f.car1, f.hotelA,
+      { collected: 20, method: 'cash' })
+
+    expect(await readyOf(f.repA)).toBe(110)
+
+    const handed = await db.asUser(f.repA, () => db.one<{ amount: number; handover_id: string }>(
+      `select * from public.my_hand_over_cash()`))
+    expect(handed.amount).toBe(110)
+
+    // Both columns point at the one envelope that went across the desk.
+    expect((await db.one<{ fuel_cash_handover_id: string }>(
+      `select fuel_cash_handover_id from public.handovers where id = $1`, [returnId]))
+      .fuel_cash_handover_id).toBe(handed.handover_id)
+
+    expect(await readyOf(f.repA)).toBe(0)
+    // Still owed until the boss confirms it — §31 is unchanged by any of this.
+    expect(await cashOf(f.repA)).toBe(110)
+
+    await db.asUser(f.admin, () => db.sql(
+      `select public.admin_confirm_cash_handover($1)`, [handed.handover_id]))
+    expect(await cashOf(f.repA)).toBe(0)
+  })
+
+  test('a rep with only fuel cash today can still hand it over', async () => {
+    await returnedShort(f.repA, f.repA, f.car1, f.hotelA, { collected: 20, method: 'cash' })
+
+    const handed = await db.asUser(f.repA, () => db.one<{ amount: number }>(
+      `select * from public.my_hand_over_cash()`))
+    expect(handed.amount).toBe(20)
+  })
+
+  test('a rep cannot stamp the fuel hand-over themselves', async () => {
+    const { returnId } = await returnedShort(f.repA, f.repA, f.car1, f.hotelA,
+      { collected: 20, method: 'cash' })
+
+    expect(await errcode(() => db.asUser(f.repA, () => db.sql(
+      `update public.handovers set fuel_cash_handover_id = null where id = $1`, [returnId]))))
+      .toBe('42501')
+  })
+
+  test('yesterday\'s fuel cash is not today\'s figure', async () => {
+    await returnedShort(f.repA, f.repA, f.car1, f.hotelA,
+      { collected: 20, method: 'cash', daysAgo: 2 })
+
+    expect(await cashOf(f.repA)).toBe(0)
+  })
+
+  test('a rep cannot move their takings to another day, or another rep', async () => {
+    const { returnId } = await returnedShort(f.repA, f.repA, f.car1, f.hotelA,
+      { collected: 20, method: 'cash' })
+
+    // Both columns are out of the update grant since 0031...
+    for (const sql of [
+      `update public.handovers set occurred_at = now() - interval '3 days' where id = $1`,
+      `update public.handovers set by_profile = '${'00000000-0000-0000-0000-000000000000'}' where id = $1`,
+    ]) {
+      expect(await errcode(() => db.asUser(f.repA, () => db.sql(sql, [returnId]))))
+        .toBe('42501')
+    }
+
+    // ...and the guard reverts them even on a statement that gets past the
+    // grant, the same way the rental side's stamp is protected.
+    await db.sql(
+      `update public.handovers set occurred_at = now() - interval '3 days', by_profile = $2
+        where id = $1`, [returnId, f.repB])
+
+    const after = await db.one<{ by_profile: string }>(
+      `select by_profile from public.handovers where id = $1`, [returnId])
+    expect(after.by_profile).toBe(f.repA)
+    expect(await cashOf(f.repA)).toBe(20)
   })
 })
