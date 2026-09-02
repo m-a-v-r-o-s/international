@@ -50,9 +50,17 @@ plan:
    **This service's command changed on 2 Sep 2026** (docs/01-DECISIONS.md
    §34) and was updated in Railway the same day: it runs
    `npm run notify -- --incidents`, and the old `--exceptions` flag no longer
-   exists. The service is still NAMED `notify-exceptions` in Railway — the
-   command is what matters and it is correct; the name is cosmetic and can be
-   changed in the dashboard whenever.
+   exists.
+
+   **The service is still NAMED `notify-exceptions`, and should be renamed to
+   `notify-incidents` in the dashboard** (Settings → the service's name). It
+   has to be done by hand: Railway's API has no rename field, so the only
+   programmatic route — the one its own agent offers — is to delete the
+   service and recreate it with the same configuration. Do not take that
+   offer. This is the service whose 5-minute cadence keeps the Supabase
+   project from auto-pausing (§1), and destroying and rebuilding it to correct
+   a label risks the one thing this document exists to prevent. The command is
+   what runs; the name is only what it is called.
 
    **Correction, 2 Sep 2026.** This section previously recorded the schedule as
    `* * * * *`, every 1 minute, "changed 1 Sep 2026 at the owner's request".
