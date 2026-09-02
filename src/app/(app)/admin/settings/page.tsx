@@ -11,6 +11,7 @@ import {
 import { CompanyForm } from './CompanyForm'
 import { FuelChargeForm, PurgeForm, RetentionForm, WindowsForm } from './RetentionForms'
 import { HotelsSection } from './HotelsSection'
+import { CategoriesSection } from './CategoriesSection'
 import { ClearLedgerForm } from '../customers/LedgerForms'
 import { NotificationPreferences } from '../../settings/NotificationPreferences'
 import { PushToggle } from '../../settings/PushToggle'
@@ -56,6 +57,10 @@ export async function generateMetadata(): Promise<Metadata> {
  *
  * A8's hotel half is folded in the same way — it used to be its own sidebar
  * entry at /admin/hotels, which now only redirects here. See HotelsSection.tsx.
+ *
+ * A3's categories & models half follows them, for the same reason and by the
+ * same route: /admin/categories now only redirects here. See
+ * CategoriesSection.tsx.
  */
 export default async function AdminSettingsPage() {
   const staff = await requireAdmin()
@@ -119,6 +124,8 @@ export default async function AdminSettingsPage() {
       </section>
 
       <HotelsSection />
+
+      <CategoriesSection />
 
       {readiness.ready ? (
         <p className="ir-notice border-ok bg-ok-tint text-ok" role="status">{t('ready')}</p>

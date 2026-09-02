@@ -82,7 +82,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: '/incidents', label: tn('incidents') },
         { href: '/admin/movements', label: ta('nav.movements'), section: ta('nav.adminSection') },
         { href: '/admin/fleet', label: ta('nav.fleet') },
-        { href: '/admin/categories', label: ta('nav.categories') },
         { href: '/admin/pricing', label: ta('nav.pricing') },
         { href: '/admin/bookings', label: ta('nav.bookings') },
         { href: '/admin/incidents', label: ta('nav.incidents') },
