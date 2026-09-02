@@ -21,8 +21,9 @@ export type ErrorKey =
   | 'IR120' | 'IR121' | 'IR122' | 'IR123'
   | 'forbidden' | 'conflict' | 'unknown' | 'inUse' | 'duplicate'
   // Raised by the app rather than by Postgres: a file the upload path refused
-  // before it ever reached the bucket, and the caps around the OCR call.
-  | 'fileType' | 'fileTooLarge' | 'rateLimited' | 'ocrFailed'
+  // before it ever reached the bucket, the caps around the OCR call, and a
+  // report with nothing in it.
+  | 'fileType' | 'fileTooLarge' | 'rateLimited' | 'ocrFailed' | 'incidentEmpty'
   | 'companyMissing' | 'contractFailed' | 'signatureMissing'
   // A8: the GoTrue Admin API's own refusals, which never reach Postgres.
   | 'emailInUse' | 'accountFailed'

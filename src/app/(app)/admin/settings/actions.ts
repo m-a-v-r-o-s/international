@@ -94,6 +94,34 @@ export async function saveRetentionSettings(
 }
 
 /**
+ * What a missing eighth of a tank costs (docs/01-DECISIONS.md §14).
+ *
+ * A commercial rate rather than a rule, which is why it is a setting and not a
+ * constant: the owner changes fuel prices without changing the app. The bounds
+ * match the column's own check constraint. What the number governs is
+ * app.bookings_fuel_charge(), which applies it on the return transition — so
+ * the figure typed here is the figure charged, with nothing in between.
+ */
+export async function saveFuelChargeSettings(
+  _prev: SettingsState, formData: FormData,
+): Promise<SettingsState> {
+  await requireAdmin()
+
+  const parsed = z.coerce.number().int().min(0).max(1000)
+    .safeParse(formData.get('fuel_charge_per_eighth'))
+  if (!parsed.success) return { error: 'IR104' }
+
+  const supabase = await supabaseServer()
+  const { error } = await supabase.from('app_settings')
+    .update({ fuel_charge_per_eighth: parsed.data }).eq('id', 1)
+
+  if (error) return { error: errorKey(error) }
+
+  revalidatePath('/admin/settings')
+  return { saved: true }
+}
+
+/**
  * §5's operating windows. They are stored as 'HH:MM-HH:MM' — the format the
  * check constraint in supabase/migrations/20260830170000_windows.sql enforces
  * — and drive two things: the time R3 pre-fills, and whether a booking's

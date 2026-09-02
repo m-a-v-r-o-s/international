@@ -40,7 +40,8 @@
     "quickBooking": "Booking",
     "writeContract": "Contract",
     "pickups": "Pickups",
-    "dropoffs": "Drop-offs"
+    "dropoffs": "Drop-offs",
+    "incidents": "Incidents"
   },
   "login": {
     "title": "Sign in",
@@ -229,6 +230,31 @@
       "no_show": "No-show",
       "blocked": "Blocked"
     }
+  },
+  "incidents": {
+    "title": "Incidents",
+    "subtitle": "Anything you have sent to the manager.",
+    "empty": "You have not sent anything in.",
+    "sent": "Sent to the manager.",
+    "withManager": "With the manager",
+    "closed": "Dealt with",
+    "reportAction": "Report an incident",
+    "reportTitle": "Report an incident",
+    "reportIntro": "Say what happened and add photos. The manager decides what happens next — do not price it, do not argue it and do not take money for it.",
+    "noBookings": "There are no contracts to report on yet.",
+    "whichContract": "Which contract",
+    "choose": "Choose a contract",
+    "whichContractHint": "Reference, plate, guest and dates.",
+    "whatHappened": "What happened",
+    "whatHappenedHint": "Plain words are fine. Write it as you would say it.",
+    "notePlaceholder": "e.g. Wing mirror on the driver’s side is cracked. Guest says it happened in a car park.",
+    "photos": "Photos",
+    "photosHint": "Add them one at a time. Each one uploads on its own, so a slow connection cannot lose the rest.",
+    "addPhoto": "Choose a photo",
+    "uploadPhoto": "Add this photo",
+    "photoAdded": "Photo {n} added",
+    "removePhoto": "Remove",
+    "sendAction": "Send to the manager"
   },
   "today": {
     "startPickup": "Start pickup",
@@ -842,7 +868,8 @@
     "IR122": "Too many customer lookups in a short time. Type the details in by hand and try the lookup again later.",
     "IR123": "This is an exception booking and the manager has not approved it yet. It cannot be picked up until they do.",
     "emailInvalid": "That does not look like a real email address.",
-    "emailUndeliverable": "That email's domain cannot receive mail — check it for a typo, or tick \"exception booking\" and give a reason to book without it."
+    "emailUndeliverable": "That email's domain cannot receive mail — check it for a typo, or tick \"exception booking\" and give a reason to book without it.",
+    "incidentEmpty": "Write what happened, or add a photo — an empty report tells the manager nothing."
   },
   "eligibility": {
     "title": "Eligibility",
@@ -978,6 +1005,10 @@
     },
     "windowsTitle": "Pick-up and drop-off windows",
     "windowsHint": "Pick-up is enforced: a rep can only book within these hours unless the booking is flagged as an exception with a reason. Drop-off stays a default — a rep can set any time, and a time outside these hours is recorded on the booking as an override.",
+    "fuelChargeTitle": "Fuel shortfall",
+    "fuelChargeIntro": "What a car costs the guest for every eighth of a tank it comes back short. Applied automatically the moment a return is confirmed — nobody is asked, and the rep cannot change it.",
+    "fuelChargeLabel": "Charge per eighth of a tank (€)",
+    "fuelChargeHint": "Whole euros. A car back two eighths short at €10 is charged €20.",
     "pickupWindow": "Pick-ups",
     "dropoffWindow": "Drop-offs",
     "windowFrom": "From",

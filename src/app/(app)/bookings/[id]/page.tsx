@@ -37,6 +37,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
   const t = await getTranslations('bookingDetail')
   const tt = await getTranslations('today')
   const tcs = await getTranslations('contractStep')
+  const ti = await getTranslations('incidents')
   const supabase = await supabaseServer()
 
   const { data: booking } = await supabase.from('bookings')
@@ -168,6 +169,13 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
       {isOut ? (
         <Link href={`/bookings/${row.id}/return`} className="ir-btn-primary">{tt('startReturn')}</Link>
       ) : null}
+
+      {/* Anything wrong with this car, in the rep's own words and photographs.
+          The link pre-selects the contract; it is not what authorises the
+          report, which the incidents policy decides for itself. */}
+      <Link href={`/incidents/new?booking=${row.id}`} className="ir-btn-quiet">
+        {ti('reportAction')}
+      </Link>
 
       {editable ? (
         <section className="ir-card p-4">

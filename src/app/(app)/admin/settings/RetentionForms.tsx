@@ -5,7 +5,8 @@ import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
 import { SubmitButton } from '@/components/SubmitButton'
 import {
-  runLicencePurge, saveRetentionSettings, saveWindowSettings, type SettingsState,
+  runLicencePurge, saveFuelChargeSettings, saveRetentionSettings, saveWindowSettings,
+  type SettingsState,
 } from './actions'
 
 function Notice({ state }: { state: SettingsState }) {
@@ -38,6 +39,25 @@ export function RetentionForm({ months }: { months: number }) {
         id="licence_retention_months" name="licence_retention_months" type="number"
         label={t('retentionMonths')} hint={t('retentionMonthsHint')}
         defaultValue={months} min={1} max={120} step={1} required inputMode="numeric"
+      />
+      <SubmitButton label={tc('save')} />
+    </form>
+  )
+}
+
+export function FuelChargeForm({ perEighth }: { perEighth: number }) {
+  const t = useTranslations('adminSettings')
+  const tc = useTranslations('common')
+  const [state, formAction] = useActionState<SettingsState, FormData>(
+    saveFuelChargeSettings, undefined)
+
+  return (
+    <form action={formAction} className="flex flex-col gap-4">
+      <Notice state={state} />
+      <Field
+        id="fuel_charge_per_eighth" name="fuel_charge_per_eighth" type="number"
+        label={t('fuelChargeLabel')} hint={t('fuelChargeHint')}
+        defaultValue={perEighth} min={0} max={1000} step={1} required inputMode="numeric"
       />
       <SubmitButton label={tc('save')} />
     </form>

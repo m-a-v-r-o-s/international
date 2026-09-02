@@ -9,7 +9,7 @@ import {
   contractReadiness, parseCompany, REQUIRED_FOR_CONTRACT, type RequiredCompanyField,
 } from '@/lib/contract/company'
 import { CompanyForm } from './CompanyForm'
-import { PurgeForm, RetentionForm, WindowsForm } from './RetentionForms'
+import { FuelChargeForm, PurgeForm, RetentionForm, WindowsForm } from './RetentionForms'
 import { ClearLedgerForm } from '../customers/LedgerForms'
 import { NotificationPreferences } from '../../settings/NotificationPreferences'
 import { PushToggle } from '../../settings/PushToggle'
@@ -64,7 +64,7 @@ export default async function AdminSettingsPage() {
 
   const [{ data }, { data: retention }, { data: ledger }, { data: profile }] = await Promise.all([
     supabase.from('app_settings')
-      .select('id, company, licence_retention_months, pickup_window, dropoff_window')
+      .select('id, company, licence_retention_months, pickup_window, dropoff_window, fuel_charge_per_eighth')
       .eq('id', 1).maybeSingle(),
     supabase.rpc('admin_licence_retention_status'),
     supabase.rpc('admin_customer_ledger_status'),
@@ -78,6 +78,7 @@ export default async function AdminSettingsPage() {
 
   const settings = data as {
     licence_retention_months: number; pickup_window: string; dropoff_window: string
+    fuel_charge_per_eighth: number
   } | null
   const status = ((retention ?? []) as {
     retention_months: number; cutoff: string; due_count: number; orphan_count: number
@@ -140,6 +141,14 @@ export default async function AdminSettingsPage() {
           {t('windowsTitle')}
         </h2>
         <WindowsForm windows={{ pickupFrom, pickupTo, dropoffFrom, dropoffTo }} />
+      </section>
+
+      <section className="ir-card flex flex-col gap-4 p-4" aria-labelledby="fuel-heading">
+        <h2 id="fuel-heading" className="text-[1.0625rem] font-semibold">
+          {t('fuelChargeTitle')}
+        </h2>
+        <p className="text-[0.9375rem] text-ink-soft">{t('fuelChargeIntro')}</p>
+        <FuelChargeForm perEighth={settings?.fuel_charge_per_eighth ?? 10} />
       </section>
 
       <section className="ir-card flex flex-col gap-4 p-4" aria-labelledby="retention-heading">

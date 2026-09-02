@@ -80,6 +80,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: '/admin/settings', label: ta('nav.settings') },
         { href: '/availability', label: tn('availability'), section: ta('nav.deskSection') },
         { href: '/bookings', label: tn('myBookings') },
+        { href: '/incidents', label: tn('incidents') },
       ]
     : [
         { href: '/', label: tn('today') },
@@ -87,6 +88,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: '/returns', label: tn('dropoffs') },
         { href: '/availability', label: tn('availability') },
         { href: '/bookings', label: tn('myBookings') },
+        { href: '/incidents', label: tn('incidents') },
         { href: '/settings', label: tn('settings') },
       ]
 
