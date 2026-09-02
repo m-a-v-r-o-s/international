@@ -8,7 +8,7 @@ import { FormActions } from '@/components/FormActions'
 import { archiveCar, unarchiveCar, deleteCar, setCarNotes, type FormState } from './actions'
 
 export function ArchiveToggle({ id, archived }: { id: string; archived: boolean }) {
-  const t = useTranslations('admin.cars')
+  const t = useTranslations('admin.fleet')
   const te = useTranslations('errors')
   const action = archived ? unarchiveCar : archiveCar
   const [state, formAction] = useActionState<FormState, FormData>(action, undefined)
@@ -25,12 +25,12 @@ export function ArchiveToggle({ id, archived }: { id: string; archived: boolean 
 }
 
 export function DeleteCarForm({ id }: { id: string }) {
-  const t = useTranslations('admin.cars')
+  const t = useTranslations('admin.fleet')
   const te = useTranslations('errors')
   const router = useRouter()
   const [state, formAction] = useActionState<FormState, FormData>(async (prev, fd) => {
     const result = await deleteCar(prev, fd)
-    if (!result?.error) router.push('/admin/cars')
+    if (!result?.error) router.push('/admin/fleet')
     return result
   }, undefined)
 
@@ -49,7 +49,7 @@ export function DeleteCarForm({ id }: { id: string }) {
 }
 
 export function NotesForm({ id, notes }: { id: string; notes: string | null }) {
-  const t = useTranslations('admin.cars')
+  const t = useTranslations('admin.fleet')
   const tc = useTranslations('common')
   const te = useTranslations('errors')
   const [state, formAction] = useActionState<FormState, FormData>(setCarNotes, undefined)

@@ -2,7 +2,7 @@ import { beforeAll, afterAll, describe, expect, test } from 'vitest'
 import { TestDb, errcode } from '../helpers/db'
 import { seed, type Fixtures } from '../helpers/fixtures'
 
-// A3 · Car management — categories, models, cars, and blocks are all reached
+// A2 · Fleet (car management) — categories, models, cars, and blocks are all reached
 // through the same table grants a rep already holds (docs/06-IMPLEMENTATION-NOTES.md:
 // "column grants plus admin RPCs, rather than admin-only tables"). The screens
 // have no authorisation logic of their own; the guarantee lives entirely in

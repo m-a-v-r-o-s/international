@@ -125,13 +125,18 @@ mode to be in the wrong one of. Both header buttons (R3b, R4b) are his as well.
 The paper day-sheet, replaced. Any chosen day, all hotels: pickups then returns, in time
 order, with car, guest, hotel, room and rep. Printable. This is the boss's morning screen.
 
-### A2 · Fleet board
-All ~100 cars, live: out / free / blocked / back today. Filter by category or status.
-Tap a car → its calendar, its history, its record.
+### A2 · Fleet  *(A3 · Car management folded in)*
+One screen, one list: all ~100 cars grouped by model, each plate carrying today's status —
+out / free / blocked / back today. The counts for the whole yard and the category/status
+filters sit above it. Tap a car → its calendar, its history, its record.
 
-### A3 · Car management
-Add, edit, archive, delete. Photo, plate, make, model, category, year, colour, transmission,
-fuel, seats, doors, A/C, tank litres. **Block a date range** with an admin-only reason.
+Managing the fleet happens on the same screen, because A2 and A3 were two lists of the same
+hundred plates: add a car from the disclosure above the list; edit, archive or delete on the
+car's own record, which also **blocks a date range** with an admin-only reason. Photo, plate,
+make, model, category, year, colour, transmission, fuel, seats, doors, tank litres. Archived
+cars carry no status and are not counted or filtered — they keep their own collapsed list at
+the foot. A3's number is kept so every reference to A4-A10 still points where it did.
+
 
 ### A4 · Pricing
 Pricing periods for a season (add, edit, drag the boundaries) with overlap prevented.

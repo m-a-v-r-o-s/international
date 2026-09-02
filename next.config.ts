@@ -31,6 +31,17 @@ const config: NextConfig = {
   experimental: {
     serverActions: { bodySizeLimit: '12mb' },
   },
+  // A2 (fleet board) and A3 (car management) were merged into one /admin/fleet
+  // screen, and car detail moved under it. These are the boss's bookmarks, so
+  // the old paths answer rather than 404 — a rename inside the app, not a
+  // public URL contract, hence permanent.
+  async redirects() {
+    return [
+      { source: '/admin/fleet-board', destination: '/admin/fleet', permanent: true },
+      { source: '/admin/cars', destination: '/admin/fleet', permanent: true },
+      { source: '/admin/cars/:id', destination: '/admin/fleet/:id', permanent: true },
+    ]
+  },
   // Security headers that never vary per request live here; the ones that do
   // (the CSP nonce) are set in middleware.
   async headers() {

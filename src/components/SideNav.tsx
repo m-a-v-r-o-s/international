@@ -9,7 +9,7 @@ export type NavItem = {
   label: string
   /**
    * Starts a new labelled group at this item. The admin's list is his own
-   * twelve screens followed by the rep screens he gained in §30, and running
+   * screens followed by the rep screens he gained in §30, and running
    * the two together as one undifferentiated column would lose which is which
    * (docs/01-DECISIONS.md §30 decision 4).
    */
@@ -29,7 +29,7 @@ export type NavItem = {
 
 /**
  * The longest href the current path sits under, so /bookings/new marks "New
- * booking" rather than "My bookings", and /admin/cars/<id> still marks
+ * booking" rather than "My bookings", and /admin/fleet/<id> still marks
  * "Fleet". Exact-match-only would leave every detail screen with nothing lit;
  * shortest-prefix would light the wrong row.
  */

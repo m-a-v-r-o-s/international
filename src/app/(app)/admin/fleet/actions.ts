@@ -47,7 +47,7 @@ export async function createCar(_prev: FormState, formData: FormData): Promise<F
 
   if (error) return { error: errorKey(error) }
 
-  revalidatePath('/admin/cars')
+  revalidatePath('/admin/fleet')
   return undefined
 }
 
@@ -82,8 +82,8 @@ export async function updateCar(_prev: FormState, formData: FormData): Promise<F
 
   if (error) return { error: errorKey(error) }
 
-  revalidatePath('/admin/cars')
-  revalidatePath(`/admin/cars/${parsed.data.id}`)
+  revalidatePath('/admin/fleet')
+  revalidatePath(`/admin/fleet/${parsed.data.id}`)
   return undefined
 }
 
@@ -100,8 +100,8 @@ export async function archiveCar(_prev: FormState, formData: FormData): Promise<
 
   if (error) return { error: errorKey(error) }
 
-  revalidatePath('/admin/cars')
-  revalidatePath(`/admin/cars/${id.data}`)
+  revalidatePath('/admin/fleet')
+  revalidatePath(`/admin/fleet/${id.data}`)
   return undefined
 }
 
@@ -117,8 +117,8 @@ export async function unarchiveCar(_prev: FormState, formData: FormData): Promis
 
   if (error) return { error: errorKey(error) }
 
-  revalidatePath('/admin/cars')
-  revalidatePath(`/admin/cars/${id.data}`)
+  revalidatePath('/admin/fleet')
+  revalidatePath(`/admin/fleet/${id.data}`)
   return undefined
 }
 
@@ -133,7 +133,7 @@ export async function deleteCar(_prev: FormState, formData: FormData): Promise<F
 
   if (error) return { error: errorKey(error) }
 
-  revalidatePath('/admin/cars')
+  revalidatePath('/admin/fleet')
   return undefined
 }
 
@@ -158,7 +158,7 @@ export async function setCarNotes(_prev: FormState, formData: FormData): Promise
 
   if (error) return { error: errorKey(error) }
 
-  revalidatePath(`/admin/cars/${parsed.data.id}`)
+  revalidatePath(`/admin/fleet/${parsed.data.id}`)
   return undefined
 }
 
@@ -193,7 +193,7 @@ export async function createBlock(_prev: FormState, formData: FormData): Promise
 
   if (error) return { error: errorKey(error) }
 
-  revalidatePath(`/admin/cars/${parsed.data.car_id}`)
+  revalidatePath(`/admin/fleet/${parsed.data.car_id}`)
   return undefined
 }
 
@@ -226,7 +226,7 @@ export async function updateBlock(_prev: FormState, formData: FormData): Promise
 
   if (error) return { error: errorKey(error) }
 
-  revalidatePath(`/admin/cars/${parsed.data.car_id}`)
+  revalidatePath(`/admin/fleet/${parsed.data.car_id}`)
   return undefined
 }
 
@@ -244,6 +244,6 @@ export async function deleteBlock(_prev: FormState, formData: FormData): Promise
 
   if (error) return { error: errorKey(error) }
 
-  revalidatePath(`/admin/cars/${parsed.data.car_id}`)
+  revalidatePath(`/admin/fleet/${parsed.data.car_id}`)
   return undefined
 }

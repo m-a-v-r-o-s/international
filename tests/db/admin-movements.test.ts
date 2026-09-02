@@ -2,7 +2,7 @@ import { beforeAll, afterAll, beforeEach, describe, expect, test } from 'vitest'
 import { TestDb, errcode } from '../helpers/db'
 import { seed, bookAsRep, type Fixtures } from '../helpers/fixtures'
 
-// A1 · Movements sheet, A2 · Fleet board, A5 · Bookings — all three are
+// A1 · Movements sheet, A2 · Fleet, A5 · Bookings — all three are
 // read-heavy screens over data that already exists (bookings, cars, hotels),
 // with no new RLS policy and no new engine logic (HANDOFF.md). What is under
 // test here is that the plain `select` these screens run sees every hotel's
@@ -66,7 +66,7 @@ describe('A1 · movements sheet — the query an admin runs sees every hotel', (
   })
 })
 
-describe('A2 · fleet board — today\'s status per car', () => {
+describe('A2 · fleet — today\'s status per car', () => {
   test('an admin block is visible with its car and dates, exactly as A3 already allows', async () => {
     const block = await db.asUser(f.admin, () => db.one<{ id: string }>(
       `select public.admin_create_block($1, '2026-07-01', '2026-12-31', 'write-off') as id`, [f.car2]))

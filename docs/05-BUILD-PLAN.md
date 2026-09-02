@@ -44,7 +44,7 @@ data to exist.
 
 ## Phase 2 — Booking core · ~1 week
 - Availability screen (R2), new booking (R3), booking detail (R7), my bookings (R6).
-- Admin: fleet board (A2), car management (A3), bookings (A5), movements sheet (A1).
+- Admin: fleet — board and car management in one (A2 + A3), bookings (A5), movements sheet (A1).
 - Audit logging on every write.
 
 **Done when:** a rep can find a free car, book it, and the boss can see it on the day sheet.

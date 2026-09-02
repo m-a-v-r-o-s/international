@@ -51,7 +51,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   )
 
   /**
-   * The admin's list is his twelve screens with the rep's appended under their
+   * The admin's list is his own screens with the rep's appended under their
    * own heading — additive, never a mode to be in the wrong one of
    * (docs/01-DECISIONS.md §30 decision 4). Before this the admin branch linked
    * to none of them, which is why "even the boss makes bookings sometimes" was
@@ -65,8 +65,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const items: NavItem[] = admin
     ? [
         { href: '/admin/movements', label: ta('nav.movements') },
-        { href: '/admin/fleet-board', label: ta('nav.fleetBoard') },
-        { href: '/admin/cars', label: ta('nav.cars') },
+        { href: '/admin/fleet', label: ta('nav.fleet') },
         { href: '/admin/categories', label: ta('nav.categories') },
         { href: '/admin/pricing', label: ta('nav.pricing') },
         { href: '/admin/bookings', label: ta('nav.bookings') },
@@ -92,7 +91,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: '/settings', label: tn('settings') },
       ]
 
-  // The boss's screens are tables — the movements sheet, the fleet board, the
+  // The boss's screens are tables — the movements sheet, the fleet list, the
   // price grid — and they get the wider shell. A rep's stay at the reading
   // width they were designed at; the column simply sits in the margin.
   const shell = admin ? 'max-w-6xl' : 'max-w-5xl'

@@ -14,7 +14,7 @@ export function CarForm({
   models: CarModelRow[]
   onDone?: () => void
 }) {
-  const t = useTranslations('admin.cars')
+  const t = useTranslations('admin.fleet')
   const tc = useTranslations('common')
   const te = useTranslations('errors')
   const action = car ? updateCar : createCar

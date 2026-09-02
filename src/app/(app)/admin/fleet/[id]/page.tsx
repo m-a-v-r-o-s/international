@@ -12,7 +12,7 @@ import type { CarModelRow, CarRow, CategoryRow } from '@/lib/supabase/database.t
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
-  const t = await getTranslations('admin.cars')
+  const t = await getTranslations('admin.fleet')
   return { title: `${t('title')} — ${id}` }
 }
 
@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function CarDetailPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin()
   const { id } = await params
-  const t = await getTranslations('admin.cars')
+  const t = await getTranslations('admin.fleet')
   const tb = await getTranslations('admin.blocks')
   const supabase = await supabaseServer()
 
@@ -36,7 +36,7 @@ export default async function CarDetailPage({ params }: { params: Promise<{ id: 
   const carRow = car as CarRow
 
   const { data: models } = await supabase.from('car_models')
-    .select('id, make, model, category_id, transmission, fuel_type, seats, doors, aircon, tank_litres, photo_path')
+    .select('id, make, model, category_id, transmission, fuel_type, seats, doors, tank_litres, photo_path')
     .order('make')
   const allModels = (models ?? []) as CarModelRow[]
   const model = allModels.find((m) => m.id === carRow.model_id)
@@ -72,7 +72,7 @@ export default async function CarDetailPage({ params }: { params: Promise<{ id: 
           <span className="ir-notice border-line-strong bg-canvas text-ink-soft !py-1.5">{t('archivedBadge')}</span>
         ) : null}
       </div>
-      <Link href="/admin/cars" className="text-[0.9375rem] text-brand underline-offset-2 hover:underline">
+      <Link href="/admin/fleet" className="text-[0.9375rem] text-brand underline-offset-2 hover:underline">
         {t('backToFleet')}
       </Link>
 
