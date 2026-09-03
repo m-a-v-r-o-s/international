@@ -40,12 +40,14 @@ export type LedgerState = {
 export type LedgerMatch = {
   id: string
   name: string
+  detail: string | null
   lastSeenAt: string
   hasImages: boolean
 }
 
 /**
- * Finding the person who asked to be forgotten.
+ * The general lookup for the whole ledger screen — find a returning guest by
+ * whatever the admin has to hand, not only when they are about to erase one.
  *
  * An admin already holds SELECT on public.customers — they can see every
  * booking in the company, so a ledger built out of those bookings tells them
@@ -54,8 +56,12 @@ export type LedgerMatch = {
  * control, and a rep reaching this action is refused by requireAdmin() and
  * then again by the policy.
  *
- * It searches on the phone number OR the name, because a guest writing in to
- * ask for erasure will give one or the other and rarely both.
+ * It matches against `search_text` — one generated, lower-cased column
+ * carrying name, phone, email and licence number
+ * (20260903150000_ledger_search.sql) — rather than an `.or()` across several
+ * `ilike` columns, so one `pg_trgm` index covers every field this bar
+ * searches and adding a field to the bar later is a column, not a query
+ * change.
  */
 export async function searchCustomerLedger(
   _prev: LedgerState, formData: FormData,
@@ -68,13 +74,13 @@ export async function searchCustomerLedger(
   const supabase = await supabaseServer()
   // `%` and `_` are wildcards to LIKE, so an unescaped query is a way to match
   // the whole table one character at a time. Escaped here rather than stripped,
-  // so a name that legitimately contains one still finds itself.
-  const term = parsed.data.replace(/[%_\\]/g, (c) => `\\${c}`)
+  // so a name (or email) that legitimately contains one still finds itself.
+  const term = parsed.data.toLowerCase().replace(/[%_\\]/g, (c) => `\\${c}`)
 
   const { data, error } = await supabase
     .from('customers')
-    .select('id, first_name, last_name, phone_e164, last_seen_at, licence_front_path')
-    .or(`phone_e164.ilike.%${term}%,first_name.ilike.%${term}%,last_name.ilike.%${term}%`)
+    .select('id, first_name, last_name, phone_e164, email, licence_number, last_seen_at, licence_front_path')
+    .ilike('search_text', `%${term}%`)
     .order('last_seen_at', { ascending: false })
     .limit(20)
 
@@ -86,6 +92,7 @@ export async function searchCustomerLedger(
       id: row.id,
       name: [`${row.first_name ?? ''} ${row.last_name ?? ''}`.trim(), row.phone_e164]
         .filter(Boolean).join(' · '),
+      detail: [row.email, row.licence_number].filter(Boolean).join(' · ') || null,
       lastSeenAt: row.last_seen_at,
       hasImages: row.licence_front_path !== null,
     })),

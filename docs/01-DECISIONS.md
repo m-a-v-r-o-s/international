@@ -1113,3 +1113,49 @@ licence*, which are not car groups.
 
 See `src/app/(app)/admin/fleet/ModelForm.tsx`, `src/app/(app)/admin/fleet/model-actions.ts`,
 `src/app/(app)/admin/settings/CategoriesSection.tsx` and `messages/`.
+
+## 41. The admin ledger gets one search bar, and the ledger gains an email column
+
+Asked ahead of the first season's end, with ~7,000 customers expected in the ledger by
+then: a "robust" search over name, phone, email and "whatever else makes sense", in one bar.
+Three things followed from what §25a had already decided, and were put to the owner rather
+than assumed.
+
+**Admin-only, and unchanged for reps.** §25a already made the Ψηφιακό πελατολόγιο admin-only
+— a rep's entire access stays `customer_by_phone()`: exact number, one row, rate limited,
+logged. This search is a new way for the admin to read a table they could already read in
+full; it opens no new door and `customer_by_phone()`'s return columns are untouched.
+
+**`customers.email` is new.** The ledger never stored it — only `bookings.cust_email`
+(optional, §9/§33) did, and only on the booking. *Chosen:* add `email` to the ledger,
+captured on the same consent and the same manual-only retention as every other field
+(§25a §§1–2), because a search bar that cannot search a field nobody kept would not be
+robust. It is populated two ways: `record_customer_consent()` reads whatever
+`bookings.cust_email` already holds at signing, and — because §33 lets the guest give it
+later, at the separate "email me a copy" step, which never re-runs consent —
+`app.customers_refresh_email_from_booking()` (a trigger on `bookings.cust_email`, the same
+shape as `app.customers_refresh_from_driver()` two migrations up) carries a later or
+corrected address across. Both paths coalesce the way name, dob and licence already do:
+never overwritten with a null, most recent rental wins.
+
+**One generated column, not a four-column `.or()`.** `customers.search_text` is `first_name
+|| last_name || phone_e164 || email || licence_number`, lower-cased, generated and stored —
+the device `bookings.cust_phone_e164` already uses, for the same reason: a value every write
+produces on its own. One `pg_trgm` GIN index on it is what the bar matches against, so name,
+phone, email and licence number are one predicate and one index rather than three or four,
+and a field added to the bar later is a column in the generated expression, not a new clause
+in every query that searches it. Licence number was added to the match set on the same
+reasoning as email: it is already on every ledger row and is the natural lookup when a guest
+hands a rep — or the boss — their licence.
+
+**The bar moved, and stopped being erasure-only.** The screen used to have one search box,
+under the status figures, whose only purpose was finding a guest to erase
+(`LedgerErasureForm`). It is now `LedgerSearchForm`, above the status figures — the first
+thing on the screen, because looking someone up is the common case and erasing them is not
+— and results show enough (name, phone, email, licence number, last seen, whether photos are
+held) to tell two similarly-named guests apart before erasing is even in question. Erasing
+stays one action a result offers, not the reason the bar exists.
+
+See `supabase/migrations/20260903150000_ledger_search.sql`,
+`src/app/(app)/admin/customers/actions.ts`, `src/app/(app)/admin/customers/LedgerForms.tsx`,
+`src/app/(app)/admin/customers/page.tsx` and `tests/db/customers.test.ts`.

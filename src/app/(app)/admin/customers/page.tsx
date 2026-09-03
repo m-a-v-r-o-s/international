@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { getTranslations, getFormatter } from 'next-intl/server'
 import { requireAdmin } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
-import { LedgerErasureForm } from './LedgerForms'
+import { LedgerSearchForm } from './LedgerForms'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('adminLedger')
@@ -11,20 +11,24 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * A11 · Ψηφιακό πελατολόγιο (docs/01-DECISIONS.md §25a, promoted by §30).
+ * A11 · Ψηφιακό πελατολόγιο (docs/01-DECISIONS.md §25a, promoted by §30,
+ * search widened by §41).
  *
  * It was a section of A10 Settings until the owner asked for it in the
  * sidebar. Nothing about what it does changed in the move — the status figures
- * still come from admin_customer_ledger_status() and the erasure desk is the
- * same form — but it stops being something you have to remember is at the
- * bottom of another screen. A store of names, dates of birth and licence
- * numbers that the owner chose to keep with no expiry (§25a decision 1)
- * should be one tap from anywhere, not filed under configuration.
+ * still come from admin_customer_ledger_status() — but it stops being
+ * something you have to remember is at the bottom of another screen. A store
+ * of names, dates of birth and licence numbers that the owner chose to keep
+ * with no expiry (§25a decision 1) should be one tap from anywhere, not filed
+ * under configuration.
  *
- * The three-confirmation clear-the-whole-ledger button lives on A10 Settings
- * instead, in its danger zone at the bottom of that screen — a destructive,
- * whole-table action sits better next to the other irreversible admin actions
- * than on the day-to-day ledger screen a rep might also land on.
+ * Search sits above the status figures, not below: it is the thing an admin
+ * reaches for first when a returning guest is on the phone, and only
+ * occasionally the lead-in to erasing someone. The three-confirmation
+ * clear-the-whole-ledger button lives on A10 Settings instead, in its danger
+ * zone at the bottom of that screen — a destructive, whole-table action sits
+ * better next to the other irreversible admin actions than on the day-to-day
+ * ledger screen a rep might also land on.
  */
 export default async function AdminCustomersPage() {
   await requireAdmin()
@@ -47,6 +51,14 @@ export default async function AdminCustomersPage() {
         <h1 className="text-[1.75rem] font-bold tracking-tight">{t('title')}</h1>
         <p className="text-ink-soft">{t('intro')}</p>
       </div>
+
+      <section className="ir-card flex flex-col gap-4 p-4" aria-labelledby="ledger-search-heading">
+        <h2 id="ledger-search-heading" className="text-[1.0625rem] font-semibold">
+          {t('searchTitle')}
+        </h2>
+        <p className="text-[0.9375rem] text-ink-soft">{t('searchIntro')}</p>
+        <LedgerSearchForm />
+      </section>
 
       {ledgerStatus ? (
         <section className="ir-card flex flex-col gap-4 p-4" aria-labelledby="ledger-status-heading">
@@ -89,14 +101,6 @@ export default async function AdminCustomersPage() {
           </p>
         </section>
       ) : null}
-
-      <section className="ir-card flex flex-col gap-4 p-4" aria-labelledby="ledger-erasure-heading">
-        <h2 id="ledger-erasure-heading" className="text-[1.0625rem] font-semibold">
-          {t('erasureTitle')}
-        </h2>
-        <p className="text-[0.9375rem] text-ink-soft">{t('erasureIntro')}</p>
-        <LedgerErasureForm />
-      </section>
     </div>
   )
 }

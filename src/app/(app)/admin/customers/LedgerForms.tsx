@@ -46,13 +46,16 @@ function Notice({ state }: { state: LedgerState }) {
 }
 
 /**
- * The right-to-erasure desk: find a guest who has written in, and remove them.
+ * The general ledger lookup: find a returning guest by name, phone, email or
+ * licence number, in one bar.
  *
- * Searching before erasing is not a convenience — it is the only way to be
- * sure the row about to go is the right person's, and the result line shows
- * the phone number alongside the name for exactly that reason.
+ * This used to exist only as the search-before-you-erase step, capped to
+ * whoever a guest writing in to ask for erasure gave a phone number or name
+ * for. It is now the ledger's one search surface, so results show enough to
+ * tell two similarly-named guests apart — and erasing is still one action a
+ * result offers, not the reason the bar exists.
  */
-export function LedgerErasureForm() {
+export function LedgerSearchForm() {
   const t = useTranslations('adminLedger')
   const tc = useTranslations('common')
   const format = useFormatter()
@@ -86,6 +89,9 @@ export function LedgerErasureForm() {
             {search.results.map((row) => (
               <li key={row.id} className="rounded-field border border-line p-3">
                 <p className="font-medium">{row.name}</p>
+                {row.detail ? (
+                  <p className="text-[0.875rem] text-ink-soft">{row.detail}</p>
+                ) : null}
                 <p className="text-[0.875rem] text-ink-soft">
                   {t('lastSeen', {
                     when: format.dateTime(new Date(row.lastSeenAt), { dateStyle: 'medium' }),

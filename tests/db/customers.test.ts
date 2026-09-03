@@ -251,6 +251,52 @@ describe('consent is the only door in', () => {
     expect(row.licence_number).toBe('CORRECTED-9')
   })
 
+  test('an email already on the booking is captured at consent time', async () => {
+    const id = await rentalWithDriver(f.repA, { hotelId: f.hotelA })
+    await db.asUser(f.repA, () => db.sql(
+      `update public.bookings set cust_email = $2 where id = $1`, [id, 'anna@example.com']))
+    await consent(f.repA, id)
+
+    const row = await db.asUser(f.admin, () => db.one<{ email: string | null }>(
+      `select email from public.customers where phone_e164 = '+306941230001'`))
+    expect(row.email).toBe('anna@example.com')
+  })
+
+  test('an email given later, at the "email me a copy" step, still reaches the ledger', async () => {
+    // §33: the guest may skip the email at signing and give it afterwards, in
+    // the separate copy-of-the-agreement step (contract-actions.ts
+    // emailContract), which only ever UPDATEs bookings.cust_email — never
+    // calls record_customer_consent() again. app.customers_refresh_email_from_booking()
+    // is what carries it across.
+    const id = await rentalWithDriver(f.repA, { hotelId: f.hotelA })
+    await consent(f.repA, id)
+
+    let row = await db.asUser(f.admin, () => db.one<{ email: string | null }>(
+      `select email from public.customers where phone_e164 = '+306941230001'`))
+    expect(row.email).toBeNull()
+
+    await db.asUser(f.repA, () => db.sql(
+      `update public.bookings set cust_email = $2 where id = $1`, [id, 'anna@example.com']))
+
+    row = await db.asUser(f.admin, () => db.one<{ email: string | null }>(
+      `select email from public.customers where phone_e164 = '+306941230001'`))
+    expect(row.email).toBe('anna@example.com')
+  })
+
+  test('a later correction to the email overwrites, like every other refreshed field', async () => {
+    const id = await rentalWithDriver(f.repA, { hotelId: f.hotelA })
+    await db.asUser(f.repA, () => db.sql(
+      `update public.bookings set cust_email = $2 where id = $1`, [id, 'typo@example.com']))
+    await consent(f.repA, id)
+
+    await db.asUser(f.repA, () => db.sql(
+      `update public.bookings set cust_email = $2 where id = $1`, [id, 'anna@example.com']))
+
+    const row = await db.asUser(f.admin, () => db.one<{ email: string | null }>(
+      `select email from public.customers where phone_e164 = '+306941230001'`))
+    expect(row.email).toBe('anna@example.com')
+  })
+
   test('an unnormalisable number consents to nothing', async () => {
     // Not an error — the rental proceeds. There is simply nothing to key on.
     const id = await rentalWithDriver(f.repA, { hotelId: f.hotelA, phone: '07911123456' })
@@ -315,6 +361,63 @@ describe('the table itself is not readable', () => {
 
     const seen = await db.asUser(f.admin, () => db.sql(`select id from public.customers`))
     expect(seen).toHaveLength(1)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §41: the admin ledger's search bar matches on `search_text`, one generated
+// column carrying name, phone, email and licence number, rather than an
+// `.or()` across several `ilike` columns. These tests are about the column,
+// not the screen: that it exists on every row, in every field it promises,
+// and is what an ilike the admin runs actually matches against.
+describe('search_text — the one column the admin search bar matches', () => {
+  async function searchTextFor(phone: string): Promise<string> {
+    const row = await db.asUser(f.admin, () => db.one<{ search_text: string }>(
+      `select search_text from public.customers where phone_e164 = $1`, [phone]))
+    return row.search_text
+  }
+
+  test('carries name, phone, email and licence number, lower-cased', async () => {
+    const id = await rentalWithDriver(f.repA, { hotelId: f.hotelA })
+    await db.asUser(f.repA, () => db.sql(
+      `update public.bookings set cust_email = $2 where id = $1`, [id, 'Anna@Example.com']))
+    await consent(f.repA, id)
+
+    const text = await searchTextFor('+306941230001')
+    expect(text).toContain('anna')
+    expect(text).toContain('visitor')
+    expect(text).toContain('+306941230001')
+    expect(text).toContain('anna@example.com')
+    expect(text).toContain('lic-12345')
+  })
+
+  test('an admin search by email, name or licence number all find the same guest', async () => {
+    const id = await rentalWithDriver(f.repA, { hotelId: f.hotelA })
+    await db.asUser(f.repA, () => db.sql(
+      `update public.bookings set cust_email = $2 where id = $1`, [id, 'anna@example.com']))
+    await consent(f.repA, id)
+
+    for (const term of ['anna', 'visitor', '941230001', 'anna@example', 'lic-12345']) {
+      const rows = await db.asUser(f.admin, () => db.sql<{ id: string }>(
+        `select id from public.customers where search_text ilike $1`, [`%${term}%`]))
+      expect(rows, `expected a match for "${term}"`).toHaveLength(1)
+    }
+  })
+
+  test('stays in step with a later licence correction and a later email', async () => {
+    const id = await rentalWithDriver(f.repA, { hotelId: f.hotelA })
+    await consent(f.repA, id)
+    expect(await searchTextFor('+306941230001')).not.toContain('anna@example.com')
+
+    await db.asUser(f.repA, () => db.sql(
+      `update public.booking_drivers set licence_number = 'CORRECTED-9' where booking_id = $1`,
+      [id]))
+    await db.asUser(f.repA, () => db.sql(
+      `update public.bookings set cust_email = $2 where id = $1`, [id, 'anna@example.com']))
+
+    const text = await searchTextFor('+306941230001')
+    expect(text).toContain('corrected-9')
+    expect(text).toContain('anna@example.com')
   })
 })
 

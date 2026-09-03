@@ -608,6 +608,7 @@ export type Database = {
       customers: {
         Row: {
           dob: string | null
+          email: string | null
           first_name: string | null
           first_seen_at: string
           id: string
@@ -621,10 +622,12 @@ export type Database = {
           licence_issued_on: string | null
           licence_number: string | null
           phone_e164: string
+          search_text: string | null
           updated_at: string
         }
         Insert: {
           dob?: string | null
+          email?: string | null
           first_name?: string | null
           first_seen_at?: string
           id?: string
@@ -638,10 +641,12 @@ export type Database = {
           licence_issued_on?: string | null
           licence_number?: string | null
           phone_e164: string
+          search_text?: string | null
           updated_at?: string
         }
         Update: {
           dob?: string | null
+          email?: string | null
           first_name?: string | null
           first_seen_at?: string
           id?: string
@@ -655,6 +660,7 @@ export type Database = {
           licence_issued_on?: string | null
           licence_number?: string | null
           phone_e164?: string
+          search_text?: string | null
           updated_at?: string
         }
         Relationships: [
