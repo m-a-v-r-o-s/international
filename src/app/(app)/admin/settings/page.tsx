@@ -18,10 +18,11 @@ export async function generateMetadata(): Promise<Metadata> {
 /**
  * A10 · Settings.
  *
- * The four settings big enough to be their own screen — hotels, groups,
+ * The settings big enough to be their own screen — hotels, groups, staff,
  * company/contract terms, licence retention — moved out to /admin/hotels,
- * /admin/categories, /admin/settings/company and /admin/settings/retention,
- * each reachable from a clickable card below rather than embedded inline.
+ * /admin/categories, /admin/users, /admin/settings/company and
+ * /admin/settings/retention, each reachable from a clickable card below
+ * rather than embedded inline.
  * What is left here is either small (language, the two single-purpose forms
  * for the pick-up/drop-off windows and the fuel-shortfall rate) or the one
  * destructive, whole-table action (the ledger's clear-everything button).
@@ -44,6 +45,7 @@ export default async function AdminSettingsPage() {
   const tl = await getTranslations('adminLedger')
   const th = await getTranslations('admin.hotels')
   const tcat = await getTranslations('admin.categories')
+  const tu = await getTranslations('admin.users')
 
   const supabase = await supabaseServer()
 
@@ -53,6 +55,7 @@ export default async function AdminSettingsPage() {
     { data: ledger },
     { count: hotelsCount },
     { count: categoriesCount },
+    { data: staff },
   ] = await Promise.all([
     supabase.from('app_settings')
       .select('id, company, pickup_window, dropoff_window, fuel_charge_per_eighth')
@@ -61,6 +64,7 @@ export default async function AdminSettingsPage() {
     supabase.rpc('admin_customer_ledger_status'),
     supabase.from('hotels').select('id', { count: 'exact', head: true }),
     supabase.from('categories').select('id', { count: 'exact', head: true }),
+    supabase.rpc('admin_list_users'),
   ])
 
   const readiness = contractReadiness(parseCompany(data?.company))
@@ -99,6 +103,13 @@ export default async function AdminSettingsPage() {
         title={tcat('title')}
         description={tcat('intro')}
         meta={String(categoriesCount ?? 0)}
+      />
+
+      <SettingsLinkCard
+        href="/admin/users"
+        title={tu('title')}
+        description={tu('intro')}
+        meta={tu('count', { n: staff?.length ?? 0 })}
       />
 
       <SettingsLinkCard
