@@ -43,6 +43,7 @@ export async function createCategory(_prev: FormState, formData: FormData): Prom
   if (error) return { error: errorKey(error) }
 
   revalidatePath('/admin/settings')
+  revalidatePath('/admin/categories')
   return undefined
 }
 
@@ -75,6 +76,7 @@ export async function updateCategory(_prev: FormState, formData: FormData): Prom
   if (error) return { error: errorKey(error) }
 
   revalidatePath('/admin/settings')
+  revalidatePath('/admin/categories')
   return undefined
 }
 

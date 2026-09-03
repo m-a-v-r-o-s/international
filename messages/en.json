@@ -992,7 +992,7 @@
   },
   "adminSettings": {
     "title": "Settings",
-    "intro": "Language, notifications, and the administrative tools that keep the fleet running.",
+    "intro": "Language and the administrative tools that keep the fleet running.",
     "companyCardTitle": "Company & contract terms",
     "companyCardDesc": "The company details and the terms that print on every rental agreement.",
     "ready": "Everything the rental agreement needs is filled in. Contracts print as real agreements.",

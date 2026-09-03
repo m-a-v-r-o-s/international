@@ -14,7 +14,7 @@ import {
  * belong to them, rather than in Settings beside the groups. A group is a
  * pricing and eligibility band the boss sets once a season; a model is part of
  * the fleet, and the screen that lists the fleet is where one gets added.
- * (The group half stayed in Settings — admin/settings/CategoriesSection.tsx.)
+ * (The group half has its own screen at admin/categories/page.tsx.)
  *
  * `photoError` is separate from `error` for the same reason it is on a damage
  * mark: a model whose photo failed to upload is still a model, and losing the

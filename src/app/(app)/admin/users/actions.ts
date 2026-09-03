@@ -246,7 +246,7 @@ export async function setHomeHotel(
 
   revalidatePath('/admin/users')
   revalidatePath(`/admin/users/${parsed.data.id}`)
-  revalidatePath('/admin/settings')
+  revalidatePath('/admin/hotels')
   return { saved: true }
 }
 
@@ -274,6 +274,6 @@ export async function setCover(_prev: UserFormState, formData: FormData): Promis
 
   revalidatePath('/admin/users')
   revalidatePath(`/admin/users/${parsed.data.id}`)
-  revalidatePath('/admin/settings')
+  revalidatePath('/admin/hotels')
   return { saved: true }
 }

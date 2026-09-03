@@ -116,7 +116,7 @@ export default async function FleetPage({
       <div className="flex flex-col gap-4">
         <h1 className="text-[1.75rem] font-bold tracking-tight">{t('title')}</h1>
         <p className="ir-notice border-warn bg-warn-tint text-warn">{t('noModels')}</p>
-        <Link href="/admin/settings#categories-heading" className="ir-btn-primary">{t('goToCategories')}</Link>
+        <Link href="/admin/categories" className="ir-btn-primary">{t('goToCategories')}</Link>
       </div>
     )
   }

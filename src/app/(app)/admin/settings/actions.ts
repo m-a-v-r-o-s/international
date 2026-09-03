@@ -57,6 +57,7 @@ export async function saveCompanySettings(
   if (error) return { error: errorKey(error) }
 
   revalidatePath('/admin/settings')
+  revalidatePath('/admin/settings/company')
   return { saved: true }
 }
 
@@ -90,6 +91,7 @@ export async function saveRetentionSettings(
   if (error) return { error: errorKey(error) }
 
   revalidatePath('/admin/settings')
+  revalidatePath('/admin/settings/retention')
   return { saved: true }
 }
 
@@ -188,6 +190,7 @@ export async function runLicencePurge(
   if (outcome.failed > 0) return { error: 'unknown' }
 
   revalidatePath('/admin/settings')
+  revalidatePath('/admin/settings/retention')
   return {
     purged: {
       deleted: outcome.deleted,

@@ -51,6 +51,7 @@ export async function createHotel(
   if (error) return { error: errorKey(error) }
 
   revalidatePath('/admin/settings')
+  revalidatePath('/admin/hotels')
   return { saved: true }
 }
 
@@ -69,6 +70,7 @@ export async function updateHotel(
   if (error) return { error: errorKey(error) }
 
   revalidatePath('/admin/settings')
+  revalidatePath('/admin/hotels')
   return { saved: true }
 }
 
@@ -95,6 +97,7 @@ export async function setHotelActive(
   if (error) return { error: errorKey(error) }
 
   revalidatePath('/admin/settings')
+  revalidatePath('/admin/hotels')
   return { saved: true }
 }
 
@@ -119,6 +122,7 @@ export async function deleteHotel(
   if (error) return { error: errorKey(error) }
 
   revalidatePath('/admin/settings')
+  revalidatePath('/admin/hotels')
   revalidatePath('/admin/users')
   return { saved: true }
 }
