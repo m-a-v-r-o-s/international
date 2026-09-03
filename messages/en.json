@@ -3,7 +3,7 @@
     "name": "International Rentals",
     "short": "IR Ops",
     "description": "Operations app for International Rentals staff.",
-    "logoAlt": "International Rentals — rent a car"
+    "logoAlt": "International Rentals: rent a car"
   },
   "common": {
     "loading": "Working…",
@@ -110,7 +110,7 @@
   },
   "home": {
     "title": "Today",
-    "adminNote": "Manager account — the movements sheet, fleet board, bookings and the exceptions queue are all live."
+    "adminNote": "Manager account: the movements sheet, fleet board, bookings and the exceptions queue are all live."
   },
   "settings": {
     "title": "Settings",
@@ -185,14 +185,14 @@
     "windowHint": "Usually {from}–{to}",
     "pickupWindowLocked": "Pick-ups are {from}–{to}. For anything outside that, use the exception below.",
     "pickupWindowLockedRep": "Pick-ups are {from}–{to}. A pick-up outside those hours can only be booked by the manager.",
-    "exceptionBooking": "Exception booking — pick-up outside the usual window",
+    "exceptionBooking": "Exception booking: pick-up outside the usual window",
     "exceptionReasonLabel": "Reason for the exception",
-    "exceptionHint": "Only you can record an exception, and the booking is live as soon as you make it — the car is held, it appears on Today and the movements sheet, and it can be picked up. Nothing else on this form is required when this box is ticked.",
-    "returningGuest": "We have rented to this number before ({name}). The fields below were filled in from that rental — check them with the guest and correct anything that has changed."
+    "exceptionHint": "Only you can record an exception, and the booking is live as soon as you make it: the car is held, it appears on Today and the movements sheet, and it can be picked up. Nothing else on this form is required when this box is ticked.",
+    "returningGuest": "We have rented to this number before ({name}). The fields below were filled in from that rental. Check them with the guest and correct anything that has changed."
   },
   "quickBooking": {
     "title": "Booking confirmation",
-    "intro": "For a guest who orders a car over the phone. The number, the room, the car, the dates and any child seats — that is all. The name, date of birth and licence are taken at pickup, from the licence itself.",
+    "intro": "For a guest who orders a car over the phone. The number, the room, the car, the dates and any child seats: that is all. The name, date of birth and licence are taken at pickup, from the licence itself.",
     "guestTitle": "Caller",
     "seatsTitle": "Child seats",
     "confirm": "Confirm the booking"
@@ -228,7 +228,7 @@
     "extendCarTaken": "This car is already booked on part of the new range.",
     "noAlternatives": "No other car in this group is free for the whole range.",
     "chooseAlternative": "Choose a car",
-    "keepSameCar": "Keep this car (not available — checked above)",
+    "keepSameCar": "Keep this car (not available, checked above)",
     "confirmExtend": "Confirm extension",
     "status": {
       "booked": "Booked",
@@ -264,7 +264,7 @@
     "closed": "Dealt with",
     "reportAction": "Report an incident",
     "reportTitle": "Report an incident",
-    "reportIntro": "Say what happened and add photos. The manager decides what happens next — do not price it, do not argue it and do not take money for it.",
+    "reportIntro": "Say what happened and add photos. The manager decides what happens next. Do not price it, do not argue it and do not take money for it.",
     "noBookings": "There are no contracts to report on yet.",
     "whichContract": "Which contract",
     "choose": "Choose a contract",
@@ -292,7 +292,7 @@
     "cashInHand": "Cash in hand today",
     "handOver": "Hand over",
     "handedOver": "€{amount} handed over. The manager confirms it at his end.",
-    "awaitingConfirmation": "Already handed over — waiting on the manager to confirm.",
+    "awaitingConfirmation": "Already handed over, waiting on the manager to confirm.",
     "goToAvailability": "Check availability",
     "goToMyBookings": "My bookings",
     "goToMovements": "Movements sheet",
@@ -332,7 +332,7 @@
       "other": "Other"
     },
     "noteLabel": "Note",
-    "noteHint": "Optional — what it is and how big.",
+    "noteHint": "Optional: what it is and how big.",
     "addTitle": "Add a mark",
     "addAction": "Add mark",
     "surfaceHint": "Tap the drawing where the damage is, or use the form below.",
@@ -361,7 +361,7 @@
     "saveFuelIn": "Save the fuel level",
     "fuelSaved": "Fuel level saved.",
     "notesLabel": "Note",
-    "shortfallNotice": "{n}/8 less than at pickup. This is recorded and goes to the manager — do not price it and do not collect for it."
+    "shortfallNotice": "{n}/8 less than at pickup. This is recorded and goes to the manager. Do not price it and do not collect for it."
   },
   "pickup": {
     "title": "Pickup",
@@ -414,7 +414,7 @@
     "alreadyOut": "This car has already been handed over.",
     "notPickable": "This booking is not open for pickup.",
     "licenceCaptureTitle": "Licence photos",
-    "licenceCaptureIntro": "Photograph the licence and the app will fill in what it can read. Check every field afterwards — it is often wrong on a worn card.",
+    "licenceCaptureIntro": "Photograph the licence and the app will fill in what it can read. Check every field afterwards: it is often wrong on a worn card.",
     "licenceFront": "Front of the licence",
     "licenceBack": "Back of the licence",
     "licenceBackHint": "Optional, but it carries the categories and the dates on most cards.",
@@ -422,12 +422,12 @@
     "readLicence": "Read the licence",
     "storedFront": "Front of the licence, on file",
     "storedBack": "Back of the licence, on file",
-    "licenceOnFile": "{side} — the photo is on file.",
+    "licenceOnFile": "{side}: the photo is on file.",
     "ocrHigh": "Read with high confidence ({percent}%). Check the fields below against the card.",
     "ocrMedium": "Read with moderate confidence ({percent}%). Check every field below against the card.",
     "ocrLow": "Read with low confidence ({percent}%). Read every field below off the card yourself before saving.",
-    "ocrOff": "The photos were saved. Automatic reading is switched off on this installation — type the licence in below.",
-    "ocrRateLimited": "The photos were saved. Automatic reading has been used a lot in the last few minutes — type the licence in below.",
+    "ocrOff": "The photos were saved. Automatic reading is switched off on this installation. Type the licence in below.",
+    "ocrRateLimited": "The photos were saved. Automatic reading has been used a lot in the last few minutes. Type the licence in below.",
     "ocrUnreadable": "The photos were saved, but nothing could be read from them. Type the licence in below.",
     "ocrUnreviewed": "These fields were read from the photo and nobody has checked them yet. Correct anything that is wrong, then save.",
     "ocrConfidence": "Read confidence: {percent}%",
@@ -439,7 +439,7 @@
     "returningTitle": "Returning guest",
     "returningBody": "{name} rented from us before, most recently {when}. The licence details below were filled in from that rental. Check every one of them against the licence in front of you.",
     "reuseImages": "Use the licence photos from last time",
-    "reuseHint": "Copies the photographs onto this rental so you do not have to scan the licence again. They are copied, not shared — this rental gets its own, deleted on its own schedule.",
+    "reuseHint": "Copies the photographs onto this rental so you do not have to scan the licence again. They are copied, not shared: this rental gets its own, deleted on its own schedule.",
     "reuseDone": "Copied {n, plural, =1 {one photograph} other {# photographs}}. Check them before continuing.",
     "reuseGone": "Those photographs are no longer available. Take new ones.",
     "reuseNeedsDriver": "Save the driver first, then you can copy last time’s licence photos onto this rental."
@@ -453,10 +453,10 @@
     "searchLabel": "Search bookings",
     "searchPlaceholder": "Name, phone, plate or reference",
     "empty": "Every booking you can see already has a signed agreement.",
-    "walkInTitle": "No booking — walk-in",
+    "walkInTitle": "No booking: walk-in",
     "walkInIntro": "A guest at the desk with nothing booked in advance, taking a car now. The booking is made here and the pickup carries straight on from it.",
     "walkInAction": "Start a walk-in",
-    "walkInFormIntro": "Fill in the rental first — a contract cannot exist without one. You go straight to the licence afterwards.",
+    "walkInFormIntro": "Fill in the rental first: a contract cannot exist without one. You go straight to the licence afterwards.",
     "walkInSubmit": "Create and continue to the licence"
   },
   "returnFlow": {
@@ -470,16 +470,16 @@
     "fuelOutWas": "Fuel at pickup: {level}",
     "sameToSame": "The car goes out and comes back at the same level. Read the gauge as it is now.",
     "toConfirm": "Continue to confirm",
-    "confirmHint": "Confirming closes the rental. The remaining days go back into availability straight away, and the price does not change — an early return earns no refund.",
+    "confirmHint": "Confirming closes the rental. The remaining days go back into availability straight away, and the price does not change: an early return earns no refund.",
     "confirmAction": "Complete the return",
     "confirmPrompt": "Complete the return now?",
     "alreadyReturned": "This rental has already been returned.",
     "notReturnable": "This booking is not out, so there is nothing to return.",
-    "fuelCharge": "Back {n}/8 short — €{amount} will be added to this booking.",
-    "damageGoesToIncidents": "Anything wrong with the car — damage, mess, something missing — is reported separately under Incidents, with photos.",
+    "fuelCharge": "Back {n}/8 short: €{amount} will be added to this booking.",
+    "damageGoesToIncidents": "Anything wrong with the car (damage, mess, something missing) is reported separately under Incidents, with photos.",
     "fuelPaymentTitle": "Fuel taken from the guest",
     "fuelCollected": "Amount taken (€)",
-    "fuelCollectedHint": "Pre-filled with what is owed. Change it if the guest paid something else, or 0 if they paid nothing — the manager sees both figures."
+    "fuelCollectedHint": "Pre-filled with what is owed. Change it if the guest paid something else, or 0 if they paid nothing: the manager sees both figures."
   },
   "admin": {
     "navLabel": "Admin sections",
@@ -595,7 +595,7 @@
     },
     "categories": {
       "title": "Groups",
-      "intro": "The pricing and eligibility bands each car model belongs to — minimum driver age and years licensed.",
+      "intro": "The pricing and eligibility bands each car model belongs to: minimum driver age and years licensed.",
       "add": "Add a group",
       "edit": "Edit group",
       "empty": "No groups yet. Add the 8 groups the client uses (A–H).",
@@ -604,7 +604,7 @@
       "nameEl": "Name (Greek)",
       "nameEn": "Name (English)",
       "minAge": "Minimum driver age",
-      "minAgeHint": "Editable per group — never hard-coded.",
+      "minAgeHint": "Editable per group, never hard-coded.",
       "minLicenceYears": "Minimum years licensed",
       "ageAndLicence": "{age}+ · licence ≥{years}y"
     },
@@ -641,7 +641,7 @@
     },
     "blocks": {
       "title": "Blocked dates",
-      "screenHint": "Service, repair or a write-off. A rep sees this exactly like another rep's booking — no reason, ever.",
+      "screenHint": "Service, repair or a write-off. A rep sees this exactly like another rep's booking: no reason, ever.",
       "empty": "No blocks in the last or next year.",
       "add": "Block a date range",
       "start": "Start date",
@@ -668,18 +668,18 @@
       "extraDayRateFor": "Extra-day rate for group {category}",
       "saveRow": "Save this row",
       "bulkPaste": "Bulk paste from a spreadsheet",
-      "bulkPasteHint": "One line per group: the group code, then 8 numbers — the totals for 1 to 7 days, then the extra-day rate. Tab, comma or semicolon separated — paste straight out of a spreadsheet.",
+      "bulkPasteHint": "One line per group: the group code, then 8 numbers, the totals for 1 to 7 days, then the extra-day rate. Tab, comma or semicolon separated. Paste straight out of a spreadsheet.",
       "bulkPasteLabel": "Pasted price table",
       "bulkPastePlaceholder": "A\t35\t65\t90\t115\t140\t160\t180\t25",
       "bulkPasteLineError": "Line {line} could not be read. Check the group code and that there are exactly 8 numbers.",
       "bulkPasteApply": "Apply",
       "previewTitle": "Preview",
-      "previewHint": "Shows what a sample rental would actually cost, using this screen's saved prices — the same calculation a booking uses.",
+      "previewHint": "Shows what a sample rental would actually cost, using this screen's saved prices: the same calculation a booking uses.",
       "previewCategory": "Group",
       "previewPickup": "Pickup date",
       "previewDays": "Days",
       "previewButton": "Calculate",
-      "previewResult": "{days, plural, one {# day} other {# days}} — €{total}"
+      "previewResult": "{days, plural, one {# day} other {# days}}: €{total}"
     },
     "incidents": {
       "title": "Incidents",
@@ -696,7 +696,7 @@
       "emptyOpen": "Nothing open. Everything sent in has been dealt with.",
       "booking": "Booking",
       "note": "What the rep wrote",
-      "noNote": "No note — see the photos.",
+      "noNote": "No note: see the photos.",
       "raisedBy": "Sent in by",
       "raisedBySystem": "The system",
       "raisedAt": "Sent",
@@ -705,7 +705,7 @@
       "photoAlt": "Photo {n}",
       "photoUnavailable": "This photo could not be opened.",
       "resolveTitle": "Settle it",
-      "resolveHint": "Set what it costs and close the item. Leave the amount empty if there is nothing to charge — that is not the same as charging zero.",
+      "resolveHint": "Set what it costs and close the item. Leave the amount empty if there is nothing to charge: that is not the same as charging zero.",
       "chargeLabel": "Charge (€)",
       "chargeHint": "Whole euros. Leave empty for nothing to charge.",
       "resolutionLabel": "What you decided",
@@ -716,7 +716,7 @@
     },
     "cash": {
       "title": "Cash",
-      "subtitle": "What every rep has handed over and you have not confirmed yet. Confirming is what clears it from their own screen — nothing else does.",
+      "subtitle": "What every rep has handed over and you have not confirmed yet. Confirming is what clears it from their own screen: nothing else does.",
       "empty": "Nothing waiting. Every hand-over has been confirmed.",
       "rep": "Rep",
       "amount": "Amount",
@@ -728,7 +728,7 @@
       "intro": "Create a rep, station them at a hotel, and set who covers where.",
       "count": "{n, plural, =0 {No staff} one {1 person} other {# people}}",
       "add": "Add a rep",
-      "addIntro": "The rep signs in with this address and the PIN shown once after you create the account. There is no password anywhere — the PIN is the whole of it.",
+      "addIntro": "The rep signs in with this address and the PIN shown once after you create the account. There is no password anywhere: the PIN is the whole of it.",
       "fullName": "Full name",
       "email": "Email",
       "emailHint": "This is what they type to sign in. It cannot be changed here afterwards.",
@@ -736,7 +736,7 @@
       "lang": "App language",
       "create": "Create the account",
       "pinTitle": "PIN for {name}",
-      "pinBody": "Write this down or hand it over now. It is shown once and cannot be seen again — if it is lost, issue a new one from the person’s page.",
+      "pinBody": "Write this down or hand it over now. It is shown once and cannot be seen again. If it is lost, issue a new one from the person’s page.",
       "pinLabel": "Sign-in PIN",
       "reissue": "Issue a new PIN",
       "reissueHint": "The current PIN stops working immediately. Use this if it is lost, or if somebody else has seen it.",
@@ -757,7 +757,7 @@
       "accessHint": "Removing access stops this person signing in. The bookings they made stay on the record, and you can give the access back at any time.",
       "removeAccess": "Remove this account",
       "removeConfirmTitle": "Remove {name}’s access?",
-      "removeConfirmBody": "They will not be able to sign in, and their PIN stops working. The bookings they made stay on the record — nothing is deleted — and you can give the access back from this page whenever you want.",
+      "removeConfirmBody": "They will not be able to sign in, and their PIN stops working. The bookings they made stay on the record (nothing is deleted) and you can give the access back from this page whenever you want.",
       "removeConfirm": "Remove access",
       "removeConfirmWait": "Remove access ({seconds})",
       "restoreHint": "This account cannot sign in. Giving the access back restores it exactly as it was.",
@@ -881,17 +881,17 @@
     "rateLimited": "Too many attempts just now. Wait a moment, then try again.",
     "ocrFailed": "The licence could not be read from the photo. Type the driver in, then add the photos.",
     "companyMissing": "The company details and the agreement terms have not been entered yet, so the agreement cannot be signed. Ask the manager to fill them in under Settings.",
-    "contractFailed": "The agreement could not be produced. Nothing was saved — try again.",
+    "contractFailed": "The agreement could not be produced. Nothing was saved. Try again.",
     "signatureMissing": "No signature was captured. Sign in the box, or take a photo of a signed paper copy.",
     "inUse": "That is still in use somewhere and cannot be removed. Deactivate it instead.",
     "duplicate": "That already exists.",
     "IR115": "That is already the rep’s home hotel.",
     "emailInUse": "A staff account already uses that email address.",
-    "accountFailed": "The account could not be created. Nothing was saved — try again.",
+    "accountFailed": "The account could not be created. Nothing was saved. Try again.",
     "IR122": "Too many customer lookups in a short time. Type the details in by hand and try the lookup again later.",
     "emailInvalid": "That does not look like a real email address.",
-    "emailUndeliverable": "That email's domain cannot receive mail — check it for a typo.",
-    "incidentEmpty": "Write what happened, or add a photo — an empty report tells the manager nothing."
+    "emailUndeliverable": "That email's domain cannot receive mail: check it for a typo.",
+    "incidentEmpty": "Write what happened, or add a photo: an empty report tells the manager nothing."
   },
   "eligibility": {
     "title": "Eligibility",
@@ -924,11 +924,11 @@
       "retentionTitle": "How long we keep it",
       "retention": "Photographs of driving licences are deleted automatically after a period set by the company, twenty-four months after the rental ends by default. The booking record, the signed agreement and the typed licence number are kept for longer, as accounting and insurance obligations require. Every deletion is logged.",
       "ledgerTitle": "Guests who choose to be remembered",
-      "ledger": "At the signing step we ask, in a separate tick box next to the signature, whether you agree that we keep your name, phone number, date of birth and driving licence details after your rental ends, so that renting from us again is quicker. This is optional and is not part of the rental agreement — you can leave it unticked, decline it, and still rent the vehicle on exactly the same terms. If you do agree, those details are held in a customer record that is separate from any one booking, and the next time a member of our staff enters your phone number at any of our locations, your details are filled in for them. They see your name, date of birth and licence details; they do not see your previous bookings, where you stayed, or what you paid. Every one of those look-ups is recorded. These records have NO automatic expiry date: unlike licence photographs, they are kept until you ask us to delete them or until the company clears the ledger. That is a longer time than we keep anything else about you, which is why we ask for it separately and why you can withdraw it at any point.",
+      "ledger": "At the signing step we ask, in a separate tick box next to the signature, whether you agree that we keep your name, phone number, date of birth and driving licence details after your rental ends, so that renting from us again is quicker. This is optional and is not part of the rental agreement: you can leave it unticked, decline it, and still rent the vehicle on exactly the same terms. If you do agree, those details are held in a customer record that is separate from any one booking, and the next time a member of our staff enters your phone number at any of our locations, your details are filled in for them. They see your name, date of birth and licence details; they do not see your previous bookings, where you stayed, or what you paid. Every one of those look-ups is recorded. These records have NO automatic expiry date: unlike licence photographs, they are kept until you ask us to delete them or until the company clears the ledger. That is a longer time than we keep anything else about you, which is why we ask for it separately and why you can withdraw it at any point.",
       "securityTitle": "How it is protected",
       "security": "Licence photographs are held in private storage and can only be reached through short-lived links issued to a member of staff who is entitled to that booking. All access is over HTTPS. Staff can only see the bookings they created or those belonging to a hotel they cover.",
       "rightsTitle": "Your rights",
-      "rights": "You can ask for a copy of the personal data held about you, ask for it to be corrected, or ask for it to be deleted where there is no legal obligation to keep it. If you agreed to be kept in our customer records, you can withdraw that at any time and we will delete that record and any driving licence photographs held with it — tell any member of our staff, or contact us using the details on the rental agreement. Your booking and the signed agreement itself will remain, because accounting and insurance obligations require us to keep them.",
+      "rights": "You can ask for a copy of the personal data held about you, ask for it to be corrected, or ask for it to be deleted where there is no legal obligation to keep it. If you agreed to be kept in our customer records, you can withdraw that at any time and we will delete that record and any driving licence photographs held with it: tell any member of our staff, or contact us using the details on the rental agreement. Your booking and the signed agreement itself will remain, because accounting and insurance obligations require us to keep them.",
       "contactTitle": "Contact",
       "contact": "Company registered details and a data contact address are to be confirmed and will appear here before launch."
     }
@@ -940,7 +940,7 @@
   },
   "contract": {
     "title": "Vehicle Rental Agreement",
-    "draftTitle": "DRAFT — NOT A RENTAL AGREEMENT",
+    "draftTitle": "DRAFT: NOT A RENTAL AGREEMENT",
     "draftBody": "The company details and the terms and conditions have not been entered yet. This document is a layout preview only. It has no legal effect and must not be signed.",
     "ref": "Agreement no.",
     "lessor": "Lessor",
@@ -1012,10 +1012,10 @@
     "insurer": "Insurance provider",
     "insurancePolicy": "Policy number",
     "termsTitle": "Rental agreement terms",
-    "termsIntro": "Paste the terms from your paper rental agreement, in both languages. They are printed on the agreement exactly as typed here — the app does not reword, shorten or translate them.",
-    "termsEl": "Terms — Greek",
-    "termsEn": "Terms — English",
-    "termsDe": "Terms — German",
+    "termsIntro": "Paste the terms from your paper rental agreement, in both languages. They are printed on the agreement exactly as typed here: the app does not reword, shorten or translate them.",
+    "termsEl": "Terms (Greek)",
+    "termsEn": "Terms (English)",
+    "termsDe": "Terms (German)",
     "termsHint": "Plain text. Blank lines separate paragraphs.",
     "saved": "Saved.",
     "field": {
@@ -1024,13 +1024,13 @@
       "vat_number": "VAT number (ΑΦΜ)",
       "phone": "Telephone",
       "insurer": "Insurance provider",
-      "terms_el": "Terms — Greek",
-      "terms_en": "Terms — English"
+      "terms_el": "Terms (Greek)",
+      "terms_en": "Terms (English)"
     },
     "windowsTitle": "Pick-up and drop-off windows",
-    "windowsHint": "Pick-up is enforced: a rep can only book within these hours, and only you can book outside them, as an exception with a reason. Drop-off stays a default — a rep can set any time, and a time outside these hours is recorded on the booking as an override.",
+    "windowsHint": "Pick-up is enforced: a rep can only book within these hours, and only you can book outside them, as an exception with a reason. Drop-off stays a default: a rep can set any time, and a time outside these hours is recorded on the booking as an override.",
     "fuelChargeTitle": "Fuel shortfall",
-    "fuelChargeIntro": "What a car costs the guest for every eighth of a tank it comes back short. Applied automatically the moment a return is confirmed — nobody is asked, and the rep cannot change it.",
+    "fuelChargeIntro": "What a car costs the guest for every eighth of a tank it comes back short. Applied automatically the moment a return is confirmed: nobody is asked, and the rep cannot change it.",
     "fuelChargeLabel": "Charge per eighth of a tank (€)",
     "fuelChargeHint": "Whole euros. A car back two eighths short at €10 is charged €20.",
     "pickupWindow": "Pick-ups",
@@ -1046,7 +1046,7 @@
     "retentionPurgedTotal": "Drivers already purged",
     "retentionLastPurge": "Last purge",
     "retentionNeverPurged": "Never run",
-    "retentionOrphans": "{n, plural, one {# licence photo belongs to a booking that no longer exists} other {# licence photos belong to bookings that no longer exist}}. The purge does not touch them — it only deletes photos it can trace to a finished rental. Report this.",
+    "retentionOrphans": "{n, plural, one {# licence photo belongs to a booking that no longer exists} other {# licence photos belong to bookings that no longer exist}}. The purge does not touch them: it only deletes photos it can trace to a finished rental. Report this.",
     "purgeNow": "Delete them now",
     "purgeConfirm": "{n, plural, one {Permanently delete # licence photo} other {Permanently delete # licence photos}}. This cannot be undone.",
     "purgeNothingDue": "Nothing is due for deletion. The scheduled job runs on its own; this button is only for running it early.",
@@ -1102,7 +1102,7 @@
   "adminLedger": {
     "title": "Digital customer ledger",
     "intro": "Guests who agreed, at signing, that we keep their details so a future rental is quicker. Only guests who ticked the box are here. Reps can match a guest by typing their full phone number; they cannot browse or list this.",
-    "noWindow": "These records have no expiry date. Unlike licence photographs, nothing here is deleted automatically — it stays until you erase a guest on request or clear the ledger below.",
+    "noWindow": "These records have no expiry date. Unlike licence photographs, nothing here is deleted automatically: it stays until you erase a guest on request or clear the ledger below.",
     "total": "Customers held",
     "withImages": "With licence photos",
     "oldest": "Oldest record",
