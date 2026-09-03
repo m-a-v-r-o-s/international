@@ -775,6 +775,14 @@ live, and the cron service that sweeps the boss's inbox now runs
 `npm run notify -- --incidents` (the old `--exceptions` flag no longer exists). The service is
 still named `notify-exceptions` in Railway, which is cosmetic. See docs/07-SEASON-ROUTINE.md
 §1, which also corrects a schedule this repo had recorded wrongly.
+
+> **Overtaken by §36 (3 Sep 2026).** There is no inbox sweeper any more: push
+> notifications went entirely, `npm run notify` with it, and the
+> `notify-exceptions` service was deleted along with `notify-morning` and
+> `notify-evening`. The incidents themselves are untouched — the boss reads them
+> on the screen. What used to be this cron's incidental side effect, keeping the
+> free-tier Supabase project awake, is now the whole job of a service called
+> `keep-alive`. See docs/07-SEASON-ROUTINE.md §1.
 ## 35. The rep takes the fuel money, so the app counts it
 
 §34 made the fuel shortfall a real charge and stopped there: the figure was computed and

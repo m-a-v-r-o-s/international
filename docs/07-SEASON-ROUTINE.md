@@ -33,30 +33,51 @@ plan:
    at all: `scripts/keep-alive.ts`, run as `npm run keep-alive`, does one
    cheap authenticated read against `app_settings` and nothing else.
 
-   The old `notify-exceptions` service (previously the incidents sender,
-   `*/5 * * * *` — Railway's minimum interval, and the fastest of the three
-   old schedules, which is why it was the one repurposed rather than deleted)
-   now runs `npm run keep-alive` on the same 5-minute cadence. `notify-morning`
-   and `notify-evening` had no keep-alive role of their own — their schedules
-   were daily, nowhere near tight enough on their own to matter against a
-   7-day threshold — and were deleted outright rather than repurposed.
+   **The Railway half of that was not done on the same day the code was, and
+   this section wrongly recorded it as if it had been.** For a few hours on
+   3 Sep 2026 all three `notify-*` services were still live and still starting
+   `npm run notify`, an npm script the very commit they were running had
+   deleted: every fire failed instantly, `notify-exceptions` failed every five
+   minutes, and nothing at all was keeping the Supabase project awake. Nobody
+   would have noticed from the app. That is the whole argument for this
+   document — a cron that fails looks exactly like a cron with nothing to do.
+
+   The correction, applied to Railway the same day: `notify-morning`,
+   `notify-evening` and `notify-exceptions` are all **deleted**, and a new
+   service named **`keep-alive`** carries the heartbeat. The earlier draft of
+   this section kept `notify-exceptions` alive under its wrong name on the
+   grounds that rebuilding the awake-keeping service was riskier than the bad
+   label; that reasoning was overtaken by the fact that the service was not
+   keeping anything awake. The rebuild was done in the safe order — the new
+   service was created, deployed and seen to run before any of the three old
+   ones was removed.
 
    | Service | Schedule | Command |
    |---|---|---|
-   | `notify-exceptions` (name unchanged — see below) | `*/5 * * * *` — every 5 minutes, all year | `npm run keep-alive` |
+   | `keep-alive` | `*/5 * * * *` — every 5 minutes, all year | `npm run keep-alive` |
    | `purge-licences` | `0 0 1 * *` — monthly | `npm run purge:licences` |
+
+   Both are the same shape: GitHub source `m-a-v-r-o-s/international` on
+   `master`, build command `true` (a cron runs a script, it does not need
+   `next build`), restart policy `NEVER` so a failed run is not retried into a
+   loop. `keep-alive` reads its four environment variables as Railway
+   references to the `international` service (`${{international.…}}`) rather
+   than as its own copies, so rotating a key in one place rotates it here too.
+
+   One trap for whoever adds the next cron here: `railway.json` at the repo
+   root is config-as-code for the *web* service — `NIXPACKS`, `npm run build`,
+   `npm run start`, a healthcheck on `/login` — and a newly created service
+   picks it up before its own settings have taken hold. `keep-alive`'s first
+   build ran a full `next build` for that reason. Set the service's build and
+   start commands, then trigger a second build, and check the log actually
+   shows the cheap path before trusting it.
 
    **Do not disable or delete the keep-alive service to save cost over the
    winter** — same reasoning as before: as long as it keeps running there is
-   no realistic way for the free-tier pause to happen by inactivity.
+   no realistic way for the free-tier pause to happen by inactivity. If it is
+   ever replaced again, check a real run's logs for `keep-alive: ok`; a green
+   "deployed" badge only says the container built.
 
-   **The service is still NAMED `notify-exceptions`.** Railway's API has no
-   rename field, so renaming it means deleting and recreating it by hand in
-   the dashboard (Settings → the service's name) — deliberately not done here,
-   for the same reason it wasn't done when this section first flagged it: this
-   is the service whose cadence keeps the project awake, and destroying and
-   rebuilding it to correct a label risks the one thing this document exists
-   to prevent. The command is what runs; the name is only what it is called.
 3. **The boss's login is email + one-time code (§21).** That depends on
    Supabase Auth actually being able to send mail, which depends on the
    project being unpaused and (once a domain/SMTP exists) on that SMTP
