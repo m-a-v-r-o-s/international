@@ -1131,5 +1131,43 @@
     "clearNothing": "The ledger is empty. There is nothing to clear.",
     "statusTitle": "What the ledger holds",
     "retentionPointer": "Licence photographs are a separate store with a window that empties itself:"
+  },
+  "accountant": {
+    "eyebrow": "International Rentals · For the company accountant",
+    "title": "myDATA questionnaire",
+    "standfirst": "Seventeen questions that need answering before any code is written to connect the app to AADE.",
+    "metaFromLabel": "From",
+    "metaFrom": "Akos Digital Services",
+    "metaSubjectLabel": "Subject",
+    "metaSubject": "Electronic transmission of income to myDATA and keeping the Digital Vehicle Customer Registry",
+    "metaAskLabel": "Asked for",
+    "metaAsk": "Answers to questions 1 to 17, plus the files in section ST",
+    "assumptionsTitle": "What I take to be true",
+    "assumptionsLede": "Three assumptions the design rests on. Please confirm or correct each one.",
+    "answerLabel": "Answer",
+    "filesTitle": "What I need alongside the answers",
+    "filesLede": "Material that needs no decision, only sending.",
+    "filesLabel": "Attach files",
+    "filesHint": "Up to {max} files, JPG, PNG, WebP or PDF, {mb} MB in total.",
+    "youTitle": "Your details",
+    "nameLabel": "Full name",
+    "emailLabel": "Email",
+    "emailHint": "Optional. Only so I can come back with follow-up questions.",
+    "noteLabel": "Notes, or anything I did not ask",
+    "submit": "Send answers",
+    "submitHint": "You can send this partly filled in. Everything does not have to be answered at once.",
+    "doneTitle": "Answers received",
+    "doneBody": "Thank you. They have been recorded and I will read them. I will be in touch if anything needs clarifying.",
+    "referencesTitle": "References",
+    "error": {
+      "rateLimited": "Too many submissions from this connection. Try again in an hour.",
+      "empty": "The form is empty. Fill in at least one answer or attach a file.",
+      "tooLong": "One of the answers is too long. The limit is 4,000 characters per question.",
+      "fileType": "Only JPG, PNG, WebP and PDF files are accepted.",
+      "fileTooLarge": "The files are too large. Up to six files, 8 MB each and 9 MB in total.",
+      "failed": "The submission did not go through. Try again, and if it keeps failing send them by email.",
+      "fileCount": "More than {max} files selected. Remove some and try again.",
+      "fileTotal": "The files come to more than {mb} MB in total. Send them in two submissions, or compress the photos."
+    }
   }
 }

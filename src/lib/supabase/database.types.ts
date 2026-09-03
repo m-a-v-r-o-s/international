@@ -27,7 +27,7 @@
  */
 export * from './database.generated'
 
-import type { Database as GeneratedDatabase } from './database.generated'
+import type { Database as GeneratedDatabase, Json } from './database.generated'
 
 type Tbl = GeneratedDatabase['public']['Tables']
 type Row<T extends keyof Tbl> = Tbl[T]['Row']
@@ -116,3 +116,69 @@ export type BookingInsert = Pick<
   | 'cust_dob' | 'cust_email' | 'pickup_exception' | 'pickup_exception_reason'
 >
 
+
+/**
+ * ── 4. A TABLE THE GENERATOR HAS NOT SEEN YET ───────────────────────────────
+ *
+ * `accountant_replies` lands in 20260903160000_accountant_questionnaire.sql.
+ * `npm run types` regenerates `database.generated.ts` from the REMOTE project,
+ * so the generated file cannot know about a migration that has not been
+ * applied there yet, and the app would not typecheck against a table it can
+ * legitimately write today in development.
+ *
+ * So the shape is declared here, once, and `Database` below is the generated
+ * database with that one table folded in. The explicit export deliberately
+ * shadows the `export *` at the top of this file: everything that imports
+ * `Database` from this module — supabaseAdmin(), supabaseServer(), the browser
+ * client — picks up the merged one without a change of its own.
+ *
+ * THIS BLOCK IS TEMPORARY AND SHOULD DELETE ITSELF. Once the migration is
+ * applied to the real project and `npm run types` has run, the generated file
+ * carries the table and everything from `AccountantRepliesTable` down to the
+ * `Database` override below can go, leaving only the `AccountantReplyRow`
+ * alias. Anything else here is a lie waiting to drift from the schema.
+ */
+type AccountantRepliesTable = {
+  Row: {
+    id: string
+    submitted_at: string
+    respondent_name: string | null
+    respondent_email: string | null
+    respondent_note: string | null
+    answers: Json
+    files: Json
+    locale: string
+    ip_hash: string | null
+    mail_status: string
+  }
+  Insert: {
+    id?: string
+    submitted_at?: string
+    respondent_name?: string | null
+    respondent_email?: string | null
+    respondent_note?: string | null
+    answers?: Json
+    files?: Json
+    locale?: string
+    ip_hash?: string | null
+    mail_status?: string
+  }
+  Update: {
+    mail_status?: string
+  }
+  Relationships: []
+}
+
+export type Database = Omit<GeneratedDatabase, 'public'> & {
+  public: Omit<GeneratedDatabase['public'], 'Tables'> & {
+    Tables: GeneratedDatabase['public']['Tables'] & {
+      accountant_replies: AccountantRepliesTable
+    }
+  }
+}
+
+/** Narrowed per the migration's CHECK, which the generator cannot see. */
+export type MailStatus = 'sent' | 'not_configured' | 'failed'
+
+export type AccountantReplyRow =
+  Omit<AccountantRepliesTable['Row'], 'mail_status'> & { mail_status: MailStatus }

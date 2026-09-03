@@ -13,7 +13,18 @@ import { absoluteUrl } from './lib/http/publicUrl'
  * that. This exists so an unauthenticated phone gets a login screen instead of
  * a flash of an empty app.
  */
-const PUBLIC_PATHS = ['/login', '/privacy', '/signed-out', '/session/resume']
+/**
+ * `/accountant-questionnaire` is the only one of these that accepts a POST from
+ * somebody the database has never heard of. It is public because the owner
+ * chose a link he can paste into an email over a token or a fourth role, so the
+ * defences live in the action instead: a signed render stamp, a honeypot and
+ * two rate-limit buckets (src/lib/accountant/stamp.ts). The CSRF origin check
+ * at the top of this file still applies to it, as does the page's own
+ * `robots: noindex`.
+ */
+const PUBLIC_PATHS = [
+  '/login', '/privacy', '/signed-out', '/session/resume', '/accountant-questionnaire',
+]
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
 
