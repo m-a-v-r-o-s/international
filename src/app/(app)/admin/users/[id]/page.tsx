@@ -126,7 +126,7 @@ export default async function AdminUserPage({
               {person.coverHotels.map((hotel) => (
                 <li key={hotel.id} className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-[0.9375rem]">
-                    {hotel.area ? `${hotel.name} — ${hotel.area}` : hotel.name}
+                    {hotel.area ? `${hotel.name} · ${hotel.area}` : hotel.name}
                   </span>
                   <RemoveCoverForm personId={person.id} hotel={hotel} />
                 </li>

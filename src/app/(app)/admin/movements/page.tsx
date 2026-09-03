@@ -90,19 +90,19 @@ export default async function MovementsPage({
   returns.sort((a, b) => sortByTime(a, b, 'dropoff_at'))
 
   const fmtTime = (iso: string | null) =>
-    iso ? new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Athens' }) : '—'
+    iso ? new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Athens' }) : '–'
 
   const row = (m: Movement, time: string) => {
     const model = modelByCarId.get(m.car_id)
     return (
       <tr key={m.id} className="border-b border-line last:border-0">
         <td className="py-2 pr-3 font-medium tabular-nums">{time}</td>
-        <td className="py-2 pr-3 font-medium">{plateById.get(m.car_id) ?? '—'}</td>
-        <td className="py-2 pr-3 text-ink-soft">{model ? `${model.make} ${model.model}` : '—'}</td>
+        <td className="py-2 pr-3 font-medium">{plateById.get(m.car_id) ?? '–'}</td>
+        <td className="py-2 pr-3 text-ink-soft">{model ? `${model.make} ${model.model}` : '–'}</td>
         <td className="py-2 pr-3">{m.cust_first} {m.cust_last}</td>
-        <td className="py-2 pr-3 text-ink-soft">{m.hotel_id ? hotelById.get(m.hotel_id) ?? '—' : '—'}</td>
-        <td className="py-2 pr-3 text-ink-soft">{m.room_number ?? '—'}</td>
-        <td className="py-2 pr-3 text-ink-soft">{repById.get(m.created_by) ?? '—'}</td>
+        <td className="py-2 pr-3 text-ink-soft">{m.hotel_id ? hotelById.get(m.hotel_id) ?? '–' : '–'}</td>
+        <td className="py-2 pr-3 text-ink-soft">{m.room_number ?? '–'}</td>
+        <td className="py-2 pr-3 text-ink-soft">{repById.get(m.created_by) ?? '–'}</td>
       </tr>
     )
   }
@@ -126,7 +126,7 @@ export default async function MovementsPage({
         </div>
       </div>
 
-      <p className="hidden text-[1.125rem] font-semibold print:block">{t('title')} — {day}</p>
+      <p className="hidden text-[1.125rem] font-semibold print:block">{t('title')}: {day}</p>
 
       <section className="ir-card p-4 print:border-0 print:p-0">
         <h2 className="mb-3 text-[1.0625rem] font-semibold">{t('pickups')} ({pickups.length})</h2>

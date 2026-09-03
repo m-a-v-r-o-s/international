@@ -36,7 +36,7 @@ export default async function HomePage() {
     return (
       <div className="flex flex-col gap-4">
         <h1 className="text-[1.75rem] font-bold tracking-tight">{th('title')}</h1>
-        <p className="text-ink-soft">{tc('signedInAs', { name: staff.fullName || '—' })}</p>
+        <p className="text-ink-soft">{tc('signedInAs', { name: staff.fullName || '–' })}</p>
         <p className="ir-card p-5">{th('adminNote')}</p>
         <Link href="/admin/movements" className="ir-btn-primary">{t('goToMovements')}</Link>
         <Link href="/admin/incidents" className="ir-btn-quiet">{t('goToIncidents')}</Link>

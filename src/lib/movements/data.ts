@@ -80,5 +80,5 @@ export function fmtTime(iso: string | null): string {
     ? new Date(iso).toLocaleTimeString('en-GB', {
         hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Athens',
       })
-    : '—'
+    : '–'
 }

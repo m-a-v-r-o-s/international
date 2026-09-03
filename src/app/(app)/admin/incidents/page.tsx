@@ -113,8 +113,8 @@ export default async function IncidentsPage({
                 <Link href={`/admin/incidents/${row.id}`} className="ir-card flex flex-col gap-1 p-3.5">
                   <span className="flex items-center justify-between gap-3">
                     <span className="font-semibold">
-                      {booking?.ref ?? '—'}
-                      {booking ? ` · ${plateById.get(booking.car_id) ?? '—'}` : ''}
+                      {booking?.ref ?? '–'}
+                      {booking ? ` · ${plateById.get(booking.car_id) ?? '–'}` : ''}
                     </span>
                     <span className={`shrink-0 rounded-field px-2.5 py-1 text-[0.8125rem] font-medium ${
                       row.resolved_at ? 'bg-ok-tint text-ok' : 'bg-warn-tint text-warn'
@@ -128,9 +128,9 @@ export default async function IncidentsPage({
                     <span className="text-[0.9375rem] text-ink-soft">{t('noNote')}</span>
                   )}
                   <span className="text-[0.8125rem] text-ink-soft">
-                    {booking ? `${booking.cust_first ?? ''} ${booking.cust_last ?? ''}`.trim() : '—'}
+                    {booking ? `${booking.cust_first ?? ''} ${booking.cust_last ?? ''}`.trim() : '–'}
                     {' · '}{row.raised_at.slice(0, 10)}
-                    {row.raised_by ? ` · ${repById.get(row.raised_by) ?? '—'}` : ''}
+                    {row.raised_by ? ` · ${repById.get(row.raised_by) ?? '–'}` : ''}
                     {shots > 0 ? ` · ${t('photoCount', { n: shots })}` : ''}
                   </span>
                 </Link>

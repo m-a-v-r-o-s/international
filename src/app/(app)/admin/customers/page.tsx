@@ -67,7 +67,7 @@ export default async function AdminCustomersPage() {
               <dd>
                 {ledgerStatus.oldest_seen
                   ? format.dateTime(new Date(ledgerStatus.oldest_seen), { dateStyle: 'medium' })
-                  : '—'}
+                  : '–'}
               </dd>
             </div>
             <div className="flex gap-2">

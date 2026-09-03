@@ -77,18 +77,18 @@ export const euros = formatEuros
 
 /** A stored timestamptz, printed as the desk reads it. */
 export function athensTime(value: string | null): string {
-  if (!value) return '—'
+  if (!value) return '–'
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '—'
+  if (Number.isNaN(date.getTime())) return '–'
   return new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Europe/Athens', hour: '2-digit', minute: '2-digit',
   }).format(date)
 }
 
 export function athensDateTime(value: string | null): string {
-  if (!value) return '—'
+  if (!value) return '–'
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '—'
+  if (Number.isNaN(date.getTime())) return '–'
   return new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Europe/Athens',
     year: 'numeric', month: '2-digit', day: '2-digit',
@@ -98,7 +98,7 @@ export function athensDateTime(value: string | null): string {
 
 /** `date` columns are calendar dates and must never become instants. */
 export function calendarDate(value: string | null): string {
-  if (!value) return '—'
+  if (!value) return '–'
   const [y, m, d] = value.split('-')
   return y && m && d ? `${d}/${m}/${y}` : value
 }

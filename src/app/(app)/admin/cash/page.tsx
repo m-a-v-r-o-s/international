@@ -60,7 +60,7 @@ export default async function CashPage() {
             <tbody>
               {rows.map((row) => (
                 <tr key={row.id} className="border-b border-line last:border-0">
-                  <td className="py-2 pr-3 font-medium">{row.rep_name ?? '—'}</td>
+                  <td className="py-2 pr-3 font-medium">{row.rep_name ?? '–'}</td>
                   <td className="py-2 pr-3 tabular-nums">{formatEuros(row.amount)}</td>
                   <td className="py-2 pr-3 text-ink-soft tabular-nums">{fmtTime(row.handed_at)}</td>
                   <td className="py-2 pr-3">

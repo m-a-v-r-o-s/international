@@ -89,7 +89,7 @@ export default async function AvailabilityPage({
               <section key={category.id} aria-labelledby={`cat-${category.id}`}>
                 <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                   <h2 id={`cat-${category.id}`} className="text-[1.0625rem] font-semibold">
-                    {category.code} — {categoryName(category, locale)}
+                    {category.code} · {categoryName(category, locale)}
                   </h2>
                   <p className="text-[0.875rem] tabular-nums text-ink-soft">
                     {t('groupTally', { free: group.free, total: group.total })}

@@ -85,7 +85,7 @@ export default async function MyBookingsPage({
               <Link href={`/bookings/${booking.id}`} className="ir-card flex items-center justify-between gap-3 p-3.5">
                 <div className="min-w-0">
                   <p className="truncate font-medium">
-                    {booking.cust_first} {booking.cust_last} · {plateById.get(booking.car_id) ?? '—'}
+                    {booking.cust_first} {booking.cust_last} · {plateById.get(booking.car_id) ?? '–'}
                   </p>
                   <p className="truncate text-[0.8125rem] text-ink-soft">
                     {booking.start_date} → {booking.end_date} · {t(`status.${booking.status}`)}

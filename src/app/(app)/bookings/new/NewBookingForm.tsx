@@ -224,7 +224,7 @@ export function NewBookingForm({
             >
               <option value="" disabled>{t('chooseCarPlaceholder')}</option>
               {cars.map((c) => (
-                <option key={c.id} value={c.id}>{c.plate} — {c.make} {c.model} ({c.category_code})</option>
+                <option key={c.id} value={c.id}>{c.plate} · {c.make} {c.model} ({c.category_code})</option>
               ))}
             </select>
           </div>
@@ -260,7 +260,7 @@ export function NewBookingForm({
         {lookup?.status === 'found' && lookup.match ? (
           <p className="ir-notice border-brand bg-brand-tint mb-3" role="status">
             {t('returningGuest', {
-              name: `${lookup.match.firstName ?? ''} ${lookup.match.lastName ?? ''}`.trim() || '—',
+              name: `${lookup.match.firstName ?? ''} ${lookup.match.lastName ?? ''}`.trim() || '–',
             })}
           </p>
         ) : null}

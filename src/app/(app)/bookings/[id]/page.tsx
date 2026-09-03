@@ -96,11 +96,11 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
           </div>
           <div>
             <dt className="text-ink-soft">{t('car')}</dt>
-            <dd className="font-medium">{car?.plate ?? '—'}</dd>
+            <dd className="font-medium">{car?.plate ?? '–'}</dd>
           </div>
           <div>
             <dt className="text-ink-soft">{t('hotelRoom')}</dt>
-            <dd className="font-medium">{hotelName ?? '—'} {row.room_number ? `· ${row.room_number}` : ''}</dd>
+            <dd className="font-medium">{hotelName ?? '–'} {row.room_number ? `· ${row.room_number}` : ''}</dd>
           </div>
           <div>
             <dt className="text-ink-soft">{t('dates')}</dt>
@@ -108,7 +108,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
           </div>
           <div>
             <dt className="text-ink-soft">{t('days')}</dt>
-            <dd className="font-medium">{row.days ?? '—'}</dd>
+            <dd className="font-medium">{row.days ?? '–'}</dd>
           </div>
           <div>
             <dt className="text-ink-soft">{t('price')}</dt>

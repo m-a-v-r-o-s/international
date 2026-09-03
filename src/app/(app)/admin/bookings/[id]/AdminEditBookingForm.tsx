@@ -50,7 +50,7 @@ export function AdminEditBookingForm({
         <div>
           <label className="ir-label" htmlFor="hotel_id">{tn('hotel')}</label>
           <select id="hotel_id" name="hotel_id" className="ir-field" defaultValue={booking.hotel_id ?? ''}>
-            <option value="">—</option>
+            <option value="">–</option>
             {hotels.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
           </select>
         </div>
@@ -86,7 +86,7 @@ export function AdminEditBookingForm({
         <div>
           <label className="ir-label" htmlFor="pay_method">{t('payMethod')}</label>
           <select id="pay_method" name="pay_method" className="ir-field" defaultValue={booking.pay_method ?? ''}>
-            <option value="">—</option>
+            <option value="">–</option>
             <option value="cash">{t('payMethodCash')}</option>
             <option value="card">{t('payMethodCard')}</option>
             <option value="transfer">{t('payMethodTransfer')}</option>

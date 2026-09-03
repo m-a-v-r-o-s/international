@@ -13,7 +13,7 @@ import type { CarModelRow, CarRow, CategoryRow } from '@/lib/supabase/database.t
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
   const t = await getTranslations('admin.fleet')
-  return { title: `${t('title')} — ${id}` }
+  return { title: `${t('title')}: ${id}` }
 }
 
 /**

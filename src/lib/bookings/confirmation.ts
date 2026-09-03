@@ -48,8 +48,8 @@ export async function sendNewBookingConfirmation(
       : { data: null }
 
     const carLabel = car
-      ? [model ? `${model.make} ${model.model}` : null, car.plate].filter(Boolean).join(' — ')
-      : '—'
+      ? [model ? `${model.make} ${model.model}` : null, car.plate].filter(Boolean).join(' · ')
+      : '–'
 
     await sendBookingConfirmation({
       to: input.email,

@@ -71,7 +71,7 @@ export function ModelForm({
         >
           <option value="" disabled>{t('selectCategory')}</option>
           {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.code} — {categoryName(c, locale)}</option>
+            <option key={c.id} value={c.id}>{c.code} · {categoryName(c, locale)}</option>
           ))}
         </select>
       </div>

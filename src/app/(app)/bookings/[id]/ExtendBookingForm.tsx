@@ -81,7 +81,7 @@ export function ExtendBookingForm({
                 >
                   <option value={carId}>{t('keepSameCar')}</option>
                   {checkState.alternatives!.map((c) => (
-                    <option key={c.id} value={c.id}>{c.plate} — {c.make} {c.model}</option>
+                    <option key={c.id} value={c.id}>{c.plate} · {c.make} {c.model}</option>
                   ))}
                 </select>
               </div>

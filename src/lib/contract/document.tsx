@@ -106,8 +106,8 @@ export function ContractDocument({ data, labels }: { data: ContractData; labels:
         ) : null}
 
         <Section title={labels.lessor}>
-          <Text style={{ fontSize: 10, fontWeight: 700 }}>{data.company.legal_name || '—'}</Text>
-          <Text style={{ color: PALETTE.soft }}>{data.company.address || '—'}</Text>
+          <Text style={{ fontSize: 10, fontWeight: 700 }}>{data.company.legal_name || '–'}</Text>
+          <Text style={{ color: PALETTE.soft }}>{data.company.address || '–'}</Text>
           <View style={styles.row}>
             <Cell label={labels.vat} value={data.company.vat_number} />
             <Cell label={labels.phone} value={data.company.phone} />
@@ -125,7 +125,7 @@ export function ContractDocument({ data, labels }: { data: ContractData; labels:
             <Cell third label={labels.returnDate} value={calendarDate(data.endDate)} />
             {/* §4: the day count is inclusive — Mon → Wed is 3 days — and the
                 number printed here is the one the engine charged for. */}
-            <Cell third label={labels.days} value={data.days === null ? '—' : String(data.days)} />
+            <Cell third label={labels.days} value={data.days === null ? '–' : String(data.days)} />
             <Cell third label={labels.pickupTime} value={athensTime(data.pickupAt)} />
             <Cell third label={labels.returnTime} value={athensTime(data.dropoffAt)} />
             <Cell third label={labels.hotel} value={data.hotelName} />
@@ -209,7 +209,7 @@ export function ContractDocument({ data, labels }: { data: ContractData; labels:
             <Text key={mark.index} style={styles.markLine}>
               {mark.index}. {both(labels.view[mark.view])} · {both(labels.zone[mark.zone]!)}
               {' · '}{both(labels.type[mark.markType])}
-              {mark.note ? ` — ${mark.note}` : ''}
+              {mark.note ? ` · ${mark.note}` : ''}
             </Text>
           ))}
         </Section>
@@ -289,7 +289,7 @@ function Cell({
   return (
     <View style={third ? styles.cellThird : styles.cell}>
       <Text style={styles.label}>{both(label)}</Text>
-      <Text style={styles.value}>{value && value.length > 0 ? value : '—'}</Text>
+      <Text style={styles.value}>{value && value.length > 0 ? value : '–'}</Text>
     </View>
   )
 }

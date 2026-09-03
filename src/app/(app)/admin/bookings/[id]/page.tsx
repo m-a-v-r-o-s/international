@@ -12,7 +12,7 @@ import type { BookingRow } from '@/lib/supabase/database.types'
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
   const t = await getTranslations('admin.bookings')
-  return { title: `${t('title')} — ${id}` }
+  return { title: `${t('title')}: ${id}` }
 }
 
 const COLUMNS =
@@ -83,11 +83,11 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
         <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-[0.9375rem]">
           <div>
             <dt className="text-ink-soft">{tb('car')}</dt>
-            <dd className="font-medium">{car?.plate ?? '—'}</dd>
+            <dd className="font-medium">{car?.plate ?? '–'}</dd>
           </div>
           <div>
             <dt className="text-ink-soft">{t('createdBy')}</dt>
-            <dd className="font-medium">{rep?.full_name || '—'}</dd>
+            <dd className="font-medium">{rep?.full_name || '–'}</dd>
           </div>
           <div>
             <dt className="text-ink-soft">{tb('price')}</dt>
@@ -97,7 +97,7 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
           </div>
           <div>
             <dt className="text-ink-soft">{tb('days')}</dt>
-            <dd className="font-medium">{row.days ?? '—'}</dd>
+            <dd className="font-medium">{row.days ?? '–'}</dd>
           </div>
         </dl>
 

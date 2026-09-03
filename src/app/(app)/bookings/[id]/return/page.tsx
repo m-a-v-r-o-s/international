@@ -118,7 +118,7 @@ export default async function ReturnPage({
         </Link>
         <h1 className="mt-1 text-[1.75rem] font-bold tracking-tight">{t('title')}</h1>
         <p className="text-ink-soft">
-          {booking.cust_first} {booking.cust_last} · {car?.plate ?? '—'}
+          {booking.cust_first} {booking.cust_last} · {car?.plate ?? '–'}
           {model ? ` · ${model.make} ${model.model}` : ''}
         </p>
       </div>
@@ -130,7 +130,7 @@ export default async function ReturnPage({
           <h2 className="text-[1.25rem] font-semibold">{t('step.fuel')}</h2>
           <p className="ir-notice border-line bg-canvas">
             {t('fuelOutWas', {
-              level: fuelOut !== null ? th('eighths', { n: fuelOut }) : '—',
+              level: fuelOut !== null ? th('eighths', { n: fuelOut }) : '–',
             })}
           </p>
           <p className="text-ink-soft">{t('sameToSame')}</p>
@@ -159,11 +159,11 @@ export default async function ReturnPage({
           <dl className="ir-card grid grid-cols-2 gap-x-4 gap-y-3 p-4 text-[0.9375rem]">
             <div>
               <dt className="text-ink-soft">{th('fuelOutLabel')}</dt>
-              <dd className="font-medium">{fuelOut !== null ? th('eighths', { n: fuelOut }) : '—'}</dd>
+              <dd className="font-medium">{fuelOut !== null ? th('eighths', { n: fuelOut }) : '–'}</dd>
             </div>
             <div>
               <dt className="text-ink-soft">{th('fuelInLabel')}</dt>
-              <dd className="font-medium">{fuelIn !== null ? th('eighths', { n: fuelIn }) : '—'}</dd>
+              <dd className="font-medium">{fuelIn !== null ? th('eighths', { n: fuelIn }) : '–'}</dd>
             </div>
           </dl>
 

@@ -30,7 +30,7 @@ export function StepNav({ steps, label, doneLabel }: { steps: StepState[]; label
               {step.done ? (
                 <>
                   <span aria-hidden="true"> ✓</span>
-                  <span className="sr-only"> — {doneLabel}</span>
+                  <span className="sr-only">, {doneLabel}</span>
                 </>
               ) : null}
             </>

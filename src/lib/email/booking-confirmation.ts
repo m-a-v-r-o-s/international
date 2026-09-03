@@ -60,18 +60,18 @@ export async function sendBookingConfirmation(input: BookingConfirmationInput): 
     `Κράτηση ${input.ref}`,
     '',
     `Αυτοκίνητο: ${input.carLabel}`,
-    input.hotelName ? `Ξενοδοχείο: ${input.hotelName}${input.roomNumber ? ` — δωμάτιο ${input.roomNumber}` : ''}` : null,
+    input.hotelName ? `Ξενοδοχείο: ${input.hotelName}${input.roomNumber ? `, δωμάτιο ${input.roomNumber}` : ''}` : null,
     `Παραλαβή: ${athensDateTime(input.pickupAt)}`,
     `Επιστροφή: ${athensDateTime(input.dropoffAt)}`,
     `Κόστος: ${money}`,
     licenceLine[0],
     '',
-    '— — —',
+    '-----',
     '',
     `Booking ${input.ref}`,
     '',
     `Car: ${input.carLabel}`,
-    input.hotelName ? `Hotel: ${input.hotelName}${input.roomNumber ? ` — room ${input.roomNumber}` : ''}` : null,
+    input.hotelName ? `Hotel: ${input.hotelName}${input.roomNumber ? `, room ${input.roomNumber}` : ''}` : null,
     `Pick-up: ${athensDateTime(input.pickupAt)}`,
     `Return: ${athensDateTime(input.dropoffAt)}`,
     `Cost: ${money}`,
@@ -80,7 +80,7 @@ export async function sendBookingConfirmation(input: BookingConfirmationInput): 
 
   return send({
     to: input.to,
-    subject: `Επιβεβαίωση κράτησης / Booking confirmation — ${input.ref}`,
+    subject: `Επιβεβαίωση κράτησης / Booking confirmation: ${input.ref}`,
     text,
   })
 }

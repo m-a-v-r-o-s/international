@@ -5,7 +5,7 @@ import { z } from 'zod'
  * a fraction. These are the only two places that format or validate one.
  */
 export function formatEuros(amount: number | null | undefined): string {
-  if (amount === null || amount === undefined) return '—'
+  if (amount === null || amount === undefined) return '–'
   return `€${amount}`
 }
 

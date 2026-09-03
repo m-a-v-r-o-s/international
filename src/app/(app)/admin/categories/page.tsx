@@ -58,7 +58,7 @@ export default async function CategoriesPage() {
           <section key={category.id} className="ir-card p-4" aria-labelledby={`cat-${category.id}`}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 id={`cat-${category.id}`} className="text-[1.125rem] font-semibold">
-                {category.code} — {category.name_en} / {category.name_el}
+                {category.code} · {category.name_en} / {category.name_el}
               </h2>
               <p className="text-[0.875rem] text-ink-soft">
                 {t('ageAndLicence', { age: category.min_driver_age, years: category.min_licence_years })}

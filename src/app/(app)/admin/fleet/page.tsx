@@ -240,7 +240,7 @@ export default async function FleetPage({
                     href={`/admin/fleet/${car.id}`}
                     className="min-h-11 flex-1 py-1 text-[1.0625rem] text-ink-soft underline-offset-2 hover:underline"
                   >
-                    {car.plate} — {model ? `${model.make} ${model.model}` : t('unknownModel')}
+                    {car.plate} · {model ? `${model.make} ${model.model}` : t('unknownModel')}
                   </Link>
                 </li>
               )

@@ -54,8 +54,8 @@ export default async function NewIncidentPage({
     id: b.id,
     label: [
       b.ref,
-      plateById.get(b.car_id) ?? '—',
-      `${b.cust_first ?? ''} ${b.cust_last ?? ''}`.trim() || '—',
+      plateById.get(b.car_id) ?? '–',
+      `${b.cust_first ?? ''} ${b.cust_last ?? ''}`.trim() || '–',
       `${b.start_date} → ${b.end_date}`,
     ].join(' · '),
   }))

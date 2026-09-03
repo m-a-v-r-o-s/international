@@ -196,7 +196,7 @@ export default async function PickupPage({
         </Link>
         <h1 className="mt-1 text-[1.75rem] font-bold tracking-tight">{t('title')}</h1>
         <p className="text-ink-soft">
-          {booking.cust_first} {booking.cust_last} · {car?.plate ?? '—'}
+          {booking.cust_first} {booking.cust_last} · {car?.plate ?? '–'}
           {model ? ` · ${model.make} ${model.model}` : ''}
         </p>
       </div>
@@ -212,7 +212,7 @@ export default async function PickupPage({
             <ReturningGuest
               bookingId={booking.id}
               customerId={match.customerId}
-              name={`${match.firstName ?? ''} ${match.lastName ?? ''}`.trim() || '—'}
+              name={`${match.firstName ?? ''} ${match.lastName ?? ''}`.trim() || '–'}
               lastSeen={athensDateTime(match.lastSeenAt)}
               hasImages={match.hasLicenceImages}
               driverId={mainDriver?.id}
@@ -463,12 +463,12 @@ export default async function PickupPage({
           <dl className="ir-card grid grid-cols-2 gap-x-4 gap-y-3 p-4 text-[0.9375rem]">
             <div>
               <dt className="text-ink-soft">{t('step.drivers')}</dt>
-              <dd className="font-medium">{drivers.map((d) => `${d.first_name} ${d.last_name}`).join(', ') || '—'}</dd>
+              <dd className="font-medium">{drivers.map((d) => `${d.first_name} ${d.last_name}`).join(', ') || '–'}</dd>
             </div>
             <div>
               <dt className="text-ink-soft">{th('fuelOutLabel')}</dt>
               <dd className="font-medium">
-                {pickup.fuel_eighths !== null ? th('eighths', { n: pickup.fuel_eighths }) : '—'}
+                {pickup.fuel_eighths !== null ? th('eighths', { n: pickup.fuel_eighths }) : '–'}
               </dd>
             </div>
             <div>

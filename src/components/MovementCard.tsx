@@ -28,16 +28,16 @@ export function MovementCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[1.0625rem] font-semibold">
-            <span className="tabular-nums">{time}</span> · {car?.plate ?? '—'}
+            <span className="tabular-nums">{time}</span> · {car?.plate ?? '–'}
           </p>
           <p className="text-[0.9375rem] text-ink-soft">
-            {model ? `${model.make} ${model.model}` : '—'}
+            {model ? `${model.make} ${model.model}` : '–'}
           </p>
           <p className="mt-1 text-[0.9375rem]">
             {booking.cust_first} {booking.cust_last}
           </p>
           <p className="text-[0.875rem] text-ink-soft">
-            {hotelName ?? '—'}
+            {hotelName ?? '–'}
             {roomLabel ? ` · ${roomLabel}` : ''}
           </p>
         </div>

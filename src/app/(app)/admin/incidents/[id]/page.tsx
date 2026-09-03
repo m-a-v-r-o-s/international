@@ -76,22 +76,22 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
                 <Link href={`/admin/bookings/${booking.id}`} className="text-brand underline underline-offset-2">
                   {booking.ref}
                 </Link>
-              ) : '—'}
+              ) : '–'}
             </dd>
           </div>
           <div>
             <dt className="text-ink-soft">{tb('guest')}</dt>
             <dd className="font-medium">
-              {booking ? `${booking.cust_first ?? ''} ${booking.cust_last ?? ''}`.trim() : '—'}
+              {booking ? `${booking.cust_first ?? ''} ${booking.cust_last ?? ''}`.trim() : '–'}
             </dd>
           </div>
           <div>
             <dt className="text-ink-soft">{tb('car')}</dt>
-            <dd className="font-medium">{car?.plate ?? '—'}</dd>
+            <dd className="font-medium">{car?.plate ?? '–'}</dd>
           </div>
           <div>
             <dt className="text-ink-soft">{tb('dates')}</dt>
-            <dd className="font-medium">{booking ? `${booking.start_date} → ${booking.end_date}` : '—'}</dd>
+            <dd className="font-medium">{booking ? `${booking.start_date} → ${booking.end_date}` : '–'}</dd>
           </div>
           <div>
             <dt className="text-ink-soft">{t('raisedBy')}</dt>

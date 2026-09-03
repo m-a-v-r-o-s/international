@@ -141,7 +141,7 @@ export default async function WriteContractPage({
                       {`${booking.cust_first ?? ''} ${booking.cust_last ?? ''}`.trim()
                         || booking.cust_phone
                         || booking.ref}
-                      {' · '}{plateById.get(booking.car_id) ?? '—'}
+                      {' · '}{plateById.get(booking.car_id) ?? '–'}
                     </p>
                     <p className="truncate text-[0.8125rem] text-ink-soft">
                       {booking.start_date} → {booking.end_date}

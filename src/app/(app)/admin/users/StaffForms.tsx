@@ -161,7 +161,7 @@ export function HomeHotelForm({
           <option value="">{t('noHomeHotel')}</option>
           {hotels.map((h) => (
             <option key={h.id} value={h.id}>
-              {h.area ? `${h.name} — ${h.area}` : h.name}
+              {h.area ? `${h.name} · ${h.area}` : h.name}
             </option>
           ))}
         </select>
@@ -197,7 +197,7 @@ export function CoverForm({
             <select id="cover_hotel_id" name="hotel_id" className="ir-field">
               {addable.map((h) => (
                 <option key={h.id} value={h.id}>
-                  {h.area ? `${h.name} — ${h.area}` : h.name}
+                  {h.area ? `${h.name} · ${h.area}` : h.name}
                 </option>
               ))}
             </select>
@@ -223,7 +223,7 @@ export function RemoveCoverForm({
       <input type="hidden" name="id" value={personId} />
       <input type="hidden" name="hotel_id" value={hotel.id} />
       <input type="hidden" name="covers" value="false" />
-      <SubmitButton label={`${t('coverRemove')} — ${hotel.name}`} variant="quiet" />
+      <SubmitButton label={`${t('coverRemove')}: ${hotel.name}`} variant="quiet" />
     </form>
   )
 }

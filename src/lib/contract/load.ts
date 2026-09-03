@@ -121,7 +121,7 @@ export async function loadContractSource(
       dropoffAt: booking.dropoff_at,
       hotelName: hotel?.name ?? null,
       roomNumber: booking.room_number,
-      plate: car?.plate ?? '—',
+      plate: car?.plate ?? '–',
       make: model?.make ?? null,
       model: model?.model ?? null,
       categoryEl: category ? `${category.code} · ${category.name_el}` : null,

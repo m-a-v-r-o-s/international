@@ -77,8 +77,8 @@ export default async function MyIncidentsPage({
               <li key={row.id} className="ir-card flex flex-col gap-1 p-3.5">
                 <span className="flex items-center justify-between gap-3">
                   <span className="font-medium">
-                    {booking?.ref ?? '—'}
-                    {booking ? ` · ${plateById.get(booking.car_id) ?? '—'}` : ''}
+                    {booking?.ref ?? '–'}
+                    {booking ? ` · ${plateById.get(booking.car_id) ?? '–'}` : ''}
                   </span>
                   <span className={`shrink-0 rounded-field px-2.5 py-1 text-[0.8125rem] font-medium ${
                     row.resolved_at ? 'bg-ok-tint text-ok' : 'bg-warn-tint text-warn'

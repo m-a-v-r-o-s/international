@@ -129,7 +129,7 @@ export function QuickBookingForm({
         {lookup?.status === 'found' && lookup.match ? (
           <p className="ir-notice border-brand bg-brand-tint mt-3" role="status">
             {tn('returningGuest', {
-              name: `${lookup.match.firstName ?? ''} ${lookup.match.lastName ?? ''}`.trim() || '—',
+              name: `${lookup.match.firstName ?? ''} ${lookup.match.lastName ?? ''}`.trim() || '–',
             })}
           </p>
         ) : null}
@@ -181,7 +181,7 @@ export function QuickBookingForm({
         >
           <option value="" disabled>{tn('chooseCarPlaceholder')}</option>
           {cars.map((c) => (
-            <option key={c.id} value={c.id}>{c.plate} — {c.make} {c.model} ({c.category_code})</option>
+            <option key={c.id} value={c.id}>{c.plate} · {c.make} {c.model} ({c.category_code})</option>
           ))}
         </select>
       </section>

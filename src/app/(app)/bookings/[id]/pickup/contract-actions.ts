@@ -194,7 +194,7 @@ export async function emailContract(_prev: ContractState, formData: FormData): P
       ? await send({
           to: email,
           // Bilingual, like the document itself (§24).
-          subject: `Σύμβαση ενοικίασης / Rental agreement — ${booking.ref}`,
+          subject: `Σύμβαση ενοικίασης / Rental agreement: ${booking.ref}`,
           text: [
             `Συνημμένα θα βρείτε τη σύμβαση ενοικίασης ${booking.ref}.`,
             '',
