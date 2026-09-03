@@ -24,63 +24,39 @@ plan:
    the boss's own login — until someone resumes it from the Supabase
    dashboard. Left paused long enough, a free project can be deleted outright.
    This is the single biggest risk in this list; see §1.
-2. **The four Railway cron services are what's currently preventing that
-   pause, and they're already doing it unconditionally.** Confirmed schedules
-   in the `International Rent-a-Car App` Railway project:
+2. **A dedicated `keep-alive` Railway cron is what's currently preventing that
+   pause.** Push notifications (docs/01-DECISIONS.md §22) were removed
+   outright on 3 Sep 2026 (§36) — settings UI, service worker, sender, schema,
+   and the three `notify-*` cron services that used to carry this side effect
+   as a byproduct of sending digests. Removing the notification code removed
+   that side effect too, so it needed a replacement with no notification logic
+   at all: `scripts/keep-alive.ts`, run as `npm run keep-alive`, does one
+   cheap authenticated read against `app_settings` and nothing else.
 
-   | Service | Schedule |
-   |---|---|
-   | `notify-incidents` | `*/5 * * * *` — every 5 minutes, all year (verified in Railway 2 Sep 2026) |
-   | `notify-morning` | `0 5 * * *` — daily |
-   | `notify-evening` | `30 14 * * *` — daily |
-   | `purge-licences` | `0 0 1 * *` — monthly |
+   The old `notify-exceptions` service (previously the incidents sender,
+   `*/5 * * * *` — Railway's minimum interval, and the fastest of the three
+   old schedules, which is why it was the one repurposed rather than deleted)
+   now runs `npm run keep-alive` on the same 5-minute cadence. `notify-morning`
+   and `notify-evening` had no keep-alive role of their own — their schedules
+   were daily, nowhere near tight enough on their own to matter against a
+   7-day threshold — and were deleted outright rather than repurposed.
 
-   Railway fires these on schedule regardless of content, and the code behind
-   each one hits a Supabase RPC *before* it checks whether there's anything to
-   send or purge (`notifyMorningPickups`/`notifyEveningReturns` call
-   `rep_day_movements` first; `notifyPendingIncidents` calls
-   `pending_incident_notifications` first; `purgeLicenceImages` calls
-   `licence_images_due_for_purge` first). An empty off-season still means a
-   real API call every five minutes via `notify-incidents` alone — nowhere near
-   Supabase's 7-day inactivity threshold. **Do not disable or delete these
-   services to save cost over the winter** — that's what's keeping the
-   project awake between the boss's visits, and as long as they keep running
-   there is no realistic way for the pause to happen by inactivity.
+   | Service | Schedule | Command |
+   |---|---|---|
+   | `notify-exceptions` (name unchanged — see below) | `*/5 * * * *` — every 5 minutes, all year | `npm run keep-alive` |
+   | `purge-licences` | `0 0 1 * *` — monthly | `npm run purge:licences` |
 
-   **This service's command changed on 2 Sep 2026** (docs/01-DECISIONS.md
-   §34) and was updated in Railway the same day: it runs
-   `npm run notify -- --incidents`, and the old `--exceptions` flag no longer
-   exists.
+   **Do not disable or delete the keep-alive service to save cost over the
+   winter** — same reasoning as before: as long as it keeps running there is
+   no realistic way for the free-tier pause to happen by inactivity.
 
-   **The service is still NAMED `notify-exceptions`, and should be renamed to
-   `notify-incidents` in the dashboard** (Settings → the service's name). It
-   has to be done by hand: Railway's API has no rename field, so the only
-   programmatic route — the one its own agent offers — is to delete the
-   service and recreate it with the same configuration. Do not take that
-   offer. This is the service whose 5-minute cadence keeps the Supabase
-   project from auto-pausing (§1), and destroying and rebuilding it to correct
-   a label risks the one thing this document exists to prevent. The command is
-   what runs; the name is only what it is called.
-
-   **Correction, 2 Sep 2026.** This section previously recorded the schedule as
-   `* * * * *`, every 1 minute, "changed 1 Sep 2026 at the owner's request".
-   That is not what is deployed: Railway reports `*/5 * * * *`, and 5 minutes
-   is Railway's own minimum interval for a cron service, so a 1-minute cadence
-   was never possible here. The conclusion this section draws is unaffected —
-   a call every 5 minutes is just as far from a 7-day inactivity threshold as
-   one every minute — but the number was wrong and load-bearing enough to be
-   worth correcting rather than carrying forward.
-
-   A push is not sent every five minutes either: `notifyPendingIncidents()`
-   (`src/lib/push/notify.ts`) always makes the RPC call the cron cadence exists
-   to guarantee, but only sends when `pending_incident_notifications()`
-   actually returns something, and stamps `notified_at` on every item it sends
-   so the same incident is never announced twice — an idle run is a wasted
-   round trip, never a notification. **This schedule lives on the Railway
-   service itself, not in this repository** — changing it means editing the
-   cron service's schedule in the Railway dashboard (or via the Railway MCP
-   tool); nothing in `supabase/migrations` or `scripts/send-notifications.ts`
-   is involved.
+   **The service is still NAMED `notify-exceptions`.** Railway's API has no
+   rename field, so renaming it means deleting and recreating it by hand in
+   the dashboard (Settings → the service's name) — deliberately not done here,
+   for the same reason it wasn't done when this section first flagged it: this
+   is the service whose cadence keeps the project awake, and destroying and
+   rebuilding it to correct a label risks the one thing this document exists
+   to prevent. The command is what runs; the name is only what it is called.
 3. **The boss's login is email + one-time code (§21).** That depends on
    Supabase Auth actually being able to send mail, which depends on the
    project being unpaused and (once a domain/SMTP exists) on that SMTP
@@ -114,21 +90,21 @@ Run this once, shortly after the last car of the year comes back.
    worth the boss glancing at `admin/pricing` to confirm this year's periods
    look right before they become "last year's reference" for setting next
    year's prices.
-5. **Leave all four Railway cron services running, untouched, through the
-   winter.** See §1 — `notify-incidents`'s 5-minute cadence is what keeps
+5. **Leave both Railway cron services running, untouched, through the
+   winter.** See §1 — `keep-alive`'s 5-minute cadence is what keeps
    the free-tier Supabase project from auto-pausing, so pausing, deleting, or
-   "cleaning up" any of the four to save a little Railway cost is the one
-   thing that actually creates the pause risk this doc exists to avoid.
+   "cleaning up" the keep-alive service to save a little Railway cost is the
+   one thing that actually creates the pause risk this doc exists to avoid.
 
 ## §1 — the Supabase pause decision
 
-Already decided, and already in place: **stay on free, and let the four
-Railway cron services carry it.** `notify-incidents` alone, firing every
-five minutes year-round and always issuing a real Supabase RPC call first, makes
-the 7-day auto-pause threshold unreachable by inactivity. Nothing further to
-do here as long as those services keep running (§ End of season point 6) —
-the only way this breaks is those services themselves stopping (paused,
-deleted, or the Railway project/billing lapsing), not the app going quiet.
+Already decided, and already in place: **stay on free, and let the
+`keep-alive` Railway cron carry it.** Firing every five minutes year-round,
+always issuing a real Supabase read, it makes the 7-day auto-pause threshold
+unreachable by inactivity. Nothing further to do here as long as it keeps
+running (§ End of season point 5) — the only way this breaks is the service
+itself stopping (paused, deleted, or the Railway project/billing lapsing),
+not the app going quiet.
 
 The fallback, only worth it if that dependency ever becomes uncomfortable:
 **upgrade the org to Pro**, which removes the auto-pause mechanism entirely
@@ -167,12 +143,9 @@ Run this before the first rep of the new season needs to sign in.
    admin flow — this is just the checkpoint to catch one that was bought but
    never actually entered. Archive (`archived_at`) anything sold over the
    winter rather than deleting it — booking history references it.
-8. **Smoke-test the notification paths** — `notify-morning` and
-   `notify-evening` — now, with real reps signed in, rather than discovering
-   in the first week that push subscriptions from 6 months ago are all
-   expired (`push_subscriptions` rows go stale when a rep re-installs or
-   clears the PWA over the winter; a rep's first sign-in of the season
-   re-subscribes them, but it's worth confirming rather than assuming).
+8. **Confirm the `keep-alive` cron is still green** in the Railway dashboard
+   — its last run should be within the last few minutes. Nothing else to
+   smoke-test here: there is no notification path left to go stale.
 
 ## Scope note
 

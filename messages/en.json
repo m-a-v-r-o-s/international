@@ -118,17 +118,6 @@
     "languageHelp": "Applies everywhere in the app, on this and any other device.",
     "saved": "Saved.",
     "account": "Account",
-    "notifications": "Notifications",
-    "pushChecking": "Checking this device…",
-    "pushUnsupported": "This browser cannot receive notifications. Everything else in the app works normally.",
-    "pushUnconfigured": "Notifications are not set up on the server yet.",
-    "pushDenied": "You blocked notifications for this site. Allow them in your browser settings to turn them back on.",
-    "pushOn": "This device receives notifications.",
-    "pushOff": "This device does not receive notifications.",
-    "pushEnable": "Turn on for this device",
-    "pushDisable": "Turn off for this device",
-    "notifyIncidents": "Incidents",
-    "notifyIncidentsHint": "A rep has sent something in.",
     "pin": "PIN",
     "pinHelp": "You sign in with this and use it to reopen the app on this phone.",
     "pinChange": "Change PIN"
@@ -606,6 +595,7 @@
     },
     "categories": {
       "title": "Groups",
+      "intro": "The pricing and eligibility bands each car model belongs to — minimum driver age and years licensed.",
       "add": "Add a group",
       "edit": "Edit group",
       "empty": "No groups yet. Add the 8 groups the client uses (A–H).",
@@ -1002,7 +992,9 @@
   },
   "adminSettings": {
     "title": "Settings",
-    "intro": "The company details and the terms that print on every rental agreement.",
+    "intro": "Language, notifications, and the administrative tools that keep the fleet running.",
+    "companyCardTitle": "Company & contract terms",
+    "companyCardDesc": "The company details and the terms that print on every rental agreement.",
     "ready": "Everything the rental agreement needs is filled in. Contracts print as real agreements.",
     "notReadyTitle": "Contracts cannot be signed yet.",
     "notReadyBody": "Until these are filled in, the app will still generate the agreement so you can check the layout, but every copy is stamped DRAFT and the guest cannot sign it. Fill in what is missing:",
@@ -1105,18 +1097,6 @@
       "kept": "The guest’s details have been kept for next time.",
       "declined": "The guest’s details were not kept.",
       "noPhone": "The guest agreed, but their phone number could not be read as a full number, so nothing could be kept. Add the country code to the booking and sign again if they want their details kept."
-    }
-  },
-  "push": {
-    "morning": {
-      "title": "Your pickups today",
-      "alsoReturns": "Also due back today"
-    },
-    "evening": {
-      "title": "Returns due back today"
-    },
-    "incidents": {
-      "title": "{n, plural, one {# new incident} other {# new incidents}}"
     }
   },
   "adminLedger": {

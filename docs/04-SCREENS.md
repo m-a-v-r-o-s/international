@@ -118,8 +118,8 @@ the car is taken later, same-category alternatives are offered for a swap.
 
 ### R8 · Settings
 Language (Ελληνικά / English), PIN change (§38 — the same `/change-pin` screen a rep is sent
-to while still holding one the boss issued), log out. **Not built:** biometric unlock, and
-notification preferences — a rep's two kinds are always on rather than a preference (0027).
+to while still holding one the boss issued), log out. **Not built:** biometric unlock.
+Notifications (0027) were removed outright (0036) rather than left as a preference.
 
 ---
 

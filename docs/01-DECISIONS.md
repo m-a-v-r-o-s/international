@@ -203,6 +203,14 @@ Today's movements sheet · live fleet board · full booking search · simple rev
 - **Admin:** incidents — whatever a rep has found and sent in.
 - **Reps:** morning summary of their pickups, evening reminder of returns due.
 
+> **Superseded by §36 (3 Sep 2026).** Push notifications are removed outright —
+> settings UI, service worker, sender, schema and the three Railway cron
+> services. The data these read (bookings, incidents) is untouched; only the
+> "tell a phone about it" machinery is gone. See
+> `supabase/migrations/20260903130000_drop_notifications.sql` and
+> docs/07-SEASON-ROUTINE.md §1 for what replaced the crons' side effect of
+> keeping the free-tier Supabase project awake.
+
 ## 23. Platform
 **Android only.** A Next.js web app **wrapped as a Trusted Web Activity** and published to
 the Play Store. The boss additionally uses it in a desktop browser.

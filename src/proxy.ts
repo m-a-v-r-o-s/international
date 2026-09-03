@@ -138,7 +138,6 @@ function contentSecurityPolicy(nonce: string): string {
     `base-uri 'self'`,
     `form-action 'self'`,
     `frame-ancestors 'none'`,
-    `worker-src 'self' blob:`,
     ...(dev ? [] : ['upgrade-insecure-requests']),
   ].join('; ')
 }
@@ -147,16 +146,10 @@ export const config = {
   matcher: [
     // Everything except Next's own image-optimization endpoint and any
     // request path that ends in a file extension — static files served
-    // straight out of `public/` (images, sw.js, robots.txt, …) and generated
+    // straight out of `public/` (images, robots.txt, …) and generated
     // convention files (favicon.ico, icon.svg, …) alike. Those need no
     // session and no policy, and the login and 404 pages both hold images
     // that must render before, or without, a session.
-    // `sw.js` matters here for a reason of its own: a browser re-fetches the
-    // service worker on its own schedule, including while a rep's device is
-    // PIN-locked, and this proxy would otherwise answer that fetch with a
-    // redirect to /unlock. A service worker that fails to update is one that
-    // keeps running the version it has for ever. The file is static JS with
-    // no session in it, so there is nothing here to protect.
     '/((?!_next/image|.*\\.[\\w]+$).*)',
   ],
 }

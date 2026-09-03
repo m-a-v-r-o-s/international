@@ -132,14 +132,17 @@ describe('what a rep may do to a booking that already exists', () => {
 
 describe('an exception booking is live the moment it is made', () => {
   test('it is on the rep\'s day like any other booking', async () => {
-    // rep_day_movements() is called from the push sender on the service role
-    // (src/lib/push/notify.ts), never directly by a rep session.
     const b = await book(f.admin, {
       pickup: OUT_OF_WINDOW, exception: true, reason: 'guest landing on a red-eye',
     })
-    const rows = await db.as({ kind: 'service' }, () => db.sql<{ booking_id: string }>(
-      `select booking_id from public.rep_day_movements($1, '2026-07-06')`, [f.repA]))
-    expect(rows.map((r) => r.booking_id)).toContain(b.id)
+    const rows = await db.as({ kind: 'service' }, () => db.sql<{ id: string }>(
+      `select id from public.bookings
+         where kind = 'rental' and status in ('booked', 'out')
+           and start_date = '2026-07-06'
+           and (created_by = $1 or hotel_id in (
+             select hotel_id from public.hotel_reps where profile_id = $1))`,
+      [f.repA]))
+    expect(rows.map((r) => r.id)).toContain(b.id)
   })
 
   test('nothing about the exception stands between it and pickup', async () => {

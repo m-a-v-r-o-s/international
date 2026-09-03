@@ -20,15 +20,10 @@ export async function generateMetadata(): Promise<Metadata> {
  * holding a PIN the boss issued — one form, one action, one set of rules about
  * what a PIN may be, whether the rep chose to come or was sent.
  *
- * There is still no notifications section: a rep's two kinds are always on
- * rather than a preference, and the notify_morning/notify_evening clamp in
- * app.profiles_before_write() is what makes that true rather than the absence
- * of a control here.
- *
- * The boss's version of this screen — language plus notifications and
- * account — lives at /admin/settings, folded in alongside the company/legal
- * settings so the sidebar's single "Settings" entry is the only settings
- * screen an admin ever needs. An admin landing here (an old link, the
+ * The boss's version of this screen — language plus account — lives at
+ * /admin/settings, folded in alongside the company/legal settings so the
+ * sidebar's single "Settings" entry is the only settings screen an admin ever
+ * needs. An admin landing here (an old link, the
  * header's globe button) is sent straight there instead of seeing a second,
  * incomplete settings page.
  */
