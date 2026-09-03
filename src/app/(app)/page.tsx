@@ -4,7 +4,7 @@ import { requireUnlocked } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
 import { todayAthens } from '@/lib/dates'
 import { CashStrip } from './CashStrip'
-import { loadDayMovements } from '@/lib/movements/data'
+import { loadDayMovements, movementLocation } from '@/lib/movements/data'
 import { MovementCard } from '@/components/MovementCard'
 
 /**
@@ -66,7 +66,7 @@ export default async function HomePage() {
         done={done}
         car={car}
         model={model}
-        hotelName={booking.hotel_id ? hotelById.get(booking.hotel_id) : undefined}
+        hotelName={movementLocation(booking, hotelById)}
         statusLabel={tb(`status.${booking.status}`)}
         actionLabel={kind === 'pickup' ? t('startPickup') : t('startReturn')}
         doneLabel={kind === 'pickup' ? t('pickedUp') : t('droppedOff')}

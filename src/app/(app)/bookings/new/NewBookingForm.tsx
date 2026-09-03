@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
+import { HotelLocationField } from '@/components/HotelLocationField'
 import { SubmitButton } from '@/components/SubmitButton'
 import {
   previewBookingQuote, createBooking, lookupCustomer,
@@ -235,13 +236,10 @@ export function NewBookingForm({
       <section className="ir-card p-4">
         <h2 className="mb-3 text-[1.0625rem] font-semibold">{t('hotelTitle')}</h2>
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="ir-label" htmlFor="hotel_id">{t('hotel')} *</label>
-            <select id="hotel_id" name="hotel_id" className="ir-field" required defaultValue={defaultHotelId}>
-              <option value="" disabled>{t('chooseHotel')}</option>
-              {hotels.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
-            </select>
-          </div>
+          <HotelLocationField
+            hotels={hotels} defaultHotelId={defaultHotelId} label={`${t('hotel')} *`}
+            chooseLabel={t('chooseHotel')} otherLabel={t('otherHotel')} otherNameLabel={t('otherHotelName')}
+          />
           <Field id="room_number" name="room_number" label={t('room')} maxLength={16} />
         </div>
       </section>

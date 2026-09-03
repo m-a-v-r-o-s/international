@@ -104,10 +104,14 @@ export type DamageMarkRow = Omit<Row<'damage_marks'>, 'view' | 'mark_type'> & {
  * This type is the grant. The cast at the one insert site is what bridges the
  * two, and it is a cast rather than a widening because the trigger — not the
  * caller — is what makes the row valid.
+ *
+ * `adhoc_hotel_name` joined the grant alongside `hotel_id` in
+ * 20260903140000_adhoc_hotel.sql (docs/01-DECISIONS.md §41) — a booking may
+ * name a registered hotel or an unregistered one, never both.
  */
 export type BookingInsert = Pick<
   Tbl['bookings']['Insert'],
-  'car_id' | 'hotel_id' | 'room_number' | 'start_date' | 'end_date'
+  'car_id' | 'hotel_id' | 'adhoc_hotel_name' | 'room_number' | 'start_date' | 'end_date'
   | 'pickup_at' | 'dropoff_at' | 'cust_first' | 'cust_last' | 'cust_phone'
   | 'cust_dob' | 'cust_email' | 'pickup_exception' | 'pickup_exception_reason'
 >

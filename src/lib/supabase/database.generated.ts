@@ -181,6 +181,7 @@ export type Database = {
       }
       bookings: {
         Row: {
+          adhoc_hotel_name: string | null
           block_reason: string | null
           car_id: string
           cash_handover_id: string | null
@@ -219,6 +220,7 @@ export type Database = {
           window_override: boolean
         }
         Insert: {
+          adhoc_hotel_name?: string | null
           block_reason?: string | null
           car_id: string
           cash_handover_id?: string | null
@@ -257,6 +259,7 @@ export type Database = {
           window_override?: boolean
         }
         Update: {
+          adhoc_hotel_name?: string | null
           block_reason?: string | null
           car_id?: string
           cash_handover_id?: string | null

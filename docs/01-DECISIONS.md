@@ -23,6 +23,11 @@ Bookings are made against a **specific car (plate)**, not a category. Availabili
 per-plate calendar.
 
 ## 3. Locations
+
+> **Narrowed by §42 (3 Sep 2026).** A location is still normally a hotel, but a booking
+> may also start at the office (modelled as an ordinary hotel row) or at a hotel that
+> isn't in the system (`bookings.adhoc_hotel_name`, free text).
+
 A location is a **hotel**. Each rep is stationed at one hotel. Room number is captured
 because guests are hotel guests.
 
@@ -80,6 +85,11 @@ The fleet is **one shared pool** — any rep can book any free car in the compan
 - **No commission** exists in this business. Do not build commission anywhere.
 
 ## 8. Cross-rep visibility — the hard rule
+
+> **Narrowed by §42 (3 Sep 2026).** The cover-shift exception below does not extend to a
+> booking at an unregistered hotel — there is no `hotel_reps` row for it to match against,
+> so visibility for one of those is the creator and the admin only, by the owner's choice.
+
 A rep looking at any car they do not have a booking on sees **occupied dates and nothing
 else**. No rep name, no hotel, no customer, no times, no price, no reason.
 
@@ -1159,3 +1169,40 @@ stays one action a result offers, not the reason the bar exists.
 See `supabase/migrations/20260903150000_ledger_search.sql`,
 `src/app/(app)/admin/customers/actions.ts`, `src/app/(app)/admin/customers/LedgerForms.tsx`,
 `src/app/(app)/admin/customers/page.tsx` and `tests/db/customers.test.ts`.
+
+## 42. A booking may also start at the office, or at a hotel not in the system
+
+The business rents cars from three kinds of place, not one: a base at each registered
+hotel (§3's original picture), the company's own office, and — on occasion — a guest's
+hotel that was never entered here. §3 said "a location is a hotel" as a flat rule; this
+narrows it rather than overturning it, because the two new cases needed different
+treatment from each other, not just from the old one.
+
+**The office is a hotel row, deliberately.** §3 already ties a location to two things: a
+display name and, through `hotel_reps` (§8's cover-shift exception), who may see the
+booking besides its creator. An office with real staff wants both, so it gets both for
+free by being an ordinary `hotels` row — "Company Office" or whatever name is decided —
+with real `hotel_reps` assignments. Nothing in the schema, the booking forms, the RLS
+policies or the contract renderer treats a hotel specially by name, so this needed no
+migration and no code change: it is an action for the admin to take through the existing
+`/admin/hotels` and `/admin/users` screens, not a build item.
+
+**An unregistered hotel is not worth a permanent row**, and has no rep stationed at it, so
+it gets a free-text column instead: `bookings.adhoc_hotel_name`. A booking names a
+registered hotel or types one that isn't in the system — never both, enforced by
+`bookings_hotel_xor_adhoc` — and the rep-facing forms present this as one field that
+toggles between a `<select>` and a text input (`HotelLocationField`), matching how the
+choice is actually made at the desk.
+
+**§8's cover-shift exception does not extend to an unregistered hotel — the owner's own
+call, put to him directly rather than assumed.** A booking with no `hotel_id` has nothing
+for `hotel_reps` to match, so `bookings_select`/`bookings_update`
+(`20260830091100_rls.sql`) already fall back to `created_by = auth.uid()` with no RLS
+change at all: visibility is the creator and the admin, and nobody else. If a second rep
+ever needs to help with one of these, that is a case for the admin to reassign or handle
+directly, not a standing mechanism — asked and declined, not overlooked.
+
+See `supabase/migrations/20260903140000_adhoc_hotel.sql`, `src/components/HotelLocationField.tsx`,
+`src/app/(app)/bookings/new/actions.ts`, `src/lib/bookings/quick.ts`,
+`src/app/(app)/bookings/actions.ts`, `src/app/(app)/admin/bookings/actions.ts` and
+`tests/db/isolation.test.ts`.

@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { requireUnlocked } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
 import { todayAthens } from '@/lib/dates'
-import { loadDayMovements } from '@/lib/movements/data'
+import { loadDayMovements, movementLocation } from '@/lib/movements/data'
 import { MovementCard } from '@/components/MovementCard'
 
 /**
@@ -43,7 +43,7 @@ export default async function PickupsPage() {
                 done={booking.status !== 'booked'}
                 car={car}
                 model={model}
-                hotelName={booking.hotel_id ? hotelById.get(booking.hotel_id) : undefined}
+                hotelName={movementLocation(booking, hotelById)}
                 statusLabel={tb(`status.${booking.status}`)}
                 actionLabel={t('startPickup')}
                 doneLabel={t('pickedUp')}

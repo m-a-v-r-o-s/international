@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 const BOOKING_COLUMNS =
-  'id, ref, status, car_id, category_id, hotel_id, room_number, start_date, end_date, ' +
+  'id, ref, status, car_id, category_id, hotel_id, adhoc_hotel_name, room_number, start_date, end_date, ' +
   'pickup_at, dropoff_at, cust_first, cust_last, cust_phone, cust_dob, ' +
   'total, days, collected, pay_method, paid, created_by, created_at'
 
@@ -47,7 +47,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
 
   if (!booking) notFound()
   const row = booking as unknown as Pick<BookingRow,
-    'id' | 'ref' | 'status' | 'car_id' | 'category_id' | 'hotel_id' | 'room_number'
+    'id' | 'ref' | 'status' | 'car_id' | 'category_id' | 'hotel_id' | 'adhoc_hotel_name' | 'room_number'
     | 'start_date' | 'end_date' | 'pickup_at' | 'dropoff_at'
     | 'cust_first' | 'cust_last' | 'cust_phone' | 'cust_dob'
     | 'total' | 'days' | 'collected' | 'pay_method' | 'paid' | 'created_by' | 'created_at'>
@@ -69,7 +69,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
     actorId: staff.id, ttlSeconds: 300,
   })
   const hotels = hotelsResult ?? []
-  const hotelName = hotels.find((h) => h.id === row.hotel_id)?.name ?? null
+  const hotelName = hotels.find((h) => h.id === row.hotel_id)?.name ?? row.adhoc_hotel_name ?? null
 
   const beforePickup = row.status === 'booked'
   const isOut = row.status === 'out'

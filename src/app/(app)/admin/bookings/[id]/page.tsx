@@ -16,12 +16,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 const COLUMNS =
-  'id, ref, status, car_id, hotel_id, room_number, start_date, end_date, ' +
+  'id, ref, status, car_id, hotel_id, adhoc_hotel_name, room_number, start_date, end_date, ' +
   'pickup_at, dropoff_at, cust_first, cust_last, cust_phone, cust_dob, cust_email, ' +
   'total, days, collected, pay_method, paid, created_by, created_at, fuel_charge'
 
 type Row = Pick<BookingRow,
-  'id' | 'ref' | 'status' | 'car_id' | 'hotel_id' | 'room_number' | 'start_date' | 'end_date'
+  'id' | 'ref' | 'status' | 'car_id' | 'hotel_id' | 'adhoc_hotel_name' | 'room_number' | 'start_date' | 'end_date'
   | 'pickup_at' | 'dropoff_at' | 'cust_first' | 'cust_last' | 'cust_phone' | 'cust_dob' | 'cust_email'
   | 'total' | 'days' | 'collected' | 'pay_method' | 'paid' | 'created_by' | 'created_at'
   | 'fuel_charge'>

@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
+import { HotelLocationField } from '@/components/HotelLocationField'
 import { SubmitButton } from '@/components/SubmitButton'
 import { MAX_SEAT_QTY, SEAT_TYPES, type QuickBookingNext, type SeatType } from '@/lib/bookings/quick'
 import { createQuickBooking, type QuickBookingState } from './actions'
@@ -161,13 +162,10 @@ export function QuickBookingForm({
       <section className="ir-card p-4">
         <h2 className="mb-3 text-[1.0625rem] font-semibold">{tn('hotelTitle')}</h2>
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="ir-label" htmlFor="hotel_id">{tn('hotel')} *</label>
-            <select id="hotel_id" name="hotel_id" className="ir-field" required defaultValue={defaultHotelId}>
-              <option value="" disabled>{tn('chooseHotel')}</option>
-              {hotels.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
-            </select>
-          </div>
+          <HotelLocationField
+            hotels={hotels} defaultHotelId={defaultHotelId} label={`${tn('hotel')} *`}
+            chooseLabel={tn('chooseHotel')} otherLabel={tn('otherHotel')} otherNameLabel={tn('otherHotelName')}
+          />
           <Field id="room_number" name="room_number" label={tn('room')} maxLength={16} />
         </div>
       </section>

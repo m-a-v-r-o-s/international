@@ -34,7 +34,7 @@ export async function loadContractSource(
   supabase: SupabaseClient<Database>, bookingId: string,
 ): Promise<ContractSource | null> {
   const { data: booking } = await supabase.from('bookings')
-    .select('id, ref, kind, status, car_id, category_id, hotel_id, room_number, start_date, end_date, pickup_at, dropoff_at, cust_email, days, total, collected, pay_method, paid')
+    .select('id, ref, kind, status, car_id, category_id, hotel_id, adhoc_hotel_name, room_number, start_date, end_date, pickup_at, dropoff_at, cust_email, days, total, collected, pay_method, paid')
     .eq('id', bookingId).eq('kind', 'rental').maybeSingle()
   if (!booking) return null
 
@@ -119,7 +119,7 @@ export async function loadContractSource(
       days: booking.days,
       pickupAt: booking.pickup_at,
       dropoffAt: booking.dropoff_at,
-      hotelName: hotel?.name ?? null,
+      hotelName: hotel?.name ?? booking.adhoc_hotel_name ?? null,
       roomNumber: booking.room_number,
       plate: car?.plate ?? '–',
       make: model?.make ?? null,

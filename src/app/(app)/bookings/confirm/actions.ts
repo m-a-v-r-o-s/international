@@ -56,7 +56,8 @@ export async function createQuickBooking(
   const supabase = await supabaseServer()
   const newBooking: BookingInsert = {
     car_id: input.car_id,
-    hotel_id: input.hotel_id,
+    hotel_id: input.hotel_id ?? null,
+    adhoc_hotel_name: input.adhoc_hotel_name ?? null,
     room_number: input.room_number,
     start_date: input.start_date,
     end_date: input.end_date,

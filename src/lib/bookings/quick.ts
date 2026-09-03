@@ -64,7 +64,10 @@ export type QuickBookingNext = (typeof QUICK_BOOKING_NEXT)[number]
 
 export const quickBookingSchema = z.object({
   car_id: uuid,
-  hotel_id: uuid,
+  // A booking names a registered hotel OR types one that isn't in the system
+  // (docs/01-DECISIONS.md §41) — never both, never neither.
+  hotel_id: uuid.optional(),
+  adhoc_hotel_name: z.string().trim().min(1).max(160).optional(),
   room_number: optionalText(16),
   start_date: date,
   end_date: date,
@@ -90,6 +93,7 @@ export const quickBookingSchema = z.object({
   seats: z.array(z.enum(SEAT_TYPES)).optional().default([]),
   next: z.enum(QUICK_BOOKING_NEXT).optional().default('detail'),
 }).refine((v) => v.end_date >= v.start_date, { path: ['end_date'] })
+  .refine((v) => Boolean(v.hotel_id) !== Boolean(v.adhoc_hotel_name), { path: ['hotel_id'] })
 
 export type QuickBooking = z.infer<typeof quickBookingSchema>
 
@@ -104,7 +108,8 @@ export function parseQuickBooking(formData: FormData):
   { ok: true; data: QuickBooking } | { ok: false } {
   const parsed = quickBookingSchema.safeParse({
     car_id: formData.get('car_id'),
-    hotel_id: formData.get('hotel_id'),
+    hotel_id: formData.get('hotel_id') || undefined,
+    adhoc_hotel_name: formData.get('adhoc_hotel_name') || undefined,
     room_number: formData.get('room_number') || undefined,
     start_date: formData.get('start_date'),
     end_date: formData.get('end_date'),

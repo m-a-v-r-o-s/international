@@ -12,11 +12,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const COLUMNS =
-  'id, ref, status, car_id, hotel_id, room_number, start_date, end_date, ' +
+  'id, ref, status, car_id, hotel_id, adhoc_hotel_name, room_number, start_date, end_date, ' +
   'pickup_at, dropoff_at, cust_first, cust_last, created_by'
 
 type Movement = Pick<BookingRow,
-  'id' | 'ref' | 'status' | 'car_id' | 'hotel_id' | 'room_number' | 'start_date' | 'end_date'
+  'id' | 'ref' | 'status' | 'car_id' | 'hotel_id' | 'adhoc_hotel_name' | 'room_number' | 'start_date' | 'end_date'
   | 'pickup_at' | 'dropoff_at' | 'cust_first' | 'cust_last' | 'created_by'>
 
 /**
@@ -100,7 +100,7 @@ export default async function MovementsPage({
         <td className="py-2 pr-3 font-medium">{plateById.get(m.car_id) ?? '–'}</td>
         <td className="py-2 pr-3 text-ink-soft">{model ? `${model.make} ${model.model}` : '–'}</td>
         <td className="py-2 pr-3">{m.cust_first} {m.cust_last}</td>
-        <td className="py-2 pr-3 text-ink-soft">{m.hotel_id ? hotelById.get(m.hotel_id) ?? '–' : '–'}</td>
+        <td className="py-2 pr-3 text-ink-soft">{(m.hotel_id ? hotelById.get(m.hotel_id) : m.adhoc_hotel_name) ?? '–'}</td>
         <td className="py-2 pr-3 text-ink-soft">{m.room_number ?? '–'}</td>
         <td className="py-2 pr-3 text-ink-soft">{repById.get(m.created_by) ?? '–'}</td>
       </tr>

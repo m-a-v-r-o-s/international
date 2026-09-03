@@ -137,6 +137,7 @@ export async function bookAsRep(
   input: {
     carId: string
     hotelId?: string | null
+    adhocHotelName?: string | null
     start: string
     end: string
     first?: string
@@ -149,12 +150,12 @@ export async function bookAsRep(
   return db.asUser(rep, async () => {
     const row = await db.one<{ id: string }>(
       `insert into public.bookings
-         (car_id, hotel_id, room_number, start_date, end_date,
+         (car_id, hotel_id, adhoc_hotel_name, room_number, start_date, end_date,
           cust_first, cust_last, cust_phone, cust_dob)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        returning id`,
       [
-        input.carId, input.hotelId ?? null, input.room ?? '101',
+        input.carId, input.hotelId ?? null, input.adhocHotelName ?? null, input.room ?? '101',
         input.start, input.end,
         input.first ?? 'Anna', input.last ?? 'Visitor',
         input.phone ?? '+306900000000', input.dob ?? '1990-01-01',

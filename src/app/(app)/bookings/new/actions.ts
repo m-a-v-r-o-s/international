@@ -127,7 +127,10 @@ export async function createBooking(
 
   const parsed = z.object({
     car_id: uuidSchema,
-    hotel_id: uuidSchema,
+    // A booking names a registered hotel OR types one that isn't in the system
+    // (docs/01-DECISIONS.md §41) — never both, never neither.
+    hotel_id: uuidSchema.optional(),
+    adhoc_hotel_name: z.string().trim().min(1).max(160).optional(),
     room_number: z.string().trim().max(16).optional().transform((v) => v || null),
     start_date: dateSchema,
     end_date: dateSchema,
@@ -150,9 +153,12 @@ export async function createBooking(
     pickup_exception: z.boolean().optional().default(false),
     pickup_exception_reason: z.string().trim().max(300).optional().transform((v) => v || null),
     seats: z.array(z.enum(SEAT_TYPES)).optional().default([]),
+  }).refine((data) => Boolean(data.hotel_id) !== Boolean(data.adhoc_hotel_name), {
+    message: 'choose exactly one pickup location',
   }).safeParse({
     car_id: formData.get('car_id'),
-    hotel_id: formData.get('hotel_id'),
+    hotel_id: formData.get('hotel_id') || undefined,
+    adhoc_hotel_name: formData.get('adhoc_hotel_name') || undefined,
     room_number: formData.get('room_number'),
     start_date: formData.get('start_date'),
     end_date: formData.get('end_date'),
@@ -198,7 +204,8 @@ export async function createBooking(
   // describes the grant, which is what this call actually writes through.
   const newBooking: BookingInsert = {
     car_id: parsed.data.car_id,
-    hotel_id: parsed.data.hotel_id,
+    hotel_id: parsed.data.hotel_id ?? null,
+    adhoc_hotel_name: parsed.data.adhoc_hotel_name ?? null,
     room_number: parsed.data.room_number,
     start_date: parsed.data.start_date,
     end_date: parsed.data.end_date,

@@ -161,6 +161,8 @@
     "hotelTitle": "Hotel",
     "hotel": "Hotel",
     "chooseHotel": "Choose a hotel",
+    "otherHotel": "Other hotel (not registered) / Office",
+    "otherHotelName": "Hotel or location name",
     "room": "Room number",
     "guestTitle": "Guest",
     "firstName": "First name",

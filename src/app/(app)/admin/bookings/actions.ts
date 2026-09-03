@@ -40,7 +40,10 @@ export async function adminUpdateBooking(_prev: FormState, formData: FormData): 
   const parsed = z.object({
     id: uuidSchema,
     car_id: uuidSchema,
+    // A booking may name a registered hotel, an unregistered one
+    // (docs/01-DECISIONS.md §41), or — admin only, as before — neither.
     hotel_id: uuidSchema.nullable(),
+    adhoc_hotel_name: z.string().trim().min(1).max(160).nullable(),
     room_number: z.string().trim().max(16).optional().transform((v) => v || null),
     start_date: dateSchema,
     end_date: dateSchema,
@@ -52,10 +55,13 @@ export async function adminUpdateBooking(_prev: FormState, formData: FormData): 
     collected: euroAmountSchema,
     pay_method: payMethodSchema.nullable(),
     paid: z.coerce.boolean(),
+  }).refine((data) => !(data.hotel_id && data.adhoc_hotel_name), {
+    message: 'choose at most one pickup location',
   }).safeParse({
     id: formData.get('id'),
     car_id: formData.get('car_id'),
     hotel_id: formData.get('hotel_id') || null,
+    adhoc_hotel_name: formData.get('adhoc_hotel_name') || null,
     room_number: formData.get('room_number'),
     start_date: formData.get('start_date'),
     end_date: formData.get('end_date'),

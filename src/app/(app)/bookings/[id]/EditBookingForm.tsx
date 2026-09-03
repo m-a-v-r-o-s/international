@@ -4,6 +4,7 @@ import { useActionState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
 import { FormActions } from '@/components/FormActions'
+import { HotelLocationField } from '@/components/HotelLocationField'
 import { updateBooking, type FormState } from '../actions'
 import type { BookingRow } from '@/lib/supabase/database.types'
 
@@ -12,7 +13,7 @@ type Hotel = { id: string; name: string; area: string | null }
 export function EditBookingForm({
   booking, hotels,
 }: {
-  booking: Pick<BookingRow, 'id' | 'hotel_id' | 'room_number' | 'start_date' | 'end_date'
+  booking: Pick<BookingRow, 'id' | 'hotel_id' | 'adhoc_hotel_name' | 'room_number' | 'start_date' | 'end_date'
     | 'cust_first' | 'cust_last' | 'cust_phone' | 'cust_dob'>
   hotels: Hotel[]
 }) {
@@ -36,12 +37,11 @@ export function EditBookingForm({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="ir-label" htmlFor="hotel_id">{tn('hotel')}</label>
-          <select id="hotel_id" name="hotel_id" className="ir-field" required defaultValue={booking.hotel_id ?? ''}>
-            {hotels.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
-          </select>
-        </div>
+        <HotelLocationField
+          hotels={hotels} defaultHotelId={booking.hotel_id} defaultAdhocHotelName={booking.adhoc_hotel_name}
+          label={tn('hotel')} chooseLabel={tn('chooseHotel')} otherLabel={tn('otherHotel')}
+          otherNameLabel={tn('otherHotelName')}
+        />
         <Field id="room_number" name="room_number" label={tn('room')} defaultValue={booking.room_number ?? undefined} maxLength={16} />
       </div>
 

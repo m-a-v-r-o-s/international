@@ -20,7 +20,10 @@ export async function updateBooking(_prev: FormState, formData: FormData): Promi
 
   const parsed = z.object({
     id: uuidSchema,
-    hotel_id: uuidSchema,
+    // A booking names a registered hotel OR types one that isn't in the system
+    // (docs/01-DECISIONS.md §41) — never both, never neither.
+    hotel_id: uuidSchema.optional(),
+    adhoc_hotel_name: z.string().trim().min(1).max(160).optional(),
     room_number: z.string().trim().max(16).optional().transform((v) => v || null),
     start_date: dateSchema,
     end_date: dateSchema,
@@ -28,9 +31,12 @@ export async function updateBooking(_prev: FormState, formData: FormData): Promi
     cust_last: nameSchema,
     cust_phone: phoneSchema,
     cust_dob: dateSchema,
+  }).refine((data) => Boolean(data.hotel_id) !== Boolean(data.adhoc_hotel_name), {
+    message: 'choose exactly one pickup location',
   }).safeParse({
     id: formData.get('id'),
-    hotel_id: formData.get('hotel_id'),
+    hotel_id: formData.get('hotel_id') || undefined,
+    adhoc_hotel_name: formData.get('adhoc_hotel_name') || undefined,
     room_number: formData.get('room_number'),
     start_date: formData.get('start_date'),
     end_date: formData.get('end_date'),
@@ -44,7 +50,13 @@ export async function updateBooking(_prev: FormState, formData: FormData): Promi
 
   const { id, ...rest } = parsed.data
   const supabase = await supabaseServer()
-  const { error } = await supabase.from('bookings').update(rest).eq('id', id)
+  const { error } = await supabase.from('bookings')
+    // hotel_id and adhoc_hotel_name are set explicitly, never left `undefined`
+    // — Postgrest drops an undefined key from the PATCH body rather than
+    // clearing the column, and switching from a registered hotel to an ad-hoc
+    // one (or back) needs the other column cleared, not left stale.
+    .update({ ...rest, hotel_id: rest.hotel_id ?? null, adhoc_hotel_name: rest.adhoc_hotel_name ?? null })
+    .eq('id', id)
 
   if (error) return { error: errorKey(error) }
 

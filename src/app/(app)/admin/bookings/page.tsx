@@ -13,11 +13,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const COLUMNS =
-  'id, ref, status, car_id, hotel_id, room_number, start_date, end_date, ' +
+  'id, ref, status, car_id, hotel_id, adhoc_hotel_name, room_number, start_date, end_date, ' +
   'cust_first, cust_last, total, created_by, created_at'
 
 type Row = Pick<BookingRow,
-  'id' | 'ref' | 'status' | 'car_id' | 'hotel_id' | 'room_number' | 'start_date' | 'end_date'
+  'id' | 'ref' | 'status' | 'car_id' | 'hotel_id' | 'adhoc_hotel_name' | 'room_number' | 'start_date' | 'end_date'
   | 'cust_first' | 'cust_last' | 'total' | 'created_by' | 'created_at'>
 
 /**
@@ -61,6 +61,7 @@ export default async function AdminBookingsPage({
   const plateById = new Map((cars ?? []).map((c) => [c.id, c.plate]))
   const hotelById = new Map((hotels ?? []).map((h) => [h.id, h.name]))
   const repById = new Map((reps ?? []).map((r) => [r.id, r.full_name]))
+  const locationOf = (r: Row) => (r.hotel_id ? hotelById.get(r.hotel_id) : r.adhoc_hotel_name) ?? '–'
 
   if (statusFilter) rows = rows.filter((r) => r.status === statusFilter)
 
@@ -71,7 +72,7 @@ export default async function AdminBookingsPage({
       || r.cust_last?.toLowerCase().includes(needle)
       || r.ref.toLowerCase().includes(needle)
       || (plateById.get(r.car_id) ?? '').toLowerCase().includes(needle)
-      || (r.hotel_id ? (hotelById.get(r.hotel_id) ?? '') : '').toLowerCase().includes(needle)
+      || locationOf(r).toLowerCase().includes(needle)
       || (repById.get(r.created_by) ?? '').toLowerCase().includes(needle)
       || r.start_date.includes(needle)
       || r.end_date.includes(needle))
@@ -122,7 +123,7 @@ export default async function AdminBookingsPage({
                   </p>
                   <p className="truncate text-[0.8125rem] text-ink-soft">
                     {booking.start_date} → {booking.end_date} · {t(`status.${booking.status}`)}
-                    {' · '}{booking.hotel_id ? hotelById.get(booking.hotel_id) ?? '–' : '–'}
+                    {' · '}{locationOf(booking)}
                     {' · '}{repById.get(booking.created_by) ?? '–'}
                   </p>
                 </div>

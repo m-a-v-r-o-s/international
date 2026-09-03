@@ -2,11 +2,11 @@ import type { supabaseServer } from '@/lib/supabase/server'
 import type { BookingRow } from '@/lib/supabase/database.types'
 
 const COLUMNS =
-  'id, ref, status, car_id, hotel_id, room_number, start_date, end_date, ' +
+  'id, ref, status, car_id, hotel_id, adhoc_hotel_name, room_number, start_date, end_date, ' +
   'pickup_at, dropoff_at, cust_first, cust_last'
 
 export type Movement = Pick<BookingRow,
-  'id' | 'ref' | 'status' | 'car_id' | 'hotel_id' | 'room_number'
+  'id' | 'ref' | 'status' | 'car_id' | 'hotel_id' | 'adhoc_hotel_name' | 'room_number'
   | 'start_date' | 'end_date' | 'pickup_at' | 'dropoff_at' | 'cust_first' | 'cust_last'>
 
 export type DayMovements = {
@@ -72,6 +72,13 @@ export async function loadDayMovements(
     modelById: new Map((models ?? []).map((m) => [m.id, m])),
     hotelById: new Map((hotels ?? []).map((h) => [h.id, h.name])),
   }
+}
+
+/** Registered hotel, or the free-text name of one that isn't (docs/01-DECISIONS.md §41). */
+export function movementLocation(
+  m: Pick<Movement, 'hotel_id' | 'adhoc_hotel_name'>, hotelById: Map<string, string>,
+): string | undefined {
+  return (m.hotel_id ? hotelById.get(m.hotel_id) : m.adhoc_hotel_name) ?? undefined
 }
 
 /** 24-hour, in Athens: the only clock the reps and the boss share. */

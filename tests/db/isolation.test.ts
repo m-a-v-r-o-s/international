@@ -388,6 +388,45 @@ describe('what a rep may write is decided in the database', () => {
   })
 })
 
+describe('an ad-hoc-hotel booking (docs/01-DECISIONS.md §41)', () => {
+  test('is visible to its creator and the admin, and to no other rep', async () => {
+    const adhocBooking = await bookAsRep(db, f.repA, {
+      carId: f.carC, hotelId: null, adhocHotelName: 'Hotel Not In The System',
+      start: '2026-07-06', end: '2026-07-08', first: 'Ad', last: 'Hoc', room: '9',
+    })
+
+    const own = await db.asUser(f.repA, () => db.sql(
+      `select id from public.bookings where id = $1`, [adhocBooking]))
+    expect(own).toHaveLength(1)
+
+    const admin = await db.asUser(f.admin, () => db.sql(
+      `select id from public.bookings where id = $1`, [adhocBooking]))
+    expect(admin).toHaveLength(1)
+
+    // Rep Cover sees Hotel Alpha's bookings (the cover-shift exception above) —
+    // but this booking names no hotel at all, so that exception has nothing to
+    // match against.
+    const cover = await db.asUser(f.repCover, () => db.sql(
+      `select id from public.bookings where id = $1`, [adhocBooking]))
+    expect(cover).toEqual([])
+
+    const otherRep = await db.asUser(f.repB, () => db.sql(
+      `select id from public.bookings where id = $1`, [adhocBooking]))
+    expect(otherRep).toEqual([])
+  })
+
+  test('cannot name a registered hotel and an ad-hoc one at the same time', async () => {
+    await db.asUser(f.repA, async () => {
+      expect(await errcode(() => db.sql(
+        `insert into public.bookings
+           (car_id, hotel_id, adhoc_hotel_name, start_date, end_date,
+            cust_first, cust_last, cust_phone, cust_dob)
+         values ($1, $2, 'Some Hotel', '2026-07-15', '2026-07-16', 'A', 'B', '+306900000000', '1990-01-01')`,
+        [f.carC, f.hotelA]))).toBe('23514') // check_violation
+    })
+  })
+})
+
 describe('logged out', () => {
   test('anon reaches nothing at all', async () => {
     await db.as({ kind: 'anon' }, async () => {
