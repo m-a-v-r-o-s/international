@@ -8,6 +8,7 @@ import { contractReadiness, parseCompany } from '@/lib/contract/company'
 import { FuelChargeForm, WindowsForm } from './RetentionForms'
 import { ClearLedgerForm } from '../customers/LedgerForms'
 import { SettingsLinkCard } from './SettingsLinkCard'
+import { Disclosure } from '@/components/Disclosure'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('adminSettings')
@@ -23,9 +24,13 @@ export async function generateMetadata(): Promise<Metadata> {
  * each reachable from a clickable card below rather than embedded inline.
  * What is left here is either small (language, the two single-purpose forms
  * for the pick-up/drop-off windows and the fuel-shortfall rate) or the one
- * destructive, whole-table action (the ledger's clear-everything button)
- * that deliberately sits below everything else so it is never the first
- * thing tapped by reflex.
+ * destructive, whole-table action (the ledger's clear-everything button).
+ * Those three stay on this page rather than getting their own screen, but
+ * each is collapsed behind a Disclosure so the page reads at the same
+ * height as the link cards around it — a boss opens one by tapping its
+ * name, same as everything else here. The danger zone additionally sits
+ * below everything else and stays visibly red even collapsed, so it is
+ * never the first thing tapped by reflex.
  *
  * Account — sign out — is the very last thing on the page, below the danger
  * zone. On a screen this long, having it near the top meant a boss reaching
@@ -103,20 +108,16 @@ export default async function AdminSettingsPage() {
         warning={readiness.ready ? undefined : t('notReadyTitle')}
       />
 
-      <section className="ir-card flex flex-col gap-4 p-4" aria-labelledby="windows-heading">
-        <h2 id="windows-heading" className="text-[1.0625rem] font-semibold">
-          {t('windowsTitle')}
-        </h2>
+      <Disclosure summary={t('windowsTitle')}>
         <WindowsForm windows={{ pickupFrom, pickupTo, dropoffFrom, dropoffTo }} />
-      </section>
+      </Disclosure>
 
-      <section className="ir-card flex flex-col gap-4 p-4" aria-labelledby="fuel-heading">
-        <h2 id="fuel-heading" className="text-[1.0625rem] font-semibold">
-          {t('fuelChargeTitle')}
-        </h2>
-        <p className="text-[0.9375rem] text-ink-soft">{t('fuelChargeIntro')}</p>
-        <FuelChargeForm perEighth={settings?.fuel_charge_per_eighth ?? 10} />
-      </section>
+      <Disclosure summary={t('fuelChargeTitle')}>
+        <div className="flex flex-col gap-4">
+          <p className="text-[0.9375rem] text-ink-soft">{t('fuelChargeIntro')}</p>
+          <FuelChargeForm perEighth={settings?.fuel_charge_per_eighth ?? 10} />
+        </div>
+      </Disclosure>
 
       <SettingsLinkCard
         href="/admin/settings/retention"
@@ -125,19 +126,17 @@ export default async function AdminSettingsPage() {
         meta={status && status.due_count > 0 ? `${t('retentionDue')}: ${status.due_count}` : undefined}
       />
 
-      <section
-        className="ir-card flex flex-col gap-4 border-danger p-4"
-        aria-labelledby="danger-zone-heading"
+      <Disclosure
+        summary={t('dangerZoneTitle')}
+        className="border-danger"
+        summaryClassName="text-danger"
       >
-        <h2 id="danger-zone-heading" className="text-[1.0625rem] font-semibold text-danger">
-          {t('dangerZoneTitle')}
-        </h2>
         <div className="flex flex-col gap-3">
           <h3 className="text-[0.9375rem] font-semibold">{tl('clearTitle')}</h3>
           <p className="text-[0.9375rem] text-ink-soft">{tl('clearIntro')}</p>
           <ClearLedgerForm total={ledgerTotal} />
         </div>
-      </section>
+      </Disclosure>
 
       <section className="ir-card flex flex-col gap-3 p-5" aria-labelledby="acct-heading">
         <h2 id="acct-heading" className="text-[1.125rem] font-semibold">{ts('account')}</h2>

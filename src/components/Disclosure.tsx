@@ -10,21 +10,25 @@ import { useState, type ReactNode } from 'react'
  * times over.
  */
 export function Disclosure({
-  summary, children, defaultOpen = false,
+  summary, children, defaultOpen = false, className, summaryClassName,
 }: {
   summary: ReactNode
   children: ReactNode
   defaultOpen?: boolean
+  className?: string
+  summaryClassName?: string
 }) {
   const [open, setOpen] = useState(defaultOpen)
 
   return (
     <details
-      className="ir-card p-4"
+      className={`ir-card p-4${className ? ` ${className}` : ''}`}
       open={open}
       onToggle={(e) => setOpen(e.currentTarget.open)}
     >
-      <summary className="min-h-11 cursor-pointer list-none text-[1.0625rem] font-semibold text-ink marker:content-none">
+      <summary
+        className={`min-h-11 cursor-pointer list-none text-[1.0625rem] font-semibold marker:content-none ${summaryClassName ?? 'text-ink'}`}
+      >
         {summary}
       </summary>
       {open ? <div className="mt-4">{children}</div> : null}
