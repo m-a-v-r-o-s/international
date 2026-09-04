@@ -135,16 +135,16 @@ export const ASSUMPTIONS: Assumption[] = [
   {
     id: 'a4',
     heading: {
-      el: 'Παραδοχή 4 · Ελληνικός ΦΠΑ σε όλους τους πελάτες',
-      en: 'Assumption 4 · Greek VAT for every customer',
+      el: 'Παραδοχή 4 · ΦΠΑ Κω 17% σε όλους τους πελάτες',
+      en: 'Assumption 4 · Kos VAT at 17% for every customer',
     },
     body: {
-      el: 'Η βραχυχρόνια μίσθωση μεταφορικού μέσου φορολογείται στον τόπο όπου το όχημα τίθεται στη διάθεση του πελάτη. Άρα εφαρμόζεται ελληνικός ΦΠΑ 24% ακόμη και όταν ο πελάτης είναι επιχείρηση άλλου κράτους μέλους, χωρίς αντιστροφή της υποχρέωσης.',
-      en: 'Short-term hire of a means of transport is taxed where the vehicle is placed at the customer’s disposal. Greek VAT at 24% therefore applies even when the customer is a business in another member state, with no reverse charge.',
+      el: 'Η βραχυχρόνια μίσθωση μεταφορικού μέσου φορολογείται στον τόπο όπου το όχημα τίθεται στη διάθεση του πελάτη. Άρα εφαρμόζεται ελληνικός ΦΠΑ ακόμη και όταν ο πελάτης είναι επιχείρηση άλλου κράτους μέλους, χωρίς αντιστροφή της υποχρέωσης. Ο συντελεστής είναι 17%, ο μειωμένος κατά 30% συντελεστής της Κω, όχι 24%: το επιβεβαιώνει απόδειξη της επιχείρησης της 3.9.2026 με «ΕΝΟΙΚΙΑΣΕΙΣ ΑΥΤΟΚΙΝΗΤΩΝ 170,00 17,00%».',
+      en: 'Short-term hire of a means of transport is taxed where the vehicle is placed at the customer’s disposal. Greek VAT therefore applies even when the customer is a business in another member state, with no reverse charge. The rate is 17%, the Kos rate reduced by 30%, not 24%: a receipt of the business dated 3.9.2026 shows «ΕΝΟΙΚΙΑΣΕΙΣ ΑΥΤΟΚΙΝΗΤΩΝ 170,00 17,00%».',
     },
     ask: {
-      el: 'Επιβεβαιώνετε; Θέλω να μην χτίσω διαδρομή απαλλαγής με βάση ευρωπαϊκό ΑΦΜ.',
-      en: 'Do you confirm? I want to avoid building a zero-rating path keyed on an EU VAT number.',
+      el: 'Επιβεβαιώνετε το 17% ως τον συντελεστή που κωδικοποιώ; Ρωτώ γιατί από τη μείωση εξαιρούνται τα «μεταφορικά μέσα», και θέλω να είναι ρητό ότι η εξαίρεση αφορά την πώληση οχήματος και όχι τη μίσθωση. Επίσης, θέλω να μην χτίσω διαδρομή απαλλαγής με βάση ευρωπαϊκό ΑΦΜ.',
+      en: 'Do you confirm 17% as the rate I encode? I ask because "means of transport" are excluded from the reduction, and I want it stated explicitly that the exclusion covers the sale of a vehicle and not its hire. Also, I want to avoid building a zero-rating path keyed on an EU VAT number.',
     },
   },
 ]

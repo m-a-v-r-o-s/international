@@ -1356,3 +1356,58 @@ gross revenue of at least €50,000,000 and covers B2B only.
 
 See `src/lib/accountant/questionnaire.ts` for the questions as put, and
 `/accountant-questionnaire` for the form the accountant answers them on.
+
+### What one of their actual receipts settled (4 Sep 2026)
+
+The owner sent a photograph of a real receipt, dated 3.9.2026 08:23. It answered more than
+the preceding three rounds of questions, and corrected one thing this section had wrong.
+
+**ΦΠΑ IS 17%, NOT 24%.** The line reads `ΕΝΟΙΚΙΑΣΕΙΣ ΑΥΤΟΚΙΝΗΤΩΝ  170,00  17,00%`. The
+business is in Καρδάμαινα, Κως, and Κως is one of the islands whose VAT rates are reduced by
+30% (17% / 9% / 4% in place of 24% / 13% / 6%), still in force through 2026. Assumption 4
+in the questionnaire asserted 24% and was simply wrong; it now states 17% and cites this
+receipt.
+
+This is not cosmetic. Prices in this app are VAT-inclusive whole euros (§ the whole-euro
+rule), so the net/VAT split is derived, and deriving it at the wrong rate puts a wrong
+number on every document. At 17%, €170 gross is €145,30 net plus €24,70 VAT.
+
+One thing left with the accountant: the 30% reduction excludes «μεταφορικά μέσα», and it
+needs to be explicit that the exclusion covers the *sale* of a vehicle and not its *hire*.
+The till is programmed at 17% and has been for some time, so this is a confirmation to
+obtain rather than a doubt to act on.
+
+**The ΦΗΜ is a real fiscal device, and the ΦΗΜ↔POS interconnection is already done.** The
+receipt carries `*ΦΟΡΟΛΟΓΙΚΗ ΑΠΟΔΕΙΞΗ-ΕΝΑΡΞΗ*` / `-ΛΗΞΗ*` markers and a ΠΑΗΨΣ signature, so
+answer 2 is settled beyond doubt: retail is issued by a fiscal device, not by a provider.
+The EFT/POS approval block prints on the same receipt and ends with
+`ΑΡ.ΦΟΡ/ΚΗΣ ΑΠΟΔΕΙΞΗΣ 853`, tying the card transaction to the fiscal receipt number. That
+is Α.1155/2023 working already, and it is one requirement nobody has to build.
+
+**Every field `ClientCorrelations` needs is printed on it.** The Ψηφιακό Πελατολόγιο links a
+registry entry to a ΦΗΜ receipt by four values, and the receipt carries all four:
+
+| DCL field | On the receipt |
+|---|---|
+| `FIMNumber` (Αρ. Μητρώου ΦΗΜ) | `DMT 24001266` — three letters plus eight digits is the registry format |
+| `FIMAA` (αύξων αριθμός) | `ΑΡ.ΑΠΟΔ:00000853`, repeated as `853` |
+| `FIMIssueDate` | `ΗΜΕΡΑ:03-09-2026` |
+| `FIMIssueTime` | `08:23` |
+
+So the correlation step is buildable. What it costs is still what §43 said: a rep has to get
+those values off the register and into the app at handover. The registry number is constant
+per device, so realistically only the receipt number needs typing.
+
+**The document is one line, not an itemised rental.** No day count, no breakdown, no
+customer details, no ΑΦΜ. Whatever the app eventually sends for retail is a single service
+line at the rental total, which matches how the register is already programmed.
+
+**08:23 confirms issuance at handover.** That is inside the 08:30 pickup window (§5), so the
+receipt was cut at the desk as the car went out, exactly as answers 10 and 14 described.
+
+**Client item 7 is now partly unblocked.** The receipt gives the registered name
+`MAVROS GROUP ΜΟΝΟΠΡΟΣΩΠΗ ΙΚΕ`, the trading name `MAVROS INTERNATIONAL`, `ΑΦΜ 803257894`,
+`ΔΟΥ ΚΩ`, and the town, Καρδάμαινα, Κως. `app_settings.company` still needs the full street
+address, phone and insurer before `contractReadiness()` will pass, and nothing here is
+seeded automatically — src/lib/contract/company.ts is deliberate that an invented field on a
+signed agreement is worse than a blocked one.
