@@ -92,13 +92,32 @@ export async function proxy(request: NextRequest) {
     },
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  // getClaims(), not getUser(). Both establish identity securely; they differ
+  // in what they cost. getUser() is an HTTP call to the Supabase auth server on
+  // EVERY request that reaches this file — every navigation, every Server
+  // Action, every RSC fetch — and it was the single slowest thing the edge did.
+  // getClaims() verifies the JWT's signature locally against the project's
+  // public signing key, which it fetches once and keeps, so the common case is
+  // arithmetic rather than a round trip to Frankfurt.
+  //
+  // This is only true because the project signs with an asymmetric key (ES256).
+  // On a symmetric HS256 secret, or anywhere WebCrypto is missing, the library
+  // silently falls back to a getUser() call — correct either way, just back to
+  // the old cost. If the signing key is ever rotated to a symmetric one, this
+  // gets slow again rather than wrong.
+  //
+  // Session refresh still happens: with no JWT passed, getClaims() goes through
+  // getSession(), which renews an expired token and hands the new cookies to
+  // the setAll() above. That is the second of this file's three jobs and it is
+  // unchanged.
+  const { data: verified } = await supabase.auth.getClaims()
+  const userId = verified?.claims.sub ?? null
 
   response.headers.set('Content-Security-Policy', csp)
 
   const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 
-  if (!user) {
+  if (!userId) {
     if (isPublic) return response
     return redirectTo(request, '/login', response)
   }
@@ -111,7 +130,7 @@ export async function proxy(request: NextRequest) {
 
   // No gate yet — a restored session, or a first load after sign-in. Resume
   // reads the profile, issues the gate and sends the request on its way.
-  if (!gate || gate.sub !== user.id) {
+  if (!gate || gate.sub !== userId) {
     return redirectTo(request, `/session/resume?next=${encodeURIComponent(pathname)}`, response)
   }
 
@@ -161,6 +180,13 @@ export const config = {
     // convention files (favicon.ico, icon.svg, …) alike. Those need no
     // session and no policy, and the login and 404 pages both hold images
     // that must render before, or without, a session.
-    '/((?!_next/image|.*\\.[\\w]+$).*)',
+    //
+    // `opengraph-image` is the one generated convention file with no extension
+    // on its path, so it has to be named rather than matched. It is the card
+    // WhatsApp and Viber fetch when somebody shares a link to this app, and
+    // they fetch it with nobody's session: while this ran through the check
+    // below it answered them with a 307 to /login, and the link came through
+    // blank. Nothing about a brand-coloured title card needs protecting.
+    '/((?!_next/image|opengraph-image|.*\\.[\\w]+$).*)',
   ],
 }

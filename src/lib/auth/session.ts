@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { cache } from 'react'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { supabaseServer } from '../supabase/server'
@@ -26,8 +27,21 @@ export type Staff = {
  * Every server action and every protected page calls one of these. The gate
  * cookie the edge reads is a fast rejection, not a permission: a request that
  * gets past middleware still lands here, and then still lands on RLS.
+ *
+ * Wrapped in React's `cache()`, which de-duplicates it for the length of ONE
+ * request. Every screen asks twice — `(app)/layout.tsx` guards the shell and
+ * the page inside it guards itself — and each ask was three sequential round
+ * trips to Supabase (the auth server, then the profile, then the PIN columns).
+ * Six where three would do, on every navigation. Neither call site should have
+ * to know the other exists, so the de-duplication belongs here rather than in
+ * a rule about who may ask.
+ *
+ * Scope is the request, not the process: a Server Action that writes a profile
+ * and the re-render that follows it are separate requests and each reads
+ * fresh. Nothing here re-reads its own write within a single request — and
+ * anything that starts to must reach past this, not around it.
  */
-export async function currentStaff(): Promise<Staff | null> {
+export const currentStaff = cache(async function currentStaff(): Promise<Staff | null> {
   const supabase = await supabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
@@ -57,7 +71,7 @@ export async function currentStaff(): Promise<Staff | null> {
     hasPin: typeof credential?.pin_hash === 'string',
     mustChangePin: credential?.pin_must_change === true,
   }
-}
+})
 
 /** Signed in, active, and — for a rep — still on the device they were bound to. */
 export async function requireStaff(): Promise<Staff> {
@@ -104,7 +118,13 @@ export async function requireUnlocked(): Promise<Staff> {
   return staff
 }
 
-async function deviceMatches(profileId: string): Promise<boolean> {
+/**
+ * Cached per request for the same reason as currentStaff(): a rep's layout and
+ * their page each call requireStaff(), and this is the extra round trip that
+ * only a rep pays. The device binding cannot change midway through serving one
+ * request — the row it reads is written by a different request entirely.
+ */
+const deviceMatches = cache(async function deviceMatches(profileId: string): Promise<boolean> {
   const store = await cookies()
   const deviceId = store.get(DEVICE_COOKIE)?.value
   if (!deviceId) return false
@@ -115,4 +135,4 @@ async function deviceMatches(profileId: string): Promise<boolean> {
   })
   if (error) return false
   return data === true
-}
+})

@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import { requireUnlocked } from '@/lib/auth/session'
 import { Footer } from '@/components/Footer'
 import { SideNav, NavDrawer, type NavItem } from '@/components/SideNav'
+import { LinkProgress, NavProgressProvider } from '@/components/NavProgress'
 import { SignOutButton } from '@/components/SignOutButton'
 import { getLocale } from '@/i18n/locale'
 import { setLocale } from '@/lib/actions/locale'
@@ -105,113 +106,127 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const navLabel = admin ? ta('navLabel') : tn('primary')
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      {/*
-        The rail carries the brand and the section list for the full height of
-        the page — header included — so it sits outside both headers below
-        rather than above them. On a screen too narrow for it (`lg:hidden`
-        everywhere else in this file), the mobile header below stands in for
-        it: same navy, same two acts, collapsed to a drawer behind a burger.
-      */}
-      <div className="flex w-full flex-1 print:block">
-        <SideNav items={items} label={navLabel} logoAlt={tapp('logoAlt')} />
+    <NavProgressProvider label={t('loadingPage')}>
+      <div className="flex min-h-dvh flex-col">
+        {/*
+          The rail carries the brand and the section list for the full height of
+          the page — header included — so it sits outside both headers below
+          rather than above them. On a screen too narrow for it (`lg:hidden`
+          everywhere else in this file), the mobile header below stands in for
+          it: same navy, same two acts, collapsed to a drawer behind a burger.
+        */}
+        <div className="flex w-full flex-1 print:block">
+          <SideNav items={items} label={navLabel} logoAlt={tapp('logoAlt')} />
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          {/* Desktop header: the rail already carries the logo and section
-              list, so this is just identity and the two acts, in one line,
-              pinned to the trailing edge. */}
-          <header className="hidden border-b border-line bg-surface lg:block print:hidden">
-            <div className="flex items-center justify-end gap-4 px-6 py-3">
-              <span className="max-w-[16rem] truncate text-[0.875rem] text-ink-soft">
-                {staff.fullName || tr(staff.role)}
-              </span>
-              <form action={setLocale} className="contents">
-                <input type="hidden" name="locale" value={nextLocale} />
-                <button type="submit" className="flex items-center gap-1 text-[0.875rem] text-ink-soft underline underline-offset-2 hover:text-ink">
-                  {globeIcon}
-                  {nextLocaleLabel}
-                </button>
-              </form>
-              <SignOutButton className="flex items-center gap-1 text-[0.875rem] text-ink-soft underline underline-offset-2 hover:text-ink">
-                {signOutIcon}
-                {t('signOut')}
-              </SignOutButton>
-              <span className="h-6 w-px bg-line" aria-hidden="true" />
-              <Link href="/contracts/new" className="ir-btn-quiet !w-auto">
-                {tn('writeContract')}
-              </Link>
-              <Link href="/bookings/confirm" className="ir-btn-primary !w-auto">
-                {tn('quickBooking')}
-              </Link>
-            </div>
-          </header>
-
-          {/*
-            Mobile header: the rail is hidden below `lg`, so this carries the
-            burger, the logo, and the two acts — the two things a rep does
-            standing in front of a guest, on every screen rather than only
-            from the one they happen to be on (docs/01-DECISIONS.md §30
-            decision 1). Navy like the rail it stands in for.
-          */}
-          <header className="bg-brand-strong lg:hidden print:hidden">
-            <div className="flex items-center justify-between gap-2 px-4 py-2.5">
-              <div className="flex items-center gap-2">
-                <NavDrawer
-                  items={items}
-                  label={navLabel}
-                  openLabel={tn('open')}
-                  closeLabel={tn('close')}
-                  dark
-                />
-                <Link href="/" className="flex items-center rounded-field bg-surface px-2.5 py-1.5">
-                  <img
-                    src="/logo-sm.webp"
-                    width={300}
-                    height={100}
-                    alt={tapp('logoAlt')}
-                    className="h-12 w-auto"
-                  />
-                </Link>
-              </div>
-              <div className="flex items-center gap-2 text-[0.8125rem] text-brand-tint">
+          <div className="flex min-w-0 flex-1 flex-col">
+            {/* Desktop header: the rail already carries the logo and section
+                list, so this is just identity and the two acts, in one line,
+                pinned to the trailing edge. */}
+            <header className="hidden border-b border-line bg-surface lg:block print:hidden">
+              <div className="flex items-center justify-end gap-4 px-6 py-3">
+                <span className="max-w-[16rem] truncate text-[0.875rem] text-ink-soft">
+                  {staff.fullName || tr(staff.role)}
+                </span>
                 <form action={setLocale} className="contents">
                   <input type="hidden" name="locale" value={nextLocale} />
-                  <button type="submit" className="flex items-center gap-1 underline underline-offset-2 hover:text-brand-ink">
+                  <button type="submit" className="flex items-center gap-1 text-[0.875rem] text-ink-soft underline underline-offset-2 hover:text-ink">
                     {globeIcon}
                     {nextLocaleLabel}
                   </button>
                 </form>
-                <SignOutButton className="flex items-center gap-1 underline underline-offset-2 hover:text-brand-ink">
+                <SignOutButton className="flex items-center gap-1 text-[0.875rem] text-ink-soft underline underline-offset-2 hover:text-ink">
                   {signOutIcon}
                   {t('signOut')}
                 </SignOutButton>
+                <span className="h-6 w-px bg-line" aria-hidden="true" />
+                {/* prefetch off for the same reason as the rail's links —
+                    see the note in SideNav.tsx. */}
+                <Link href="/contracts/new" prefetch={false} className="ir-btn-quiet !w-auto">
+                  {tn('writeContract')}
+                  <LinkProgress />
+                </Link>
+                <Link href="/bookings/confirm" prefetch={false} className="ir-btn-primary !w-auto">
+                  {tn('quickBooking')}
+                  <LinkProgress />
+                </Link>
               </div>
-            </div>
-            <div className="flex gap-2 px-4 pb-3">
-              <Link href="/bookings/confirm" className="ir-btn-primary flex-1">
-                {tn('quickBooking')}
-              </Link>
-              <Link
-                href="/contracts/new"
-                className="ir-btn flex-1 border border-brand-ink/40 bg-brand-ink/10 text-brand-ink hover:bg-brand-ink/20"
-              >
-                {tn('writeContract')}
-              </Link>
-            </div>
-          </header>
+            </header>
 
-          <div className={`mx-auto flex w-full ${shell} flex-1 px-5 print:max-w-none print:px-0`}>
-            <main
-              id="main"
-              className={`min-w-0 flex-1 py-6 print:max-w-none print:py-0 ${admin ? '' : 'max-w-3xl'}`}
-            >
-              {children}
-            </main>
+            {/*
+              Mobile header: the rail is hidden below `lg`, so this carries the
+              burger, the logo, and the two acts — the two things a rep does
+              standing in front of a guest, on every screen rather than only
+              from the one they happen to be on (docs/01-DECISIONS.md §30
+              decision 1). Navy like the rail it stands in for.
+            */}
+            <header className="bg-brand-strong lg:hidden print:hidden">
+              <div className="flex items-center justify-between gap-2 px-4 py-2.5">
+                <div className="flex items-center gap-2">
+                  <NavDrawer
+                    items={items}
+                    label={navLabel}
+                    openLabel={tn('open')}
+                    closeLabel={tn('close')}
+                    dark
+                  />
+                  <Link
+                    href="/"
+                    prefetch={false}
+                    className="flex items-center rounded-field bg-surface px-2.5 py-1.5"
+                  >
+                    <img
+                      src="/logo-sm.webp"
+                      width={300}
+                      height={100}
+                      alt={tapp('logoAlt')}
+                      className="h-12 w-auto"
+                    />
+                    <LinkProgress />
+                  </Link>
+                </div>
+                <div className="flex items-center gap-2 text-[0.8125rem] text-brand-tint">
+                  <form action={setLocale} className="contents">
+                    <input type="hidden" name="locale" value={nextLocale} />
+                    <button type="submit" className="flex items-center gap-1 underline underline-offset-2 hover:text-brand-ink">
+                      {globeIcon}
+                      {nextLocaleLabel}
+                    </button>
+                  </form>
+                  <SignOutButton className="flex items-center gap-1 underline underline-offset-2 hover:text-brand-ink">
+                    {signOutIcon}
+                    {t('signOut')}
+                  </SignOutButton>
+                </div>
+              </div>
+              <div className="flex gap-2 px-4 pb-3">
+                <Link href="/bookings/confirm" prefetch={false} className="ir-btn-primary flex-1">
+                  {tn('quickBooking')}
+                  <LinkProgress />
+                </Link>
+                <Link
+                  href="/contracts/new"
+                  prefetch={false}
+                  className="ir-btn flex-1 border border-brand-ink/40 bg-brand-ink/10 text-brand-ink hover:bg-brand-ink/20"
+                >
+                  {tn('writeContract')}
+                  <LinkProgress />
+                </Link>
+              </div>
+            </header>
+
+            <div className={`mx-auto flex w-full ${shell} flex-1 px-5 print:max-w-none print:px-0`}>
+              <main
+                id="main"
+                className={`min-w-0 flex-1 py-6 print:max-w-none print:py-0 ${admin ? '' : 'max-w-3xl'}`}
+              >
+                {children}
+              </main>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="print:hidden"><Footer /></div>
-    </div>
+        <div className="print:hidden"><Footer /></div>
+      </div>
+    </NavProgressProvider>
   )
 }

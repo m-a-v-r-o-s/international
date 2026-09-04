@@ -144,6 +144,32 @@ button.ir-rail:focus-visible {
     animation: ir-drawer-in 160ms var(--ease-ui);
   }
 
+  /*
+     The navigation bar (NavProgress.tsx) and the page skeleton under it.
+
+     Both are held back by a delay rather than shown the instant a navigation
+     starts: a warm click answers in well under a fifth of a second, and a bar
+     that flashes on every one of those is noise that trains people to ignore
+     it. Past the delay the wait is real and worth reporting.
+
+     The delay is on the ANIMATION, and the reduced-motion rule above shortens
+     animation duration without touching delay, so both still appear on time
+     for someone who has asked for less movement — they simply appear rather
+     than slide or pulse. That is also why the bar's track carries its own
+     colour: with the indicator inside it frozen, the track alone is still a
+     visible change of state.
+  */
+  .ir-progress {
+    animation: ir-fade-in 120ms var(--ease-ui) 200ms both;
+  }
+  .ir-progress-bar {
+    animation: ir-progress-slide 1100ms var(--ease-ui) 200ms infinite;
+  }
+  .ir-skeleton {
+    @apply rounded-field bg-line-strong/35;
+    animation: ir-skeleton-pulse 1600ms var(--ease-ui) 200ms infinite;
+  }
+
   .ir-card {
     @apply rounded-card border border-line bg-surface;
   }
@@ -155,6 +181,23 @@ button.ir-rail:focus-visible {
 @keyframes ir-drawer-in {
   from { transform: translateX(-100%); }
   to   { transform: none; }
+}
+
+@keyframes ir-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Indeterminate: the app cannot know how much of a wait is left, so the bar
+   must not pretend to. It travels rather than fills. */
+@keyframes ir-progress-slide {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(350%); }
+}
+
+@keyframes ir-skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
 }
 
 /* A1's movements sheet is printed as the boss's morning paper replacement. */

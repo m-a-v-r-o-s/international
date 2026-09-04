@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useId, useRef } from 'react'
+import { LinkProgress } from './NavProgress'
 
 export type NavItem = {
   href: string
@@ -92,6 +93,25 @@ function NavList({
                   <Link
                     href={item.href}
                     onClick={onNavigate}
+                    /*
+                      Every screen in this list is dynamic — a booking board, a
+                      cash sheet, live availability — and Next does not reuse a
+                      prefetched dynamic segment for the navigation that
+                      follows (`staleTimes.dynamic` defaults to 0). So the
+                      default prefetch was rendering all fourteen of these
+                      screens on the server, in full, on EVERY page view, and
+                      then throwing every one of them away: fourteen wasted
+                      renders and their auth round trips per screen the boss
+                      opens, billed as compute, competing for a phone's
+                      bandwidth with the tap he actually made.
+
+                      Turning it off costs nothing that was being kept. Raising
+                      `staleTimes.dynamic` instead would make the prefetch pay
+                      — and would also serve a rep yesterday's board from cache
+                      after another rep changed it, which is the one thing this
+                      app must not do.
+                    */
+                    prefetch={false}
                     aria-current={item.href === current ? 'page' : undefined}
                     className={`flex min-h-12 items-center rounded-field px-3.5 text-[1.0625rem]
                                 transition-colors duration-150 ease-ui ${
@@ -105,6 +125,7 @@ function NavList({
                                 }`}
                   >
                     {item.label}
+                    <LinkProgress />
                   </Link>
                 </li>
               ))}
@@ -136,8 +157,13 @@ export function SideNav({
       className="ir-rail sticky top-0 hidden max-h-dvh w-60 shrink-0 flex-col
                  overflow-y-auto bg-brand-strong px-4 py-6 lg:flex print:hidden"
     >
-      <Link href="/" className="mb-6 inline-flex w-fit items-center rounded-field bg-surface px-2 py-1.5">
+      <Link
+        href="/"
+        prefetch={false}
+        className="mb-6 inline-flex w-fit items-center rounded-field bg-surface px-2 py-1.5"
+      >
         <img src="/logo-sm.webp" width={300} height={100} alt={logoAlt} className="h-16 w-auto" />
+        <LinkProgress />
       </Link>
       <NavList items={items} variant="dark" />
     </nav>
