@@ -1654,3 +1654,48 @@ whichever provider wins.
 migrates. Wrapp's are a flat price instead of a per-document one, and a public, documented
 API — §43 had to record that Epsilon's API answer was still to be obtained in writing. Not a
 decision until Epsilon answers.
+
+### Wrapp is the provider (4 Sep 2026)
+
+The owner chose Wrapp outright rather than as a fallback, so Epsilon is no longer the
+front-runner and its retail path gets migrated away from. That forfeits Epsilon's one real
+advantage — that nothing has to move — and buys the flat price, the public documented API,
+and the free sandbox in exchange. The choice is subject to one open item, below.
+
+**Direct, not through the partner programme.** The two commercial routes are described above.
+The becomeapartner track is multi-tenant: partners provision tenants programmatically and
+Wrapp still bills each end client directly, with custom pricing only past roughly 500 active
+tenants. For a single client it buys nothing and adds a provisioning layer. **This build
+integrates directly against the client's own Pro All-in-One API key.** Akos becoming a Wrapp
+partner is a separate business decision with its own merit across other clients; it appears
+to sit on the same issuance API with provisioning added, so taking it later should not mean
+redoing this integration, but that is worth confirming before relying on it.
+
+**The one item that could still unseat Wrapp: which acquirer and terminal model is the POS.**
+Wrapp aggregates Viva, Worldline, Cardlink, Nexi, MyPos, NBG Pay and Epay. If the terminal at
+the desk is not among them, the Α.1155/2023 interconnection cannot be re-established through
+Wrapp once the ΦΗΜ is stood down, and that is disqualifying rather than inconvenient.
+
+**What choosing a provider does NOT settle.** The provider decision and the myDATA work are
+different lists, and the second is longer:
+
+- **q2 — the accountant.** May this business issue λιανική through a πάροχος and stand its
+  ΦΗΜ down. Pivotal, and a vendor selling the capability is not the same as the accountant
+  confirming this business may use it.
+- **The deferred-issuance date ruling — the accountant.** Whether a document issued on
+  reconnect may still carry the handover date, per the offline path decided above.
+- **Q7, Q8, Q9, Q15 — the accountant.** Document types and myDATA codes, income
+  classifications, series and numbering ownership, the real correction window. Untouched.
+- **§43 answer 1 — a written agreement.** The accountant's own transmission of this income
+  through Epsilon has to stop on the day the app goes live.
+- **Client item 8, the domain.** Email is the default delivery channel decided above and it
+  does not currently exist: `src/lib/email/mailer.ts` returns `not_configured` because there
+  is no address to send from.
+- **Fiscal-document retention.** Set before the first stored PDF, not after.
+- **Ψηφιακό Πελατολόγιο: direct or through Wrapp.** Still open, see above.
+- **In writing from Wrapp:** that "Πρόσβαση με κλειδί API" is the full issuance REST API, and
+  the prices.
+
+**Nothing is committed yet and nothing needs to be.** The sandbox is free and without
+commitment, so registering for it and building against it costs nothing and locks nothing in.
+The subscription starts at cutover in March 2027.
