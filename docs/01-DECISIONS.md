@@ -1302,7 +1302,9 @@ counterparts — are exactly the right shape for a business that hands cars over
 The app already knows the hotel for every booking, including §42's unregistered ones, so
 nothing new is captured for this.
 
-**A new burden lands at the desk, though.** `ClientCorrelations` links a registry entry to
+**A new burden lands at the desk, though.** *(Lifted 4 Sep 2026 — see §44. Under the
+provider path the app receives the ΜΑΡΚ itself and none of the following applies.)*
+`ClientCorrelations` links a registry entry to
 its document by either a ΜΑΡΚ or ΦΗΜ details (`FIMNumber`, `FIMAA`, `FIMIssueDate`,
 `FIMIssueTime`). On the ΦΗΜ path that means **the receipt number has to get off the register
 and into the app at handover**. That is a new field and a new step for a rep with a guest
@@ -1332,7 +1334,9 @@ that reps collect is rung up on the ταμειακή like any other retail sale;
   a rep cuts a receipt at a hotel), or Epsilon is merely where a separate ΦΗΜ's data lands.
   The question is *ποιο ακριβώς προϊόν κόβει την απόδειξη, και σε τι συσκευή.* The pickup and
   return screens cannot be designed without it.
-- **Q4, the provider.** Now much less urgent, governing under 5% of documents. Epsilon is
+- **Q4, the provider.** *(Demotion withdrawn 4 Sep 2026 — see §44. Retail moves onto the
+  provider, so Q4 governs ~100% of documents and is back on the critical path.)*
+  Now much less urgent, governing under 5% of documents. Epsilon is
   the front-runner by default because it already owns the retail path; moving away means
   either two vendors or replacing a working ταμειακή. Get its API answer in writing anyway:
   whether a custom application can call it, whether it covers λιανική, cost per document,
@@ -1384,6 +1388,12 @@ The EFT/POS approval block prints on the same receipt and ends with
 `ΑΡ.ΦΟΡ/ΚΗΣ ΑΠΟΔΕΙΞΗΣ 853`, tying the card transaction to the fiscal receipt number. That
 is Α.1155/2023 working already, and it is one requirement nobody has to build.
 
+*Both halves of that paragraph are overtaken by §44 (4 Sep 2026). It describes how retail is
+issued **today**, not how it will be: the owner has since decided receipts go out by email,
+which moves retail onto the provider. And "one requirement nobody has to build" is exactly
+backwards under that decision — standing the ΦΗΜ down takes the POS interconnection with it,
+and it has to be re-established against the provider. See §44.*
+
 **Every field `ClientCorrelations` needs is printed on it.** The Ψηφιακό Πελατολόγιο links a
 registry entry to a ΦΗΜ receipt by four values, and the receipt carries all four:
 
@@ -1411,3 +1421,132 @@ receipt was cut at the desk as the car went out, exactly as answers 10 and 14 de
 address, phone and insurer before `contractReadiness()` will pass, and nothing here is
 seeded automatically — src/lib/contract/company.ts is deliberate that an invented field on a
 signed agreement is worse than a blocked one.
+
+## 44. Receipts go out by email, and paper is the fallback — which moves retail onto the Πάροχος
+
+Decided by the owner 4 Sep 2026: **the receipt is delivered digitally, by email, and printing
+is the backup.** Printing happens from the app to an ordinary A4 printer, on the desktop in
+the main office, and only from the manager (`admin`) account.
+
+That reads as a delivery decision. It is not. It decides who issues the document, and it
+reverses the largest finding in §43.
+
+### Why an email receipt is an issuance decision
+
+§43 settled that this app is never the issuer past 31.12.2026, and that retail is cut on the
+ταμειακή at the desk. A receipt the app emails and prints cannot come off a till roll. There
+is one shape that reaches email-only delivery without the app becoming an issuer:
+
+**Retail (λιανική) moves off the ΦΗΜ and onto the Πάροχος**, alongside the B2B slice. The app
+requests, the provider issues, seals and returns the document with its ΜΑΡΚ and QR, and the
+app delivers what came back. The app still never issues. It becomes the delivery channel for
+a document it did not make.
+
+So §43's headline finding — "over 95% of documents never touch a provider at all" — does not
+survive. Under this decision roughly **100% of documents pass through the provider**, and the
+sentence in §43's receipt subsection that answer 2 is "settled beyond doubt: retail is issued
+by a fiscal device, not by a provider" describes the present, not the design. Q2 in the
+questionnaire already asks the right question in the right words — *«Από ΦΗΜ, ή και αυτές
+μέσω του Παρόχου;»* — so no new question is needed. The owner has now answered his half of
+it; the accountant's half, whether this business may drop retail issuance from its ΦΗΜ and
+run it through a provider instead, stands exactly as written and is now the pivotal legal
+item on the project.
+
+### What it buys
+
+**§43's new burden at the desk disappears.** That section flagged that `ClientCorrelations`
+links a Ψηφιακό Πελατολόγιο entry to its document by ΦΗΜ details, and therefore that a rep
+would have to read the receipt number off the register and type it into the app at handover,
+with a guest waiting. If the provider issues, the app receives the ΜΑΡΚ in the response and
+correlates by ΜΑΡΚ. No new field, no typing, and that whole error class is gone.
+
+**One issuance path instead of two**, which is what Q2's own «Γιατί ρωτώ» predicted would be
+"far simpler for me".
+
+**Q2's remaining owner-side ambiguity stops mattering for the future.** Which Epsilon product
+cuts the receipt and on what device is a question about the current setup, not the built one.
+
+### What it costs, and one cost is sharper than it looks
+
+**Provider fees land on all volume, not under 5%.** §43 demoted Q4 to "much less urgent,
+governing under 5% of documents". That demotion is withdrawn: per-document price is now a
+real running cost on every rental, and Q4's sub-question — whether the provider covers
+αποδείξεις λιανικής or only τιμολόγια — is a go/no-go, not a detail.
+
+**Connectivity becomes fiscally critical.** A ΦΗΜ issues offline. A provider API call does
+not. See the offline path below.
+
+**Retiring the ΦΗΜ is a formal ΑΑΔΕ procedure**, and like the accountant's Epsilon
+transmission (§43 answer 1) it has to stop on exactly the day the app goes live — not before,
+not after. Accountant's work, not code.
+
+**And it breaks a working POS interconnection.** This is the sharpest consequence and it was
+not visible before the receipt photograph. §43 records that the ΦΗΜ↔POS interconnection under
+Α.1155/2023 is already live: the EFT/POS approval block prints on the same receipt and ends
+`ΑΡ.ΦΟΡ/ΚΗΣ ΑΠΟΔΕΙΞΗΣ 853`, tying the card transaction to the fiscal receipt number. §43
+called it "one requirement nobody has to build". Retiring the ΦΗΜ retires that link with it,
+and the interconnection has to be re-established against the provider instead. Payment is
+cash and card only (answer 11), so card is a real share of takings and this cannot be left
+to discover at cutover. It is a question for Epsilon *and* for the POS acquirer, in writing,
+before the ΦΗΜ is decommissioned.
+
+### The delivery design, as decided
+
+1. **Email is the default.** The guest's address is captured at handover and the provider's
+   returned PDF is sent to it.
+2. **At a hotel, a QR on the rep's phone.** A guest with no usable email, or who declines to
+   give one, scans a QR the rep shows and gets the document on their own phone. The app
+   stores the returned PDF and serves it on an unguessable signed link; the QR points there.
+   This works at every hotel, needs no hardware, and is the reason no mobile printer is being
+   bought.
+3. **Paper on request, posted from the main office.** A guest who wants a printed copy gets
+   it sent from the office rather than handed over at the hotel. That is the owner's ruling
+   and it is what makes the manager-desktop-only print scope coherent.
+4. **A4 print is an `admin` action, enforced server-side.** Roles are already `admin | rep`
+   (`db/schema.sql`), so no new role is needed; `admin` is the manager account. Hiding the
+   button is not the control — the route re-checks the caller.
+5. **The printed page is the provider's PDF, verbatim.** `src/lib/contract/render.ts` is not
+   the model here. That renderer builds a document of ours; a fiscal receipt is sealed by the
+   provider and re-rendering it locally would put an unsealed lookalike on paper. We print
+   what came back, unaltered.
+6. **A failed send is visible, not silent.** `src/lib/email/mailer.ts` returns
+   `not_configured` / `failed` and the contract flow records that honestly rather than
+   claiming a send. A receipt needs the same honesty plus a manager-visible backlog of
+   undelivered documents that can be re-sent or printed. A contract copy that does not arrive
+   is an inconvenience; a receipt that does not arrive is a document the customer never got.
+
+### The offline path: hand over, queue, issue on reconnect
+
+Decided by the owner 4 Sep 2026. If the provider is unreachable or the rep has no signal, the
+**car goes out anyway**. The document is queued and issues when the connection returns. The
+alternative — no document, no keys — was rejected: one bad signal at a hotel would strand a
+guest and a rep beside a car they cannot release.
+
+This needs three things built and one ruling obtained:
+
+- A pending-issuance queue that survives a process restart, with retry.
+- A manager-visible backlog, so a document stuck for hours is seen rather than discovered at
+  the VAT return.
+- Correlation deferred with it: the Ψηφιακό Πελατολόγιο entry is real-time on both ends
+  (§43), so the registry entry goes in at handover and the ΜΑΡΚ attaches later.
+- **The ruling: can the issue date still be the handover date?** §43 answer 10 fixes the
+  issue date at the handover and the VAT period with it. A document issued on reconnect may
+  carry a later timestamp, and if that crosses a month boundary it moves the sale into the
+  wrong VAT period. This is the accountant's, and it belongs with the Q15 correction-window
+  question that is already open.
+
+### What is now blocked on what
+
+- **The accountant:** may retail be issued through a Πάροχος and the ΦΗΜ stood down (Q2), and
+  the deferred-issuance date ruling above.
+- **Epsilon, in writing:** does the API cover λιανική, at what cost per document, and does it
+  carry the Α.1155/2023 POS interconnection.
+- **Client item 8, the domain.** Email-first receipts hard-depend on it. `mailer.ts` is
+  complete and returns `not_configured` because there is no domain to send from; until that
+  lands, the default delivery channel does not exist.
+- **Retention:** a fiscal document's retention period is its own, and longer than the
+  customer ledger's. It has to be set before the first stored PDF, not after.
+
+Nothing here changes the storage or issuance code, because none of it exists yet. What it
+changes is the shape of what gets built: one path, not two, and the provider seam §43 already
+called for is now on the critical path rather than serving a 5% slice.
