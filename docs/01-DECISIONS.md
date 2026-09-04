@@ -1708,12 +1708,10 @@ different lists, and the second is longer:
   through Epsilon has to stop on the day the app goes live.
 - **Client item 8, the domain.** ~~Email is the default delivery channel decided above and it
   does not currently exist: `src/lib/email/mailer.ts` returns `not_configured` because there
-  is no address to send from.~~ ~~**Downgraded, not closed** — Wrapp's `customer_emails` sends
-  the receipt itself, so receipts are not blocked on this. What remains is the owner's call
-  on whether a receipt may arrive from a Wrapp address rather than the company's, and the
-  rest of the app still wants its own mail.~~ **Back to a hard blocker.** The owner has since
-  ruled that Wrapp must be invisible, which rules out `customer_emails` — the sender is not
-  ours to set. The original text stands. See the invisibility subsection below.
+  is no address to send from.~~ **Downgraded, not closed.** Wrapp's `customer_emails` sends
+  the receipt itself, so receipts are not blocked on this. The rest of the app still wants
+  its own mail, and once the domain lands the receipt sender becomes ours too — cosmetics
+  rather than a blocker. See the operating-surface subsection below.
 - **Fiscal-document retention.** Set before the first stored PDF, not after.
 - **Ψηφιακό Πελατολόγιο: direct or through Wrapp.** Still open, see above.
 - **In writing from Wrapp:** that "Πρόσβαση με κλειδί API" is the full issuance REST API, and
@@ -1864,10 +1862,9 @@ per-item charge anywhere in it.
    rather than storing and serving. We never render a fiscal document — we could not
    legitimately anyway, per the verbatim-PDF rule decided above.
 4. **The customer-facing receipt page.** `wrapp_invoice_url` and `wrapp_invoice_url_en` are
-   a bilingual hosted view of the document. ~~That is the QR target at the hotel, so no
-   receipt viewer of ours and no signed-link infrastructure.~~ **Withdrawn** — the page is
-   wrapp.ai-branded and the owner has ruled Wrapp invisible, so the QR points at a view of
-   ours instead. See the invisibility subsection below.
+   a bilingual hosted view of the document. That is the QR target at the hotel, so no
+   receipt viewer of ours and no signed-link infrastructure. The page is wrapp.ai-branded,
+   which the owner has ruled acceptable — see the operating-surface subsection below.
 5. **Series and numbering.** `billing_book_id` owns the series and assigns `num`. No
    sequence table, no gap handling, no concurrency control on document numbers — fiddly code
    with a nasty failure mode, simply not written.
@@ -1900,60 +1897,48 @@ Their documentation states no retention period and no lifetime for `customer_por
 or generated PDFs, and says nothing about what happens to either when a subscription lapses.
 Fiscal retention runs for years. Storing the returned PDF ourselves costs almost nothing and
 is the difference between an archive we control and a set of links on a vendor we may not
-still be paying. Keep the bytes — and per the invisibility rule below, they are what the
-customer is shown, rather than Wrapp's hosted page.
+still be paying. Show the customer their hosted page at handover; keep the bytes anyway.
 
 **Two things to ask them, both undocumented:** how long `customer_portal` links and generated
 PDFs live, particularly after a subscription ends; and whether there is any cap on mail sent
 through `customer_emails`. Worth also confirming there is genuinely no rate limit, since a
 peak-season morning arrives in bursts.
 
-### Wrapp is invisible: the client sees one platform, ours (4 Sep 2026)
+### Wrapp is plumbing the boss never operates (4 Sep 2026)
 
-Ruled by the owner: **the boss of International Rentals sees Akos's platform and nothing
-else.** Wrapp is infrastructure, not a component the client is aware of, deals with, or
-learns the name of. This is a delivery standard rather than a technical preference, and it
-overrides parts of the division of labour decided immediately above, because "hand Wrapp
-everything it can do" and "Wrapp is never seen" disagree wherever a Wrapp-provided thing is
-customer- or client-facing.
+Ruled by the owner, then narrowed by him the same day. The first statement was that the boss
+of International Rentals should only ever see Akos's platform; the clarification is that
+**knowing Wrapp exists, as the payment and myDATA provider, is perfectly fine — what he must
+not have to do is work in Wrapp's screens.**
 
-**What it reverses:**
+That is a much smaller rule than brand invisibility, and it is worth stating precisely
+because the strict reading, briefly recorded here and now removed, would have cost real work
+for nothing. The line is **operational surface, not attribution.** Wrapp may be named,
+billed, and visible on a document. It may not be somewhere the client has to log in to get
+his job done.
 
-- **Receipt email goes back to being ours.** `customer_emails` is left empty. `email_subject`
-  and `email_body` are overridable, with `$COMPANY_NAME`, `$INVOICE_CODE` and `$ISSUE_DATES`
-  placeholders, **but nothing in the API sets the sender**, and no white-label or custom
-  sending domain is documented. A receipt arriving from a wrapp.ai address is the client's
-  platform advertising someone else's, so we send it ourselves with the PDF attached.
-  **Client item 8, the domain, is therefore a hard blocker again** — it was downgraded one
-  decision ago on exactly the assumption this rule forbids.
-- **The hotel QR points at a page of ours.** `wrapp_invoice_url` is a wrapp.ai customer
-  portal. We serve our own stored copy of the PDF on our own signed link instead. The "keep
-  the bytes" exception argued above stops being merely an archival precaution and becomes
-  load-bearing: it is what the customer is actually shown.
+**What follows from it:**
 
-**What it does not disturb.** Everything server-to-server is unaffected, which is most of the
-saving: transmission, ΜΑΡΚ, the Ψηφιακό Πελατολόγιο, series and numbering, card
-orchestration, PDF *generation*. None of it is seen. The rule costs us the two delivery
-conveniences above and nothing else on the list.
+- **The boss never signs into Wrapp.** Any operation he needs — reissuing, correcting,
+  finding a document, checking what failed — is fronted by our own admin screens, calling the
+  API underneath. If a routine task exists only in Wrapp's dashboard, that task is not
+  finished until we have wrapped it.
+- **Configuration is Akos's, once.** Billing books and POS devices have full API coverage.
+  The webhook endpoint is the exception, set in Wrapp's Settings > Account Settings, so it is
+  a one-time manual step at setup, performed by us and never by him.
+- **The subscription being billed to him directly is fine**, and stops being a problem to
+  solve. Wrapp «χρεώνει απευθείας τον τελικό πελάτη», he sees the charge, and that is an
+  ordinary vendor relationship rather than a leak. No rebilling arrangement is needed.
+- **The PDF's own branding is fine**, whatever it turns out to be. A provider mark on a
+  fiscal document is normal and in any case unavoidable under the verbatim-PDF rule. Not
+  worth asking about, and not a reason to build anything.
+- **`customer_emails` and `wrapp_invoice_url` both stand.** Neither is a screen the boss
+  operates: one is an email to a tourist, the other a page that tourist opens from a QR. The
+  division of labour above is restored intact, and client item 8 stays downgraded rather than
+  blocking receipts.
 
-**Configuration is Akos's, once.** Billing books and POS devices have full API coverage, so
-they can be provisioned from our side. The webhook endpoint is the exception: it is set in
-Wrapp's own Settings > Account Settings, so that is a one-time manual step performed by us at
-setup. **The boss never signs into Wrapp**, and nothing routine may require it — if an
-operational task can only be done in Wrapp's dashboard, that task has to be wrapped by our
-own admin screens or it breaks this rule.
-
-**Two leaks that code cannot close, and both need the owner's decision:**
-
-1. **The subscription is billed to the client directly.** Wrapp «χρεώνει απευθείας τον τελικό
-   πελάτη με κάρτα κατά το onboarding flow». So the boss goes through a Wrapp onboarding and
-   carries a recurring Wrapp charge on a card statement. The only way to hide that is for
-   Akos to pay and rebill it inside a retainer, which is a commercial arrangement rather than
-   a technical one, and §handoff terms are case-by-case per contract. **Left to the owner.**
-2. **The document's own appearance is undocumented.** The PDF is rendered by Wrapp, and
-   whether it carries Wrapp branding or only the business's letterhead is not stated
-   anywhere in the API documentation. This one matters more than the others, because the
-   verbatim-PDF rule decided above forbids re-rendering a sealed fiscal document to fix it.
-   **Ask them: is the PDF template branded, and is it configurable per tenant?** If it is
-   branded and fixed, the rule cannot be fully honoured on the one artefact the customer
-   keeps, and the owner has to decide whether that is tolerable.
+**The one refinement worth making anyway.** `email_subject` and `email_body` are overridable
+and carry `$COMPANY_NAME`, `$INVOICE_CODE` and `$ISSUE_DATES`, so the receipt mail should
+read as International Rentals even while it leaves from a Wrapp sender. That costs two
+fields on a call we are already making. Whether the sender address itself ever becomes the
+company's is a cosmetic question for after the domain lands, not a design constraint.
