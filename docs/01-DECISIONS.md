@@ -1628,14 +1628,18 @@ settled when it no longer has to be.
 **What fits the design already decided above:**
 
 - **`external_id` gives idempotency**, which is what makes the offline queue safe. A retry
-  after reconnect cannot issue the same rental twice.
-- **`POST /invoices` returns `my_data_mark`, `my_data_uid`, `my_data_qr_url` and
+  after reconnect cannot issue the same rental twice. *(Refined below: a repeat is refused
+  rather than replayed, so the retry path has a second step.)*
+- ~~**`POST /invoices` returns `my_data_mark`, `my_data_uid`, `my_data_qr_url` and
   `wrapp_invoice_url` synchronously.** So the QR-on-the-rep's-phone fallback works at the
-  moment of handover, with no wait.
-- **The PDF is asynchronous**, delivered by an `invoice-pdf` webhook with a default 120s
-  delay. The emailed copy therefore follows the handover rather than coinciding with it, and
-  **the handover must never block on a PDF.** A `thermal-print-pdf` event also exists and is
-  unused here: the decision above is A4.
+  moment of handover, with no wait.~~ **Wrong — see the documentation subsection below.**
+  The call can return `{"status": "pending"}` with only an `invoice_id`, and the ΜΑΡΚ then
+  has to be fetched. The QR fallback cannot assume it has a document at the counter.
+- **The PDF is asynchronous**, delivered by an `invoice-pdf` webhook. The emailed copy
+  therefore follows the handover rather than coinciding with it, and **the handover must
+  never block on a PDF.** A `thermal-print-pdf` event also exists and is unused here: the
+  decision above is A4. *(The "120s" quoted here earlier was wrong: that is the account-wide
+  Webhook Delay setting, which is configurable, not a PDF rendering time.)*
 - **Draft then issue** (`POST /invoices/:id/issue_draft`) preserves the B2B draft path §43
   kept.
 - **VAT 17 is in the accepted set**, matching Κως (§43's receipt).
@@ -1702,9 +1706,12 @@ different lists, and the second is longer:
   classifications, series and numbering ownership, the real correction window. Untouched.
 - **§43 answer 1 — a written agreement.** The accountant's own transmission of this income
   through Epsilon has to stop on the day the app goes live.
-- **Client item 8, the domain.** Email is the default delivery channel decided above and it
+- **Client item 8, the domain.** ~~Email is the default delivery channel decided above and it
   does not currently exist: `src/lib/email/mailer.ts` returns `not_configured` because there
-  is no address to send from.
+  is no address to send from.~~ **Downgraded, not closed** — Wrapp's `customer_emails` sends
+  the receipt itself, so receipts are not blocked on this. What remains is the owner's call
+  on whether a receipt may arrive from a Wrapp address rather than the company's, and the
+  rest of the app still wants its own mail. See the documentation subsection below.
 - **Fiscal-document retention.** Set before the first stored PDF, not after.
 - **Ψηφιακό Πελατολόγιο: direct or through Wrapp.** Still open, see above.
 - **In writing from Wrapp:** that "Πρόσβαση με κλειδί API" is the full issuance REST API, and
@@ -1713,3 +1720,118 @@ different lists, and the second is longer:
 **Nothing is committed yet and nothing needs to be.** The sandbox is free and without
 commitment, so registering for it and building against it costs nothing and locks nothing in.
 The subscription starts at cutover in March 2027.
+
+### What the API documentation actually says (4 Sep 2026)
+
+Everything above about Wrapp's API came from summaries of their HTML docs. The owner pointed
+at `https://wrapp.ai/api/documentation.md`, the raw Markdown edition they publish for exactly
+this purpose. Read in full, it corrects three things asserted above and settles several
+questions this section and §43 had left open. A copy of the reasoning matters more than the
+copy of the file: the file will move, and it is 150KB, so it is not vendored here.
+
+**Correction 1: issuance is not reliably synchronous.** `POST /invoices` has a documented
+*Response Pending* form, `{"status": "pending", "invoice_id": "..."}`, carrying no ΜΑΡΚ. The
+docs say plainly that to know whether it reached myDATA "we need to make a call to invoices
+status". So the flow is issue, then poll `GET /invoices/:id` (or subscribe to the
+`issued-invoice` webhook). **The QR-at-the-counter fallback decided above cannot assume a
+finished document exists at the moment of handover**, and the pickup screen has to be built
+for a receipt that may still be settling. Note that `my_data_qr_url` and `wrapp_invoice_url`
+are both `.../customer_portal/<the same id>`, so a QR is probably constructible from the
+pending `invoice_id` alone — probably, not certainly, and it is worth asking them rather
+than inferring it from two example URLs.
+
+**Correction 2: `external_id` refuses duplicates, it does not replay them.** The exact
+wording is that a create repeating an `external_id` already held "is refused, so a call you
+retry after a timeout or a network error can never issue a second invoice", returning
+`external_id is already used by another invoice`. That is the safety property the offline
+queue needs, but the retry path is two steps rather than one: on refusal, **read the invoice
+back with `GET /invoices/:id`, which accepts the `external_id` in place of the id.** So the
+queue should mint its own reference per handover before the first attempt, and treat the
+duplicate error as success-plus-lookup rather than as a failure.
+
+**Correction 3: the business remains the legal issuer.** Their FAQ: «Η επιχείρηση παραμένει ο
+νόμιμος εκδότης. Ο πιστοποιημένος πάροχος (ΥΠΑΗΕΣ) διαβιβάζει το παραστατικό και εφαρμόζει
+την επίσημη σήμανση (MARK) για λογαριασμό της.» §43's "the app is never the issuer" is still
+right about the app, but the framing that the *provider* issues is not quite the legal
+picture: the business issues, the provider transmits and seals on its behalf. Worth having
+the wording right when this is put to the accountant, because it is the answer to "who is
+issuing these receipts if the ταμειακή is gone".
+
+**The domain may not block receipts after all.** `POST /invoices` takes `customer_emails`, an
+array which "will send a mail to every customer on the array", with `email_locale` ("el"
+default, "en"), and `email_subject` / `email_body` overriding the account's default template.
+**So Wrapp can deliver the receipt email itself, from its own sender, with no SMTP of ours.**
+That does not retire client item 8 — a receipt arriving from a Wrapp address rather than the
+company's is a branding and deliverability decision for the owner, and the rest of the app
+still wants its own mail — but it means **the email-first design above is not hostage to the
+domain**, which is what the open-items list claimed. `email_locale` also drives the PDF
+language, which lines up with the bilingual requirement in §16/§24.
+
+**A silent-failure landmine on ΦΠΑ, and it is our problem to guard.** 17 is confirmed in the
+accepted set, described as «Μειωμένος συντελεστής νησιών», matching Κως. But the table carries
+this warning: «οποιαδήποτε άλλη τιμή δεν επιστρέφει σφάλμα. Το παραστατικό εκδίδεται και
+διαβιβάζεται ως χωρίς ΦΠΑ». **An unrecognised `vat_rate` is not rejected — the document is
+issued and transmitted with no VAT at all.** Given §43 already had the rate wrong once at
+24%, and given money here is whole euros with the split derived rather than stored, this
+wants a hard whitelist check on our side before the call, not trust in theirs.
+
+**Lines are net, and that meets the whole-euro rule head on.** The FAQ is explicit: «Δίνεις
+**καθαρή** τιμή», `unit_price` and `net_total_price` net, gross being net plus VAT, with
+`net_total_amount`, `vat_total_amount`, `total_amount` and `payable_total_amount` all
+required at document level. Our prices are VAT-inclusive whole euros, so every call derives
+the split — §43's worked example, €170 gross at 17% giving €145,30 + €24,70 — and the
+rounding has to be done so the parts still sum to the gross to the cent.
+
+**Retail receipts cannot be cancelled through the API.** `DELETE /invoices/:id/cancel` is
+documented as usable "only for delivery notes (Δελτία Αποστολής)", and separately that
+"Invoices sent from provider can't be cancelled". So a rep's mistake on an ΑΛΠ is corrected
+by issuing **11.4, Πιστωτικό Στοιχ. Λιανικής**, not by voiding. That is a real change from
+the register era, where §43 could say the void procedure "is ordinary retail practice and not
+ours to build". It is ours now, and it sharpens the still-open Q15: what matters is not just
+the correction window but that corrections are additive documents.
+
+**Series and numbering have a mechanism now (§43's Q9, partly).** `billing_book_id` is
+required on every issue, fetched per tenant from `GET /billing_books`; the `series` comes
+from the chosen billing book and `num` is auto-assigned unless we set it. So the numbering
+lives in Wrapp's billing book rather than in our database. Which book, and whether retail and
+B2B get separate ones, is still the accountant's answer — but it is now a configuration
+question rather than a design one.
+
+**The Ψηφιακό Πελατολόγιο endpoints are built for vehicle rental specifically**, which is
+better than "it is covered". `client_service_type: "rental"` is a first-class type;
+`vehicle_registration_number` and `foreign_vehicle_registration_number` both exist;
+`vehicle_movement_purpose: "vmp_rental"`; and **`is_diff_veh_pickup_location` with
+`vehicle_pickup_location`** — the exact hotel-handover shape §43 identified as "the right
+shape for a business that hands cars over at hotels". `branch` is a plain string, so §43's
+single installation is `"0"`. Correlation is `POST /digital_clienteles/:id/correlate_by_mark`
+with just `correlate_mark`, and a repeat returns "Correlation for mark ... already exists",
+which is safe to retry.
+
+**And the registry has first-class support for the offline path decided above.** `create`
+takes **`transmission_failure`** with **`creation_date_time`**, documented as applying only
+when `transmission_failure` is true. So an entry made after the fact can carry the real
+handover time rather than the transmission time. That is the registry half of the deferred-
+issuance ruling this section flagged; the invoice half is still the accountant's, but the
+mechanism exists and the design does not have to invent one.
+
+**The real POS list is longer than the marketing copy**, and matters for the acquirer
+question: `viva`, `epay`, `worldline`, `nbg`, `cosmote`, `jcc`, `attica`, `pancreta`, `tora`,
+`pbt`, `mypos`, **`nexi`**, **`nexi-mellon`**, `nbg_edps`. Both Nexi variants are there,
+which is the reassuring half of the Alpha Bank question if it is confirmed. Cardlink is
+absent from the API list despite appearing in their marketing, most likely folded into
+`worldline`. Two practical notes: every type except `viva` needs an **`authorization_code`**
+from the acquirer, and the error text says a code "έχει ήδη χρησιμοποιηθεί" — it appears to be
+single-use, so it is an onboarding step to get right once rather than a value to keep.
+
+**Smaller things worth having on record.** Payment method types are integers, and `0` Cash
+and `3` Card are all this business needs (answer 11) — `6` is web banking transfer, which is
+the dead `transfer` value §43 wants migrated out. The counterpart object needs only a `name`
+for retail ("first and last name separated by space"), with ΑΦΜ, address and country required
+only for B2B, which matches §43's "no customer details, no ΑΦΜ" on the retail document.
+Webhooks are verified by recomputing HMAC-SHA256 of the raw body with the API key and
+comparing to `X-Webhook-Secret`; the Webhook Delay is an account setting defaulting to 120
+seconds, so it is tunable rather than fixed. The JWT lasts 24 hours and login takes
+`api_key` plus either `email` or `wrapp_user_id`. The sandbox is described as matching
+production, and its key is requested through the contact form on the becomeapartner page —
+which is the one thing still worth visiting there, the programme itself having been rejected
+above.
