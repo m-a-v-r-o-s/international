@@ -1571,10 +1571,28 @@ accountant, not a doubt about the licence.
 **The per-document cost worry above does not apply to this provider, and comes out.** Wrapp
 sells a flat annual subscription with unlimited issuance, not a fee per document: Standard
 €109, Business €139, Pro €169 (all per 12 months), Pro All-in-One €279 per 12 months or €359
-per 24 months. **API key access is in Pro All-in-One only**, so €279/year is the figure that
-matters here. Against the volume of a rental fleet that is not a running cost worth designing
-around. Read off a public plans page and to be confirmed in writing, but the *shape* — flat,
-not per-document — is the vendor's stated model.
+per 24 months. Against the volume of a rental fleet that is not a running cost worth
+designing around. Read off a public plans page and to be confirmed in writing, but the
+*shape* — flat, not per-document — is the vendor's stated model.
+
+**Which tier, and why the cheaper ones are a false economy.** API key access exists only in
+the two Pro All-in-One tiers, and no add-on to a lower plan is offered. Standard and Business
+are out on their own terms: neither carries the POS interconnection, which stops being
+optional the moment the ΦΗΜ is stood down. That leaves Pro (€169/yr, POS and Ψηφιακό
+Πελατολόγιο but no API) as the only real cheaper candidate, and it fails on the thing this
+whole section is built on — without the API the app cannot issue, so every rental is typed
+into Wrapp's portal by hand. That is worse than the ΦΗΜ double-entry §43 objected to (a whole
+document rather than one number), and a rep at a hotel cannot reach a portal the manager
+controls.
+
+**The premium for the API is €10.50 a year, not €110.** The comparison to make is against the
+24-month price: €359/24 months is €179.50/yr, beside Pro's €169/yr. The €279 figure is the
+12-month tier and is the wrong basis for the decision. The All-in-One tiers also bundle a
+device.
+
+**And none of it is payable before cutover.** The sandbox is free with no commitment, so the
+integration is built and tested at no cost and the subscription starts when the app goes
+live in March 2027.
 
 **Retail is their headline proposition, not a footnote.** The Standard plan is described as
 covering receipts *with no cash register*, and the API carries 11.1 (ΑΛΠ) and 11.2 (ΑΠΥ)
