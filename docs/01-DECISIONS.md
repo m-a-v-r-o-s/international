@@ -1600,12 +1600,17 @@ explicitly. The general Greek position — that a πάροχος may issue απ�
 replace the ταμειακή outright — is well attested independently of Wrapp. It remains the
 accountant's ruling under q2, but the route is a productised one rather than a theory.
 
-**The POS interconnection, the sharpest cost above, is covered — conditionally.** Wrapp
-exposes `/pos_devices` and acts as a POS aggregator across Viva, Worldline, Cardlink, Nexi,
-MyPos, NBG Pay and Epay, claiming Α.1155/2023 compliance with the card amount routed from
-the issuing system to the terminal. That is conditional on the terminal at the desk being one
-of those. **New question for the owner: which acquirer and which terminal model is the POS?**
-The receipt photograph in §43 shows the EFT/POS approval block but does not name the bank.
+**The POS interconnection, the sharpest cost above, is covered.** Wrapp exposes
+`/pos_devices` and acts as a POS aggregator across Viva, Worldline, Cardlink, Nexi, MyPos,
+NBG Pay and Epay, claiming Α.1155/2023 compliance with the card amount routed from the
+issuing system to the terminal. **Answered by the owner, 4 Sep 2026: the acquirer is Alpha
+Bank.** Alpha Bank does not operate its own terminal technology for business card payments;
+its own site states the business is a partnership, "joining forces with Nexi", with Alpha
+distributing and servicing Nexi-branded devices (Ingenico Desk 2600, SmartPOS Mini Pax A50,
+SmartPOS with printer Pax A920Pro). Nexi is on Wrapp's list above, so the interconnection
+holds, conditional only on the specific device at the desk being one of the Nexi-branded
+ones and not a separate terminal Alpha runs in parallel — worth a glance at the model on the
+sticker or the merchant statement before treating this as fully closed.
 
 **It also covers the Ψηφιακό Πελατολόγιο, which §43 assumed would stay ours.** The API has
 `/digital_clienteles/create`, `/show`, `/update`, `/cancel`, and both `correlate_by_mark` and
@@ -1676,10 +1681,10 @@ is a discount on what tenants pay rather than a payout, at a scale aimed at ERP 
 vendors. So nothing about this project depends on a partnership, and the provider-agnostic
 seam §43 already requires is what carries reuse to any future client, not a partner status.
 
-**The one item that could still unseat Wrapp: which acquirer and terminal model is the POS.**
-Wrapp aggregates Viva, Worldline, Cardlink, Nexi, MyPos, NBG Pay and Epay. If the terminal at
-the desk is not among them, the Α.1155/2023 interconnection cannot be re-established through
-Wrapp once the ΦΗΜ is stood down, and that is disqualifying rather than inconvenient.
+**The item that could have unseated Wrapp is answered: the acquirer is Alpha Bank**, and it
+does not disqualify the choice. See the acquirer subsection above — Alpha Bank's business
+terminals run on Nexi, and Nexi is on Wrapp's supported list. The Α.1155/2023 interconnection
+holds, conditional on the desk's specific device being one of the Nexi-branded ones.
 
 **What choosing a provider does NOT settle.** The provider decision and the myDATA work are
 different lists, and the second is longer:
