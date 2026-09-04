@@ -361,7 +361,9 @@ the paperwork half-written.
 
 ## 26. Explicitly out of scope
 - Customer-facing online booking / public website
-- Invoicing, official receipts, myDATA e-invoicing, accounting integration
+- ~~Invoicing, official receipts, myDATA e-invoicing, accounting integration~~
+  **Reversed 3 Sep 2026 — see §43.** The owner asked for full ΑΑΔΕ connectivity, then
+  established that what is needed is **ηλεκτρονική τιμολόγηση**, not merely διαβίβαση.
 - WhatsApp / SMS messaging to guests
 - Odometer, mileage and service scheduling
 - Commission
@@ -1214,3 +1216,143 @@ See `supabase/migrations/20260903140000_adhoc_hotel.sql`, `src/components/HotelL
 `src/app/(app)/bookings/new/actions.ts`, `src/lib/bookings/quick.ts`,
 `src/app/(app)/bookings/actions.ts`, `src/app/(app)/admin/bookings/actions.ts` and
 `tests/db/isolation.test.ts`.
+
+## 43. ΑΑΔΕ: e-invoicing, not transmission — and it is three obligations, not one
+
+The owner asked for full myDATA connectivity on 3 Sep 2026, reversing §26. His own opening
+instruction was that data should reach ΑΑΔΕ **at the end of the day rather than live, so a
+rep's mistake can be corrected before it leaves the building**. That instinct was right for
+the model he had in mind and is largely overtaken by what the answers turned out to be. The
+reasoning is kept here because it is the reason several things are shaped as they are.
+
+### The distinction the whole section turns on
+
+**Διαβίβαση** is issuing a document yourself and then reporting its data to myDATA.
+Self-transmission through the REST API is permitted, and the ERP channel's deadline is the
+next day after issuance (Α.1138/2020 as amended by Α.1090/2022). That is the model the
+first draft of this work assumed.
+
+**Ηλεκτρονική τιμολόγηση** is the document itself being *issued* electronically, sealed,
+and stamped with the ΜΑΡΚ and QR. Under the mandatory B2B regime that happens through a
+certified **Πάροχος Υπηρεσιών Ηλεκτρονικής Έκδοσης** or through ΑΑΔΕ's free applications. A
+self-built issuer is an accepted channel only during the transition, which ends 31.12.2026.
+This app goes live 1 March 2027, so it is past it.
+
+**The app is therefore never the issuer.** It is a source system that hands data to a
+provider and takes back the ΜΑΡΚ, the seal, the QR and the finished document. Everything
+that would have been ours — building XML against the myDATA XSD, `SendInvoices`, MARK
+handling, `CancelInvoice`, reconciliation via `RequestTransmittedDocs` — belongs to the
+provider instead.
+
+### Three separate obligations, and only one of them is ours
+
+| | Who does it | Timing |
+|---|---|---|
+| **Retail receipts (λιανική)** | The ταμειακή/ΦΗΜ, at the desk | At the transaction |
+| **B2B invoices** | A certified Πάροχος | Sent by us, issued by them |
+| **Ψηφιακό Πελατολόγιο** | **Us, directly** | Real time, both ends |
+
+The third is the only one this app performs itself, it needs no provider, and it is the one
+already carrying a live penalty (§43.3).
+
+### The answers, and what they did to the design
+
+Given by the owner between 3 and 5 Sep 2026. Numbering is the questionnaire's
+(`src/lib/accountant/questionnaire.ts`).
+
+1. **The accountant already transmits to myDATA, through Epsilon.** So the app must never
+   also transmit the same income, or it lands twice and the pre-filled VAT return is wrong.
+   Under the provider model this resolves cleanly, but the accountant's current
+   transmission of these documents has to stop the day the app goes live. That is a written
+   agreement to obtain, not code.
+2. **Retail receipts come from a ταμειακή, and it "goes through Epsilon."** With answer 5
+   below, this is the finding that restructured everything: **over 95% of documents never
+   touch a provider at all.** They are cut on the register and transmitted by it via ΕΣΕΝΔ.
+3. **The Ψηφιακό Πελατολόγιο is already being kept.** So the app takes over an existing
+   practice rather than starting one, and the manual entry must stop the same day.
+5. **Under 5% of turnover is invoiced B2B.** The e-invoicing work serves that slice.
+6. **2023 revenue was under €1,000,000**, so the business falls in the second phase:
+   mandatory 1.10.2026, transition to 31.12.2026.
+10. **Issue date is the handover, and the VAT period is the month the handover falls in.**
+    A car handed over 31 January and returned 3 February belongs to January.
+11. **Cash and card only. No bank transfers.** `bookings.pay_method` still carries a
+    `transfer` value that is now dead and should come out.
+13. **Damage is settled directly with the insurer**, so the customer is not charged and
+    there is nothing to invoice. This confirms §35's "incident charges cannot be collected"
+    rather than reversing it.
+14. **A document exists only if the customer turns up.** No handover, no document, ever.
+15. No limit from the owner beyond whatever ΑΑΔΕ requires.
+16. **One registered installation: the main office.** The hotels are not establishments.
+17. Credentials undecided.
+
+### What the ταμειακή answer cost, and what it saved
+
+**The end-of-day batching design does not survive for retail, and that is most of the
+volume.** A ΦΗΜ receipt is issued at the transaction, printed, handed over. There is no
+draft to hold and nothing to batch. The owner's original worry — a rep making a mistake
+that has already reached ΑΑΔΕ — is now handled by the register's own void procedure, which
+is ordinary retail practice and not ours to build. The draft-then-issue design survives only
+for the B2B slice.
+
+**One registered installation is worth more than it looks.** `branch` becomes a single
+constant (0, the έδρα, to be confirmed by the accountant) rather than a lookup per hotel.
+And because the hotels are off-site, the Ψηφιακό Πελατολόγιο's own
+`isDiffVehPickupLocation` / `vehiclePickupLocation` fields — and their return-side
+counterparts — are exactly the right shape for a business that hands cars over at hotels.
+The app already knows the hotel for every booking, including §42's unregistered ones, so
+nothing new is captured for this.
+
+**A new burden lands at the desk, though.** `ClientCorrelations` links a registry entry to
+its document by either a ΜΑΡΚ or ΦΗΜ details (`FIMNumber`, `FIMAA`, `FIMIssueDate`,
+`FIMIssueTime`). On the ΦΗΜ path that means **the receipt number has to get off the register
+and into the app at handover**. That is a new field and a new step for a rep with a guest
+waiting, and it is not optional if the registry entries are to correlate.
+
+### Fuel: tracked internally, never invoiced by us
+
+Answer 13's first half needed a second pass, because "leave fuel out of the system" reads
+two ways and an app cannot implement "mostly". Settled by the owner 5 Sep 2026: **stop
+issuing a tax document for fuel, keep tracking the cash internally.**
+
+So §34 and §35 stand entirely unchanged. `handovers` keeps its fuel payment columns,
+`my_cash_in_hand()` keeps sweeping both streams, and the reconciliation reasoning in §35 —
+money a rep holds that the app does not know about goes quietly missing — is untouched. The
+only consequence is negative: **no fuel document is ever generated by this app.** Fuel cash
+that reps collect is rung up on the ταμειακή like any other retail sale; that it is out of
+*our* system does not mean it is out of the register.
+
+### Still open, and who owns each
+
+- **Q7, Q8, Q9 and the Q15 deadline — the accountant.** Document types and myDATA codes,
+  income classifications, who owns the series and numbering, and the actual legal correction
+  window. The "next day" figure in the owner's notes is almost certainly the *transmission*
+  deadline, not a correction one; it must not be built to until confirmed.
+- **Q2, precisely — the owner.** "The ταμειακή goes through Epsilon" has two readings:
+  Epsilon is the issuing system (a certified ταμειακό σύστημα, which would also explain how
+  a rep cuts a receipt at a hotel), or Epsilon is merely where a separate ΦΗΜ's data lands.
+  The question is *ποιο ακριβώς προϊόν κόβει την απόδειξη, και σε τι συσκευή.* The pickup and
+  return screens cannot be designed without it.
+- **Q4, the provider.** Now much less urgent, governing under 5% of documents. Epsilon is
+  the front-runner by default because it already owns the retail path; moving away means
+  either two vendors or replacing a working ταμειακή. Get its API answer in writing anyway:
+  whether a custom application can call it, whether it covers λιανική, cost per document,
+  and whether there is a sandbox.
+- **Q17, credentials.** Two separate sets: myDATA's for the registry, the provider's for
+  invoicing. Sandbox first, production after a successful test, and never through this
+  questionnaire.
+
+### Two things this already implies for the codebase
+
+- **`bookings.pay_method`'s `transfer` value is dead** (answer 11) and wants a migration.
+- **Build issuance behind a provider-agnostic seam** — one interface, one adapter per
+  provider. It costs almost nothing now, it survives a change of provider, and it is the
+  only decision here that keeps every option open.
+
+Akos becoming a Πάροχος itself was considered and rejected for this project (Α.1112/2025
+sets no capital requirement, but ISO-27001, adequate technical staffing for a client
+network, and a committee-gated release process put it 12–18 months out, past launch). The
+**Ιδιοπάροχος** route — self-issuing purely in-house — is closed outright: it requires
+gross revenue of at least €50,000,000 and covers B2B only.
+
+See `src/lib/accountant/questionnaire.ts` for the questions as put, and
+`/accountant-questionnaire` for the form the accountant answers them on.
