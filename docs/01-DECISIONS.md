@@ -1666,10 +1666,15 @@ and the free sandbox in exchange. The choice is subject to one open item, below.
 The becomeapartner track is multi-tenant: partners provision tenants programmatically and
 Wrapp still bills each end client directly, with custom pricing only past roughly 500 active
 tenants. For a single client it buys nothing and adds a provisioning layer. **This build
-integrates directly against the client's own Pro All-in-One API key.** Akos becoming a Wrapp
-partner is a separate business decision with its own merit across other clients; it appears
-to sit on the same issuance API with provisioning added, so taking it later should not mean
-redoing this integration, but that is worth confirming before relying on it.
+integrates directly against the client's own Pro All-in-One API key.**
+
+**The partner track is rejected outright, not deferred** (owner, 4 Sep 2026). It had been
+left open as a separate business decision for Akos across other clients. It is closed:
+Wrapp publishes no partner compensation of any kind — no revenue share, referral fee or
+reseller margin — and the one published threshold, «ενδεικτικά από 500+ ενεργούς tenants»,
+is a discount on what tenants pay rather than a payout, at a scale aimed at ERP and SaaS
+vendors. So nothing about this project depends on a partnership, and the provider-agnostic
+seam §43 already requires is what carries reuse to any future client, not a partner status.
 
 **The one item that could still unseat Wrapp: which acquirer and terminal model is the POS.**
 Wrapp aggregates Viva, Worldline, Cardlink, Nexi, MyPos, NBG Pay and Epay. If the terminal at
