@@ -1600,17 +1600,21 @@ explicitly. The general Greek position — that a πάροχος may issue απ�
 replace the ταμειακή outright — is well attested independently of Wrapp. It remains the
 accountant's ruling under q2, but the route is a productised one rather than a theory.
 
-**The POS interconnection, the sharpest cost above, is covered.** Wrapp exposes
-`/pos_devices` and acts as a POS aggregator across Viva, Worldline, Cardlink, Nexi, MyPos,
-NBG Pay and Epay, claiming Α.1155/2023 compliance with the card amount routed from the
-issuing system to the terminal. **Answered by the owner, 4 Sep 2026: the acquirer is Alpha
-Bank.** Alpha Bank does not operate its own terminal technology for business card payments;
-its own site states the business is a partnership, "joining forces with Nexi", with Alpha
-distributing and servicing Nexi-branded devices (Ingenico Desk 2600, SmartPOS Mini Pax A50,
-SmartPOS with printer Pax A920Pro). Nexi is on Wrapp's list above, so the interconnection
-holds, conditional only on the specific device at the desk being one of the Nexi-branded
-ones and not a separate terminal Alpha runs in parallel — worth a glance at the model on the
-sticker or the merchant statement before treating this as fully closed.
+**The POS interconnection, the sharpest cost above, is covered — conditionally, and the
+condition is not yet confirmed.** Wrapp exposes `/pos_devices` and acts as a POS aggregator
+across Viva, Worldline, Cardlink, Nexi, MyPos, NBG Pay and Epay, claiming Α.1155/2023
+compliance with the card amount routed from the issuing system to the terminal. **The owner's
+first answer, 4 Sep 2026, named Alpha Bank as the acquirer, then flagged it as a guess rather
+than a checked fact.** So this is not yet answered. What is on record for when it is: Alpha
+Bank does not operate its own terminal technology for business card payments; its own site
+states the business is a partnership, "joining forces with Nexi", with Alpha distributing and
+servicing Nexi-branded devices (Ingenico Desk 2600, SmartPOS Mini Pax A50, SmartPOS with
+printer Pax A920Pro), and Nexi is on Wrapp's list above. **If the acquirer is confirmed as
+Alpha Bank**, the interconnection most likely holds, conditional further on the specific
+device at the desk being one of the Nexi-branded ones and not a separate terminal Alpha runs
+in parallel. **If it turns out to be a different bank**, that chain does not apply and the
+bank's own terminal technology has to be checked against Wrapp's list directly. Confirm off
+the device itself, the merchant statement, or whoever set up the account — not memory.
 
 **It also covers the Ψηφιακό Πελατολόγιο, which §43 assumed would stay ours.** The API has
 `/digital_clienteles/create`, `/show`, `/update`, `/cancel`, and both `correlate_by_mark` and
@@ -1681,10 +1685,10 @@ is a discount on what tenants pay rather than a payout, at a scale aimed at ERP 
 vendors. So nothing about this project depends on a partnership, and the provider-agnostic
 seam §43 already requires is what carries reuse to any future client, not a partner status.
 
-**The item that could have unseated Wrapp is answered: the acquirer is Alpha Bank**, and it
-does not disqualify the choice. See the acquirer subsection above — Alpha Bank's business
-terminals run on Nexi, and Nexi is on Wrapp's supported list. The Α.1155/2023 interconnection
-holds, conditional on the desk's specific device being one of the Nexi-branded ones.
+**The item that could still unseat Wrapp: which acquirer and terminal model is the POS,
+and it remains open.** The owner's first answer, Alpha Bank, was flagged as a guess rather
+than a confirmed fact. See the acquirer subsection above for what is on record either way
+once it is checked.
 
 **What choosing a provider does NOT settle.** The provider decision and the myDATA work are
 different lists, and the second is longer:
