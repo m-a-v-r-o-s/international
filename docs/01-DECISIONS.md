@@ -1473,6 +1473,10 @@ governing under 5% of documents". That demotion is withdrawn: per-document price
 real running cost on every rental, and Q4's sub-question — whether the provider covers
 αποδείξεις λιανικής or only τιμολόγια — is a go/no-go, not a detail.
 
+*Qualified the same day: this holds only if the provider charges per document. Wrapp does
+not — see the subsection below. Whether it bites depends entirely on which provider wins, so
+it stays a question to ask rather than a cost to assume.*
+
 **Connectivity becomes fiscally critical.** A ΦΗΜ issues offline. A provider API call does
 not. See the offline path below.
 
@@ -1550,3 +1554,85 @@ This needs three things built and one ruling obtained:
 Nothing here changes the storage or issuance code, because none of it exists yet. What it
 changes is the shape of what gets built: one path, not two, and the provider seam §43 already
 called for is now on the critical path rather than serving a 5% slice.
+
+### Wrapp as the fallback provider, if Epsilon does not work out (4 Sep 2026)
+
+The owner named **Wrapp** (wrapp.ai) as the provider to fall back on. It was evaluated
+against the items this section leaves open, and it answers all of them, plus one this section
+did not think to ask.
+
+**The licence is real and was confirmed away from the vendor's own site.** WRAPP AE appears
+on ΑΑΔΕ's published list of αδειοδοτημένα λογισμικά παρόχων ηλεκτρονικής τιμολόγησης
+(`aade.gr/en/mydata/adeiodotimena-logismika-parohon-ilektronikis-timologisis`), among 39
+entries. Wrapp advertises «κωδικό παρόχου 029»; the ΑΑΔΕ page numbers its list sequentially
+rather than by provider code, so the code itself is unconfirmed and is a detail for the
+accountant, not a doubt about the licence.
+
+**The per-document cost worry above does not apply to this provider, and comes out.** Wrapp
+sells a flat annual subscription with unlimited issuance, not a fee per document: Standard
+€109, Business €139, Pro €169 (all per 12 months), Pro All-in-One €279 per 12 months or €359
+per 24 months. **API key access is in Pro All-in-One only**, so €279/year is the figure that
+matters here. Against the volume of a rental fleet that is not a running cost worth designing
+around. Read off a public plans page and to be confirmed in writing, but the *shape* — flat,
+not per-document — is the vendor's stated model.
+
+**Retail is their headline proposition, not a footnote.** The Standard plan is described as
+covering receipts *with no cash register*, and the API carries 11.1 (ΑΛΠ) and 11.2 (ΑΠΥ)
+explicitly. The general Greek position — that a πάροχος may issue αποδείξεις λιανικής and
+replace the ταμειακή outright — is well attested independently of Wrapp. It remains the
+accountant's ruling under q2, but the route is a productised one rather than a theory.
+
+**The POS interconnection, the sharpest cost above, is covered — conditionally.** Wrapp
+exposes `/pos_devices` and acts as a POS aggregator across Viva, Worldline, Cardlink, Nexi,
+MyPos, NBG Pay and Epay, claiming Α.1155/2023 compliance with the card amount routed from
+the issuing system to the terminal. That is conditional on the terminal at the desk being one
+of those. **New question for the owner: which acquirer and which terminal model is the POS?**
+The receipt photograph in §43 shows the EFT/POS approval block but does not name the bank.
+
+**It also covers the Ψηφιακό Πελατολόγιο, which §43 assumed would stay ours.** The API has
+`/digital_clienteles/create`, `/show`, `/update`, `/cancel`, and both `correlate_by_mark` and
+`correlate_by_fim`. Assumption 3 in the questionnaire states the registry stays a direct
+integration of ours; that is now a choice rather than a given. Keeping it direct stays
+vendor-independent and keeps the §43.3 penalty exposure (€100 per unrecorded vehicle) under
+our own control; routing it through Wrapp is less work and `correlate_by_mark` is exactly
+the call §44's design needs. Not decided here — recorded so the assumption is not treated as
+settled when it no longer has to be.
+
+**What fits the design already decided above:**
+
+- **`external_id` gives idempotency**, which is what makes the offline queue safe. A retry
+  after reconnect cannot issue the same rental twice.
+- **`POST /invoices` returns `my_data_mark`, `my_data_uid`, `my_data_qr_url` and
+  `wrapp_invoice_url` synchronously.** So the QR-on-the-rep's-phone fallback works at the
+  moment of handover, with no wait.
+- **The PDF is asynchronous**, delivered by an `invoice-pdf` webhook with a default 120s
+  delay. The emailed copy therefore follows the handover rather than coinciding with it, and
+  **the handover must never block on a PDF.** A `thermal-print-pdf` event also exists and is
+  unused here: the decision above is A4.
+- **Draft then issue** (`POST /invoices/:id/issue_draft`) preserves the B2B draft path §43
+  kept.
+- **VAT 17 is in the accepted set**, matching Κως (§43's receipt).
+- **Webhooks are signed** — `X-Webhook-Secret`, HMAC-SHA256. Verify it. An unverified webhook
+  is not truth.
+- **Auth is an `api_key` exchanged at `POST /api/v1/login` for a JWT valid 24 hours.** The
+  api_key is a server-side secret and never reaches the browser.
+- **A sandbox exists**, on free registration, which satisfies the sandbox-first rule in §43's
+  Q17.
+- **ISO 27001:2022**, which matters because they become a data processor.
+
+**Two commercial routes, and the link the owner sent is the second one.** The direct route is
+that the business buys Pro All-in-One and we integrate against its API key — right for one
+client. The partner programme at `/api/becomeapartner` is multi-tenant: programmatic
+provisioning through a Partners API, Wrapp billing each end client directly, volume discounts
+past 500 tenants. That is a route for reselling this across other clients later, not for this
+build.
+
+**Still to obtain before Wrapp is more than a candidate:** the prices and the API-tier
+boundary in writing, confirmation that "API Key Access" means the full issuance REST API, and
+the acquirer/terminal answer. None of it displaces q2, which the accountant must rule on
+whichever provider wins.
+
+**Against Epsilon.** Epsilon's advantage is that it already owns the retail path, so nothing
+migrates. Wrapp's are a flat price instead of a per-document one, and a public, documented
+API — §43 had to record that Epsilon's API answer was still to be obtained in writing. Not a
+decision until Epsilon answers.
