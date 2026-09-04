@@ -1835,3 +1835,70 @@ seconds, so it is tunable rather than fixed. The JWT lasts 24 hours and login ta
 production, and its key is requested through the contact form on the becomeapartner page —
 which is the one thing still worth visiting there, the programme itself having been rejected
 above.
+
+### The division of labour: hand Wrapp everything the subscription already covers (4 Sep 2026)
+
+Decided by the owner: **anything Wrapp can do under the subscription we already intend to
+buy, Wrapp does.** The aim is less code of ours to write and maintain, not less CPU — the
+app's load is trivial either way and Railway will not notice the difference. What is actually
+saved is surface area: integrations not built, edge cases not handled, failure modes not
+ours.
+
+Nothing below costs extra. Pro All-in-One carries API access, POS and Ψηφιακό Πελατολόγιο
+together, issuance is unlimited, and the API documentation states no rate limit, quota or
+per-item charge anywhere in it.
+
+**Handed over:**
+
+1. **The Ψηφιακό Πελατολόγιο, entirely.** The largest single saving, and it reverses
+   questionnaire assumption 3. A direct ΑΑΔΕ integration of ours would have meant its own
+   credentials, its own transport, its own correlation logic and its own retry story, all for
+   the obligation that already carries a live penalty. It becomes six documented calls
+   instead, on the connection we are building anyway.
+2. **Receipt email.** `customer_emails` with `email_locale`. No SMTP, no attachment
+   handling, no bounce or retry path for receipts, and no dependency on client item 8.
+3. **PDF rendering and hosting.** `GET /invoices/:id/generate_pdf` queues on first call and
+   returns a `download_url` directly once it exists, so the office print path re-requests
+   rather than storing and serving. We never render a fiscal document — we could not
+   legitimately anyway, per the verbatim-PDF rule decided above.
+4. **The customer-facing receipt page.** `wrapp_invoice_url` and `wrapp_invoice_url_en` are
+   a bilingual hosted view of the document. That is the QR target at the hotel, so no
+   receipt viewer of ours and no signed-link infrastructure.
+5. **Series and numbering.** `billing_book_id` owns the series and assigns `num`. No
+   sequence table, no gap handling, no concurrency control on document numbers — fiddly code
+   with a nasty failure mode, simply not written.
+6. **Card payment orchestration.** `pos_device_id` and `aade_preloaded` drive the terminal
+   from the document, which is the whole Α.1155/2023 interconnection.
+7. **Transmission, ΜΑΡΚ, UID, QR, and myDATA-side validation.** They return coded myDATA
+   errors, so classification mistakes surface as errors rather than as a wrong return.
+
+**Kept, because it cannot be handed over:**
+
+- **The offline queue.** Wrapp cannot hold what it never received. `external_id` and the
+  registry's `transmission_failure` make our queue *safe*; they do not make it unnecessary.
+- **The `vat_rate` whitelist.** Their silent zero-VAT failure means validation before the
+  call is ours, and it is the one place where trusting the provider is actively unsafe.
+- **The net/VAT derivation**, because our money is gross whole euros.
+- **When to issue, what goes on the document, and the cash reconciliation of §35.**
+- **The booking-to-document linkage** — our `external_id`, their invoice id, the ΜΑΡΚ, stored
+  our side. Cheap, and it is the audit trail.
+- **Correction decisions**, since retail cannot be voided and 11.4 is a judgement call.
+
+**The cost of this policy, stated plainly.** Every item above widens the Wrapp surface and
+raises the price of leaving. §43 mandated a provider-agnostic seam precisely to keep that
+option open, and handing over the registry, email, PDF hosting and the customer-facing page
+puts four more things behind it. That is the right trade — the saving is real and immediate,
+the switch is hypothetical — but the seam has to be honest about what sits behind it rather
+than letting Wrapp's shapes leak into the rest of the app.
+
+**One exception to "throw everything at Wrapp": keep our own copy of each issued document.**
+Their documentation states no retention period and no lifetime for `customer_portal` links
+or generated PDFs, and says nothing about what happens to either when a subscription lapses.
+Fiscal retention runs for years. Storing the returned PDF ourselves costs almost nothing and
+is the difference between an archive we control and a set of links on a vendor we may not
+still be paying. Use their hosted page for the customer at handover; keep the bytes.
+
+**Two things to ask them, both undocumented:** how long `customer_portal` links and generated
+PDFs live, particularly after a subscription ends; and whether there is any cap on mail sent
+through `customer_emails`. Worth also confirming there is genuinely no rate limit, since a
+peak-season morning arrives in bursts.
