@@ -1600,21 +1600,26 @@ explicitly. The general Greek position — that a πάροχος may issue απ�
 replace the ταμειακή outright — is well attested independently of Wrapp. It remains the
 accountant's ruling under q2, but the route is a productised one rather than a theory.
 
-**The POS interconnection, the sharpest cost above, is covered — conditionally, and the
-condition is not yet confirmed.** Wrapp exposes `/pos_devices` and acts as a POS aggregator
-across Viva, Worldline, Cardlink, Nexi, MyPos, NBG Pay and Epay, claiming Α.1155/2023
-compliance with the card amount routed from the issuing system to the terminal. **The owner's
-first answer, 4 Sep 2026, named Alpha Bank as the acquirer, then flagged it as a guess rather
-than a checked fact.** So this is not yet answered. What is on record for when it is: Alpha
-Bank does not operate its own terminal technology for business card payments; its own site
-states the business is a partnership, "joining forces with Nexi", with Alpha distributing and
-servicing Nexi-branded devices (Ingenico Desk 2600, SmartPOS Mini Pax A50, SmartPOS with
-printer Pax A920Pro), and Nexi is on Wrapp's list above. **If the acquirer is confirmed as
-Alpha Bank**, the interconnection most likely holds, conditional further on the specific
-device at the desk being one of the Nexi-branded ones and not a separate terminal Alpha runs
-in parallel. **If it turns out to be a different bank**, that chain does not apply and the
-bank's own terminal technology has to be checked against Wrapp's list directly. Confirm off
-the device itself, the merchant statement, or whoever set up the account — not memory.
+**The POS interconnection, the sharpest cost above, is covered — answered 5 Sep 2026.**
+Wrapp exposes `/pos_devices` and acts as a POS aggregator, claiming Α.1155/2023 compliance
+with the card amount routed from the issuing system to the terminal. The owner's first
+answer, Alpha Bank, was withdrawn as a guess and **turned out to be wrong**; the Alpha /
+Nexi reasoning recorded here is struck and does not apply. **There is no single terminal.
+There are four, across three acquirers:**
+
+| Terminal | Acquirer behind it | Wrapp `pos_type` | Registered with |
+|---|---|---|---|
+| 2 or 3, Eurobank | Worldline | `worldline` | `authorization_code` |
+| Viva | Viva | `viva` | `merchant_id` |
+| 1, Πειραιώς softPOS | Euronet / epay | `epay` | `authorization_code` |
+
+Both bank answers needed a step of indirection, and neither bank is itself on Wrapp's list.
+**Eurobank does not run its own acquiring**: Worldline took 80% of it, effective 30 June
+2022, trading as Worldline Merchant Acquiring Greece. **Πειραιώς's softPOS is epay
+SoftPOS**, by Euronet Merchant Services, which bought Piraeus Bank's POS services division;
+the manual is published on piraeusbank.gr under Euronet's name. So all three land on
+`worldline`, `viva` and `epay`, every one of which is in the API's `POS DEVICE TYPES`. **The
+interconnection is covered and this stops being an item that could unseat Wrapp.**
 
 **It also covers the Ψηφιακό Πελατολόγιο, which §43 assumed would stay ours.** The API has
 `/digital_clienteles/create`, `/show`, `/update`, `/cancel`, and both `correlate_by_mark` and
@@ -1689,10 +1694,10 @@ is a discount on what tenants pay rather than a payout, at a scale aimed at ERP 
 vendors. So nothing about this project depends on a partnership, and the provider-agnostic
 seam §43 already requires is what carries reuse to any future client, not a partner status.
 
-**The item that could still unseat Wrapp: which acquirer and terminal model is the POS,
-and it remains open.** The owner's first answer, Alpha Bank, was flagged as a guess rather
-than a confirmed fact. See the acquirer subsection above for what is on record either way
-once it is checked.
+**The item that could have unseated Wrapp is closed (5 Sep 2026).** Four terminals across
+three acquirers — Eurobank via Worldline, Viva, and a Πειραιώς softPOS via Euronet's epay
+— and all three map onto supported `pos_type` values. Alpha Bank was a guess and was wrong.
+See the acquirer subsection above, and the fleet-of-terminals consequences below.
 
 **What choosing a provider does NOT settle.** The provider decision and the myDATA work are
 different lists, and the second is longer:
@@ -1942,3 +1947,41 @@ and carry `$COMPANY_NAME`, `$INVOICE_CODE` and `$ISSUE_DATES`, so the receipt ma
 read as International Rentals even while it leaves from a Wrapp sender. That costs two
 fields on a call we are already making. Whether the sender address itself ever becomes the
 company's is a cosmetic question for after the domain lands, not a design constraint.
+
+### Four terminals, not one, and what that changes (5 Sep 2026)
+
+The acquirer question was asked expecting a single answer. There are four terminals across
+three acquirers, and the plural has consequences the single-terminal design did not have.
+
+**Registration is four `pos_devices`, by three different routes.** Wrapp registers a device
+per physical terminal, each with its own `terminal_id`. Viva is the only type that takes a
+`merchant_id`; `worldline` and `epay` both need an `authorization_code` from the acquirer,
+and the API's own error text — «Ο κωδικός εξουσιοδότησης ... έχει ήδη χρησιμοποιηθεί» —
+suggests those codes are single-use. So this is four onboarding steps against three vendors,
+each obtainable once, and it is the fiddliest part of cutover rather than the code.
+
+**Every card handover has to name its terminal.** `pos_device_id` is required whenever a
+payment is a POS transaction, so the app cannot simply know that a card was used — it must
+know *which device took it*. With one terminal that was a constant. With four it is either a
+choice the rep makes at the point of payment, or something inferred from who they are and
+where they are. Inference is the better answer where it is safe: the desk terminals belong to
+the office, the softPOS belongs to whoever is carrying the phone. This wants deciding before
+the pickup screen is designed, not after.
+
+**The softPOS changes what a hotel handover can do.** §43 answer 11 established cash and card,
+and the design above quietly assumed card meant the desk. A Πειραιώς softPOS is an Android
+app, so **a rep at a hotel can take a card payment on the same phone that runs our app.**
+That is a genuine gain — the hotel handover stops being cash-only — but it makes connectivity
+matter twice over at exactly the place where §44 already conceded it is weakest: a hotel with
+no signal can now fail to take payment *and* fail to issue. The offline path decided above
+covers the document; it does not conjure a card authorisation.
+
+**Two smaller notes.** `installments` is documented as valid only on a Viva terminal, so
+whether instalments are offered depends on which device is used — probably irrelevant for
+rentals, worth knowing before someone asks. And §43's single registered installation is
+untouched: terminals are not establishments, `branch` stays `"0"`.
+
+**Cutover is heavier than it looked.** Each of the four terminals is currently interconnected
+with the ΦΗΜ under Α.1155/2023. Standing the ΦΗΜ down means re-pointing all four at Wrapp,
+across three acquirers, on the day the app goes live. That belongs on the cutover checklist
+as four separate items with named owners, not as one line reading "connect the POS".
