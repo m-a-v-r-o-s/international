@@ -1985,3 +1985,162 @@ untouched: terminals are not establishments, `branch` stays `"0"`.
 with the ΦΗΜ under Α.1155/2023. Standing the ΦΗΜ down means re-pointing all four at Wrapp,
 across three acquirers, on the day the app goes live. That belongs on the cutover checklist
 as four separate items with named owners, not as one line reading "connect the POS".
+
+### The staging account arrives, and the sample payloads are wrong for this business (6 Sep 2026)
+
+Wrapp provisioned the sandbox: an account on `staging.wrapp.ai`, three billing books cut for
+the rental case, four ready-made payloads on those books' own ids, and a walkthrough of the
+POS path with a demo terminal. It closes several items above, opens two, and carries one
+trap that would be easy to walk into precisely because the payloads look ready to paste.
+
+**Nothing here is committed to the repository.** The issuance API key and the account login
+go in `.env.local` under the names documented in `.env.example`; the staging landing-page
+basic auth and the account's first-login password are human credentials for a password
+manager, not application config, and the account password is to be changed at first login as
+the email itself says.
+
+**Every sample payload carries `"vat_rate": 24`, and 24 is wrong for this business.** §43
+established 17% from a photograph of the client's own receipt — Κως is one of the reduced-rate
+islands. Wrapp built the samples on the mainland rate because they have no reason to know
+where the client trades. This is not the silent zero-VAT landmine §44 identified, and that is
+what makes it worse: 24 is a *recognised* value, so it passes validation, the document issues,
+and it transmits to myDATA with the wrong tax on it. The landmine and this are the same lesson
+from opposite sides — **the rate is never taken from an example, a default, or a response.**
+So the guard §44 called a "hard whitelist check" is narrower than a whitelist: the only rate
+this app may put on a rental line is 17, asserted before the call, with anything else a
+refusal rather than a fallback. The samples' arithmetic is on 24% throughout (50,00 → 12,00 →
+62,00) and none of the four is safe to copy without recomputing.
+
+**The billing books answer §43's Q9 in configuration, and name the document type.** Three
+books exist: **11.2 ΑΠΥ** for retail, **2.1 ΤΠΥ** for B2B, **11.4 Πιστωτικό Λιανικής** for
+retail corrections. So retail and B2B do get separate books, corrections get a third, and the
+series and numbering live in Wrapp per §44. The type question §44 left as "the API carries
+11.1 (ΑΛΠ) and 11.2 (ΑΠΥ)" resolves to **11.2**: a rental is a service, not a sale of goods,
+which is also what the client's existing receipt says (`ΕΝΟΙΚΙΑΣΕΙΣ ΑΥΤΟΚΙΝΗΤΩΝ`). The
+accountant still signs this off — it is their Q7 — but it is now a proposal with a vendor
+behind it rather than an open question.
+
+**A gap in that set: there is no book for a B2B correction.** Retail gets 11.4 and B2B gets
+nothing. §44 established that retail cannot be voided through the API and that "invoices sent
+from provider can't be cancelled" either, so a wrong ΤΠΥ is corrected the same additive way, by
+a **5.1 Πιστωτικό Τιμολόγιο / Συσχετιζόμενο** — which is in the type list and has no billing
+book. Books are creatable over the API (`POST /billing_books`), so this is an ask rather than a
+problem, but it has to be asked before the first B2B document, not after the first mistake.
+
+**Q8's income classification has a proposed answer too:** `category1_3` on both, with
+`E3_561_003` for retail and `E3_561_001` for B2B. Vendor's proposal, accountant's ruling.
+
+**The credit note correlates by ΜΑΡΚ**, through `correlated_invoices` carrying the original
+document's mark. That is the same value the Ψηφιακό Πελατολόγιο correlates on, and §44's
+booking-to-document linkage already keeps it our side — it now has a second consumer, and
+losing it costs the ability to correct as well as the audit trail.
+
+**Three of the email's technical claims are not in the published documentation.** Read against
+`wrapp.ai/api/documentation.md`, which §44 worked from:
+
+- **`authentication_code` returned synchronously from `POST /invoices`.** The string appears
+  nowhere in the docs, and the documented success response is `id`, `my_data_mark`,
+  `my_data_uid`, `my_data_qr_url`, `series`, `num`, `cancelled_by_mark`, the two
+  `wrapp_invoice_url`s and `external_id`. If the claim holds it softens §44's Correction 1 —
+  the counter would have *something* at handover even on a pending issue. If it does not, the
+  pending response carries an id and nothing else.
+- **`transaction_id`, `card_type` and `card_number` on the `issued-invoice` webhook.** The
+  documented payload for that event carries none of the three.
+- **`issued_at` from `GET /invoices/{id}`.** This one checks out; the field appears on
+  documented invoice responses.
+
+None of these is a reason to doubt the vendor — undocumented-but-real is the ordinary state of
+an API's edges. They are reasons to **verify on staging before anything is designed around
+them**, which is what the sandbox is for and costs nothing.
+
+**The QR question §44 left open is answered in substance.** §44 inferred from two example URLs
+that a QR is "probably constructible from the pending `invoice_id` alone — probably, not
+certainly, and it is worth asking them rather than inferring it". They have now said it
+directly: `my_data_qr_url` points at `wrapp.ai/customer_portal/{id}`, and that is the link to
+give the renter. So the target is deterministic on the invoice id. **What that does not settle
+is what the page shows before the ΜΑΡΚ lands** — a QR scanned at the counter can resolve to a
+document still settling. That is a ruling for the pickup screen (show it anyway, or hold it
+until issued) and it should be seen on staging rather than reasoned about.
+
+**Our own PDF is permitted, which corrects the reasoning behind a rule without changing the
+rule.** §44's delivery design item 5 says the printed page is the provider's PDF verbatim,
+reasoned as "a fiscal receipt is sealed by the provider and re-rendering it locally would put
+an unsealed lookalike on paper". Wrapp cites **Α.1112/2025 άρ.7 §7**: a custom PDF is allowed
+provided the άρ.7 §6 σήμανση is reproduced intact — issue time, ΜΑΡΚ, UID, authentication
+string, the QR as a scannable 2D code, the ΥΠΑΗΕΣ licence number and the provider's website.
+So it is not illegitimate, merely work. **The decision stands** — the division of labour hands
+PDF rendering to Wrapp and re-taking it buys nothing — but the wrong reason is worth correcting
+before it hardens into a constraint somewhere it does not belong. Note also that a custom PDF
+would need the authentication string, which is the first unverified claim above.
+
+**On the ΦΗΜ, the vendor has now put in writing what it could only advertise before**: πάροχος
+code 029, with cites to άρ.12 §10 ν.4308/2014 and Α.1112/2025, and the flat statement that no
+ταμειακή and no Ζ are required. §44 recorded the 029 code as unconfirmed because ΑΑΔΕ's list is
+numbered sequentially rather than by provider code; it now has the vendor's own assertion,
+which is better than marketing copy and still not ΑΑΔΕ confirming it. **q2 is untouched by
+this.** A provider saying the law permits issuing λιανική through a πάροχος is a statement
+about the law in general; the accountant's ruling is about whether *this* business may stand
+*its* ΦΗΜ down. That distinction is the pivotal item on the project and a vendor cannot close
+it.
+
+**The POS interconnection is cloud, server to server, with nothing installed at the desk.** No
+ECR bridge, no connector, no local software on the office machines — the app calls Wrapp and
+Wrapp drives the terminal. That removes a cutover worry §44 did not know it had. The four
+registrations across three acquirers stand exactly as §44 describes them, and remain the
+fiddliest part of cutover.
+
+**Card-flow timing, confirmed and sharper than the general pending case.** On a payload
+carrying `pos_device_id` the synchronous response returns `my_data_mark`, `my_data_uid` and
+`my_data_qr_url` **empty** — the amount routes to the terminal first, and the σήμανση only
+exists once the card has been presented. Success arrives as `issued-invoice`, and failure,
+cancellation or timeout as `pos-payment` carrying `invoice_id` and an error (the documented
+`pos-payment` body is exactly that pair, so this is the failure channel and not a general
+payment event). One webhook URL takes every event, discriminated by the `Event-Type` header.
+**For the pickup screen this means a card handover has no document at the moment of payment,
+by design and not by degradation** — which is a stronger statement than §44's "may still be
+settling", and it applies to every card rental rather than to a slow minority.
+
+**Testing rule, and it is a hard one: never against a client's live terminal.** Charges there
+are real and the money leg is Viva's rather than Wrapp's, so a mistake is a real card
+transaction on someone else's merchant account. The rehearsal path is a demo Viva merchant
+account and the demo terminal app, with `merchant_id` from Ρυθμίσεις → Πρόσβαση API and
+`terminal_id` from Πωλήσεις → Φυσικές Πληρωμές → Τερματικά, registered once through
+`POST /pos_devices` or the UI.
+
+**But the demo path is Viva-only, and that leaves the two that matter least tested.** Of the
+four terminals in §44's table, one is Viva. The other three are `worldline` and `epay`, both
+of which need an `authorization_code` from the acquirer rather than a `merchant_id`, and
+neither of which has a demo equivalent offered here. So the card flow can be rehearsed in
+shape but not per acquirer, and **the Πειραιώς softPOS — the one a rep carries to a hotel, and
+the one §44 identified as the connectivity-weakest point in the whole design — gets its first
+real exercise at cutover.** That is a risk to name on the cutover checklist now, with a
+question to Euronet/epay about whether any test facility exists, rather than a surprise in
+March.
+
+**A payment-method value the design has not accounted for.** The documented enum is `0` Cash,
+`1` Credit, `2` local bank account, `3` Card, `4` cheque, `5` overseas account, `6` web
+banking, `7` IRIS — so §44 is right that 0 and 3 are the retail pair. The B2B sample uses **`1`,
+Credit**, which is the correct value for a company invoiced on terms rather than paying at the
+desk. §43 answer 11 ("cash and card only, no bank transfers") was the owner describing how
+tourists pay, and it was read as covering the whole business. **Open, and it is the owner's:
+does a corporate client pay at handover like everyone else, or is it invoiced and settled
+later?** If the latter, the B2B path needs `payment_method_type: 1` and a settlement state
+this design does not have — which is a receivables concept the app has so far had no reason to
+carry.
+
+**Amounts are stored, never computed** — the email states plainly that the platform keeps
+whatever totals it is given and does not derive them from `unit_price`. §44 had this from the
+FAQ; having it stated directly closes the other half of the ΦΠΑ problem. There is no
+server-side arithmetic check behind us, so the net/VAT derivation from gross whole euros, and
+the requirement that the parts sum back to the gross to the cent, are ours alone to get right.
+
+**The Partners Onboarding key was issued unasked, and should be given back.** §44 rejected the
+partner track outright — Wrapp publishes no compensation of any kind and the one published
+threshold is a discount to tenants, not a payout. The provisioning key arrived anyway. An
+unused privileged credential is exposure with no offsetting benefit, so it is deliberately not
+stored anywhere in this project and Wrapp should be asked to revoke it.
+
+**Added to the list of things to obtain in writing**, alongside §44's existing three (portal
+and PDF link lifetimes, any cap on `customer_emails`, confirmation of no rate limit): a
+billing book for 5.1, the three undocumented response fields above, and whether any test
+facility exists for the Worldline and epay terminals.
