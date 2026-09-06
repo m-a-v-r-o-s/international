@@ -76,6 +76,11 @@ export default async function AdminHotelsPage() {
                   </h2>
                   <span className="flex items-center gap-2 text-[0.8125rem]">
                     <span className="text-ink-soft">{t('staffCount', { n: total })}</span>
+                    {hotel.is_depot ? (
+                      <span className="rounded-full bg-brand-tint px-2 py-0.5 font-bold text-brand">
+                        {t('depotBadge')}
+                      </span>
+                    ) : null}
                     {hotel.active ? null : (
                       <span className="rounded-full bg-danger px-2 py-0.5 font-bold text-white">
                         {t('inactiveBadge')}

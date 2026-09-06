@@ -48,6 +48,22 @@ function Fields({ hotel }: { hotel?: HotelRow }) {
           defaultValue={hotel?.address ?? ''}
         />
       </div>
+      {/*
+        §42 keeps the office an ordinary hotel row, with real reps and no
+        special treatment in booking, pricing or RLS. This box is the one place
+        it is told apart, and only for A13's benefit (§45): the yard sorts to
+        the top of a destination list instead of hiding among forty hotel names.
+      */}
+      <div>
+        <label className="flex min-h-11 items-center gap-2 text-[0.9375rem]">
+          <input
+            type="checkbox" name="is_depot" className="size-5"
+            defaultChecked={hotel?.is_depot ?? false}
+          />
+          {t('isDepot')}
+        </label>
+        <p className="ir-hint">{t('isDepotHint')}</p>
+      </div>
     </>
   )
 }

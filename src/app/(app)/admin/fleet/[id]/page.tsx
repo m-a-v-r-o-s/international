@@ -7,7 +7,7 @@ import { supabaseServer } from '@/lib/supabase/server'
 import { Disclosure } from '@/components/Disclosure'
 import { CarForm } from '../CarForm'
 import { BlockForm, type BlockRow } from '../BlockForm'
-import { ArchiveToggle, DeleteCarForm, NotesForm } from '../CarActions'
+import { ArchiveToggle, DeleteCarForm, NotesForm, StationForm } from '../CarActions'
 import type { CarModelRow, CarRow, CategoryRow } from '@/lib/supabase/database.types'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -29,7 +29,7 @@ export default async function CarDetailPage({ params }: { params: Promise<{ id: 
   const supabase = await supabaseServer()
 
   const { data: car } = await supabase.from('cars')
-    .select('id, plate, model_id, year, colour, photo_path, archived_at, created_at, updated_at')
+    .select('id, plate, model_id, year, colour, photo_path, stationed_at, archived_at, created_at, updated_at')
     .eq('id', id).maybeSingle()
 
   if (!car) notFound()
@@ -52,9 +52,13 @@ export default async function CarDetailPage({ params }: { params: Promise<{ id: 
   const to = new Date(today); to.setFullYear(to.getFullYear() + 1)
   const fmt = (d: Date) => d.toISOString().slice(0, 10)
 
-  const [{ data: notes }, { data: allBlocks }] = await Promise.all([
+  const [{ data: notes }, { data: allBlocks }, { data: hotels }] = await Promise.all([
     supabase.rpc('admin_car_notes', { p_car_id: id }),
     supabase.rpc('admin_blocks', { p_from: fmt(from), p_to: fmt(to) }),
+    // Active hotels only for the picker; the car's current station is resolved
+    // from the same list, so a base at a deactivated hotel reads as unplaced
+    // until it is corrected — which is the prompt to correct it.
+    supabase.from('hotels').select('id, name, is_depot').eq('active', true).order('name'),
   ])
   const blocks = ((allBlocks ?? []) as BlockRow[]).filter((b) => b.car_id === id)
 
@@ -79,6 +83,16 @@ export default async function CarDetailPage({ params }: { params: Promise<{ id: 
       <section className="ir-card p-4">
         <h2 className="mb-3 text-[1.125rem] font-semibold">{t('details')}</h2>
         <CarForm car={carRow} models={allModels} />
+      </section>
+
+      <section className="ir-card p-4">
+        <h2 className="mb-3 text-[1.125rem] font-semibold">{t('station')}</h2>
+        <StationForm
+          id={carRow.id}
+          station={carRow.stationed_at}
+          hotels={((hotels ?? []) as { id: string; name: string; is_depot: boolean }[])
+            .sort((a, b) => Number(b.is_depot) - Number(a.is_depot) || a.name.localeCompare(b.name))}
+        />
       </section>
 
       <section className="ir-card p-4">

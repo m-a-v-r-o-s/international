@@ -28,6 +28,10 @@ const hotelFields = z.object({
   name: nameSchema,
   area: optionalText(120),
   address: optionalText(300),
+  // The company's own yard, told apart from a hotel (docs/01-DECISIONS.md §45).
+  // An unchecked box is absent from the submission, so absence is `false`
+  // rather than "leave it alone" — which is what makes unticking it work.
+  is_depot: z.boolean(),
 })
 
 function readFields(formData: FormData) {
@@ -35,6 +39,7 @@ function readFields(formData: FormData) {
     name: formData.get('name'),
     area: (formData.get('area') as string | null) ?? null,
     address: (formData.get('address') as string | null) ?? null,
+    is_depot: formData.get('is_depot') === 'on',
   }
 }
 
@@ -52,6 +57,7 @@ export async function createHotel(
 
   revalidatePath('/admin/settings')
   revalidatePath('/admin/hotels')
+  revalidatePath('/admin/relocations')
   return { saved: true }
 }
 
@@ -71,6 +77,7 @@ export async function updateHotel(
 
   revalidatePath('/admin/settings')
   revalidatePath('/admin/hotels')
+  revalidatePath('/admin/relocations')
   return { saved: true }
 }
 
@@ -98,6 +105,7 @@ export async function setHotelActive(
 
   revalidatePath('/admin/settings')
   revalidatePath('/admin/hotels')
+  revalidatePath('/admin/relocations')
   return { saved: true }
 }
 
@@ -108,6 +116,12 @@ export async function setHotelActive(
  * turns that into "this hotel is in use" — which tells the boss to deactivate
  * it instead. `hotel_reps` cascades, so a hotel with only assignments on it is
  * still removable, and the assignments go with it.
+ *
+ * §45's two new references are deliberately not blockers either: a car
+ * `stationed_at` here becomes unplaced (ON DELETE SET NULL) and any relocation
+ * decided against it goes with the hotel (ON DELETE CASCADE). Neither is
+ * history worth keeping a mistyped hotel alive for — a real one is deactivated,
+ * not deleted.
  */
 export async function deleteHotel(
   _prev: HotelFormState, formData: FormData,
@@ -124,5 +138,7 @@ export async function deleteHotel(
   revalidatePath('/admin/settings')
   revalidatePath('/admin/hotels')
   revalidatePath('/admin/users')
+  revalidatePath('/admin/relocations')
+  revalidatePath('/admin/fleet')
   return { saved: true }
 }

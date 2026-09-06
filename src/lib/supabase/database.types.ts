@@ -60,6 +60,7 @@ export type HotelRepRow = Row<'hotel_reps'>
 export type RepDeviceRow = Row<'rep_devices'>
 export type CategoryRow = Row<'categories'>
 export type CarRow = Row<'cars'>
+export type CarRelocationRow = Row<'car_relocations'>
 export type PricingPeriodRow = Row<'pricing_periods'>
 export type PriceRowRow = Row<'price_rows'>
 export type PriceExtraDayRow = Row<'price_extra_day'>

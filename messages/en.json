@@ -488,6 +488,7 @@
     "navLabel": "Admin sections",
     "nav": {
       "movements": "Movements",
+      "relocations": "Vehicle relocations",
       "fleet": "Fleet",
       "pricing": "Pricing",
       "bookings": "Bookings",
@@ -517,6 +518,37 @@
       "hotel": "Hotel",
       "room": "Room",
       "rep": "Rep"
+    },
+    "relocations": {
+      "title": "Vehicle relocations",
+      "subtitle": "Which cars have to be driven somewhere tonight, so the morning finds them in the right place.",
+      "night": "Night",
+      "go": "Go",
+      "print": "Print",
+      "printHeading": "Vehicle relocations: night of {night} → morning of {morning}",
+      "summary": "{moves, plural, =0 {No moves for the morning of {morning}.} one {1 move for the morning of {morning}, {outstanding} outstanding.} other {# moves for the morning of {morning}, {outstanding} outstanding.}}",
+      "toMove": "To move",
+      "noMoves": "No car needs moving tonight.",
+      "staying": "Staying put",
+      "stayingHint": "Back tonight and wanted by no booking in the morning. Send one wherever you like, booking or no booking.",
+      "noStays": "No car comes back tonight without a next booking.",
+      "sendTo": "Send to",
+      "staysOption": "— Stays where it is —",
+      "stays": "stays",
+      "movesTo": "moves to",
+      "depot": "Office",
+      "unplaced": "Not placed yet",
+      "yourCall": "Your call",
+      "markDone": "Done",
+      "doneAt": "Done {time}",
+      "reset": "Reset",
+      "backAt": "back {time}",
+      "dueAt": "due out {time}",
+      "adhocDestination": "The destination is a hotel that is not in the system, so the move cannot be recorded as done. Pick a registered hotel if you want to close it off.",
+      "noDepot": "No office is marked. Tick “Office” on the company's own location under Hotels and it will sort first in every destination list.",
+      "reason": {
+        "manual": "no booking"
+      }
     },
     "fleet": {
       "title": "Fleet",
@@ -560,7 +592,11 @@
       "modelsHint": "A plate always belongs to one of these. Add the model first, then its plates.",
       "editModel": "Edit model",
       "noPlatesYet": "No plates on this model yet.",
-      "plateCount": "{n, plural, one {# plate} other {# plates}}"
+      "plateCount": "{n, plural, one {# plate} other {# plates}}",
+      "station": "Stationed at",
+      "stationHint": "The base this car belongs to. Set automatically by every return; change it here only to correct it.",
+      "stationNone": "— Not known —",
+      "stationUnplaced": "not placed"
     },
     "bookings": {
       "title": "Bookings",
@@ -801,7 +837,10 @@
       "staffAt": "Staff here",
       "homeTag": "stationed",
       "coverTag": "cover",
-      "goToStaff": "Manage staff"
+      "goToStaff": "Manage staff",
+      "isDepot": "This location is our own office",
+      "isDepotHint": "The company's own yard rather than a hotel. It sorts first in every relocation destination list.",
+      "depotBadge": "Office"
     },
     "audit": {
       "title": "Audit log",

@@ -27,6 +27,10 @@ per-plate calendar.
 > **Narrowed by §42 (3 Sep 2026).** A location is still normally a hotel, but a booking
 > may also start at the office (modelled as an ordinary hotel row) or at a hotel that
 > isn't in the system (`bookings.adhoc_hotel_name`, free text).
+>
+> **Extended by §45 (5 Sep 2026).** A location is also where a *car* lives between
+> rentals (`cars.stationed_at`), and the office row now carries `hotels.is_depot` to
+> tell the company's own yard apart from a hotel — for presentation only.
 
 A location is a **hotel**. Each rep is stationed at one hotel. Room number is captured
 because guests are hotel guests.
@@ -1182,6 +1186,11 @@ See `supabase/migrations/20260903150000_ledger_search.sql`,
 
 ## 42. A booking may also start at the office, or at a hotel not in the system
 
+> **Narrowed by §45 (5 Sep 2026).** The office is still an ordinary `hotels` row and
+> nothing in booking, pricing, RLS or the contract renderer treats it specially. It now
+> also carries `is_depot`, which one screen (A13) reads to sort the yard first and label
+> it Γραφείο. Presentation, never routing.
+
 The business rents cars from three kinds of place, not one: a base at each registered
 hotel (§3's original picture), the company's own office, and — on occasion — a guest's
 hotel that was never entered here. §3 said "a location is a hotel" as a flat rule; this
@@ -2144,3 +2153,106 @@ stored anywhere in this project and Wrapp should be asked to revoke it.
 and PDF link lifetimes, any cap on `customer_emails`, confirmation of no rate limit): a
 billing book for 5.1, the three undocumented response fields above, and whether any test
 facility exists for the Worldline and epay terminals.
+
+## 45. Cars have a base, and the night before is when they get to it
+
+Asked for by the owner 5 Sep 2026, in his own words: *a page that shows for the end of every
+day which cars have to go where — so when a car is returned at Μικρή Πόλη at night and has to
+be in Belvedere in the morning it shows Μικρή Πόλη → Belvedere.* Two things came with it: he
+must be able to send a car somewhere **with no booking behind it**, and the **office** must be
+a place a car can be stationed at.
+
+A1 could not answer this and was never going to. A1 lists pick-ups and returns — events that
+belong to bookings. The drive from Μικρή Πόλη to Belvedere at 23:00 belongs to no booking, has
+no guest, earns nothing and appears on no document. It is the one piece of the operation that
+existed only in somebody's head.
+
+### The obstacle was that nothing knew where a car was
+
+`bookings.hotel_id` says where a rental starts and ends. Nowhere did anything say where a
+**car** is between rentals, so "which cars have to move" had no first term. Hence
+`cars.stationed_at`: the base a plate belongs to.
+
+**It is a base, not a position.** While a rental is `out` the column still names the base the
+car left. That is deliberate and it is the more useful reading — the question the screen asks
+is *where would this car be if nobody had rented it*, and answering "in a guest's hands" helps
+nobody. A test pins it (`a pickup does NOT move it`).
+
+**It ships empty and fills itself.** Backfilling ~100 plates would have meant inventing an
+answer for each. Instead a trigger writes the base on every return
+(`app.cars_station_on_return()`), so the fleet places itself over a couple of weeks of
+ordinary trading and nobody maintains anything. The nulls that remain read as *άγνωστο σημείο*
+on the fleet list, which is both honest and a prompt. Considered and rejected: backfilling
+everything to the office (wrong for every car actually sitting at a hotel), and deriving each
+car's base from its last rental (right for cars with history, still null for new plates, and a
+script to maintain for a problem that solves itself).
+
+**A return to an ad-hoc hotel leaves the base alone.** §42 gave an unregistered hotel free
+text rather than a row precisely so it would not accumulate `hotels` rows; a foreign key
+cannot point at free text, and minting a row to make the trigger work would undo that. Such a
+car keeps whatever base it had, and the boss corrects it by hand if it matters.
+
+### Tonight's moves are derived, never stored
+
+`car_relocations` holds **only the boss's decisions** — a row exists when, and only when, he
+touched that car on that night. Everything else is computed from `bookings` on every read.
+
+This is the load-bearing choice on the screen. A stored sheet is a record of what was true
+when it was generated: extend a rental, swap a car or cancel a booking and the sheet still
+says drive the Panda to Belvedere. Somebody then drives to Belvedere at midnight for nothing.
+The paper day-sheet failed in exactly this way, and a database table that behaves like paper
+is not an improvement on paper.
+
+Three things put a car on the board, and the third is the owner's actual request:
+
+1. **It comes back tonight.** Always listed, even with nowhere to go — that list is what he
+   reads to decide whether to send it somewhere anyway.
+2. **It is idle somewhere and booked tomorrow morning somewhere else.** The expensive case,
+   because nothing happened to this car today: it is on no other screen, and the guest still
+   arrives at 09:00 to find an empty space.
+3. **He has decided something about it.**
+
+**The horizon is exactly one night.** A booking three days out is not tonight's problem, so
+that car reads as *παραμένει* until the night before it is due.
+
+**`to_hotel_id` is nullable, and the null means something.** A row with no destination is him
+saying *I can see why you think this should move — leave it.* The difference between that and
+"no decision yet" is whether the row exists at all. This is why setting a blank destination
+stores a row rather than deleting one.
+
+### The office is a hotel with a flag on it
+
+§42 ruled the office an ordinary `hotels` row with real `hotel_reps`, and that stands
+completely: nothing in booking, pricing, RLS or the contract renderer treats it specially, and
+`hotels.is_depot` earns its keep on this screen alone — the yard sorts to the top of a
+destination list and reads *Γραφείο* instead of being one more name among forty.
+
+**Several depots are allowed.** The flag decides presentation, never routing. A car with
+nothing booked next **stays where it is** — it is not swept to the yard. Asked directly and
+answered: sweeping idle cars to a depot would put moves on the sheet that nobody asked for,
+and the sheet's value is that every line on it is real work.
+
+### The screen is the manager's alone
+
+Asked and settled: reps neither see nor tick these off. `car_relocations` has no rep policy,
+so a rep selecting from it gets an empty set whatever filter they send. If the division of
+labour ever changes, the thing to add is a rep-side view and a policy — not a loosening of
+this one.
+
+**Two writes that must not drift apart.** Ticking a move off stamps `done_at` *and* moves
+`cars.stationed_at`. Done separately, a sheet claiming the car is at Belvedere can coexist with
+a fleet list claiming Μικρή Πόλη, and someone is then sent to the wrong hotel. So
+`public.admin_complete_relocation()` does both or neither, and a CHECK constraint refuses a
+`done_at` with no destination whatever writes it.
+
+**`stationed_at` is in no client write grant at all** — not the rep's, and not the admin's
+either. The column is granted `select` only, so the four `admin_*` functions are not the tidy
+path but the only path: no form field, no PostgREST call and no crafted body reaches it.
+Correcting a base by hand is `public.admin_set_car_station()`, on the car's own record, where
+it is an explicit act rather than a side effect. Clearing a move that was already done does
+**not** walk the base back — the car was driven; deleting the note about it does not undrive
+it.
+
+See `supabase/migrations/20260906090000_car_stations.sql`, `src/lib/relocations/data.ts`,
+`src/app/(app)/admin/relocations/`, `tests/db/admin-relocations.test.ts` and
+`tests/unit/relocations.test.ts`. Screen A13 in docs/04-SCREENS.md.

@@ -247,3 +247,39 @@ export async function deleteBlock(_prev: FormState, formData: FormData): Promise
   revalidatePath(`/admin/fleet/${parsed.data.car_id}`)
   return undefined
 }
+
+/**
+ * Correct where a car is based (docs/01-DECISIONS.md §45).
+ *
+ * `cars.stationed_at` is normally nobody's job: a return writes it, and ticking
+ * off a relocation on A13 writes it. This is the escape hatch for the cases no
+ * trigger can reach — a plate that has never been out, or one returned to an
+ * unregistered hotel that a foreign key cannot name. Blank unplaces it, which
+ * is the honest answer when nobody knows.
+ *
+ * It goes through an RPC because the column is in no client UPDATE grant at
+ * all: there is no `.update({ stationed_at })` that would work, for a rep or
+ * for the boss.
+ */
+export async function setCarStation(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin()
+
+  const parsed = z.object({
+    id: uuidSchema,
+    station: z.union([uuidSchema, z.literal('')]).transform((v) => (v === '' ? null : v)),
+  }).safeParse({ id: formData.get('id'), station: formData.get('station') })
+  if (!parsed.success) return { error: 'IR104' }
+
+  const supabase = await supabaseServer()
+  const { error } = await supabase.rpc('admin_set_car_station', {
+    p_car: parsed.data.id,
+    p_hotel: sqlNull(parsed.data.station),
+  })
+
+  if (error) return { error: errorKey(error) }
+
+  revalidatePath(`/admin/fleet/${parsed.data.id}`)
+  revalidatePath('/admin/fleet')
+  revalidatePath('/admin/relocations')
+  return undefined
+}

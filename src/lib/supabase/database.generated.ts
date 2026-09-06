@@ -402,6 +402,58 @@ export type Database = {
           },
         ]
       }
+      car_relocations: {
+        Row: {
+          car_id: string
+          created_at: string
+          decided_by: string
+          done_at: string | null
+          night_of: string
+          to_hotel_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          car_id: string
+          created_at?: string
+          decided_by: string
+          done_at?: string | null
+          night_of: string
+          to_hotel_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          car_id?: string
+          created_at?: string
+          decided_by?: string
+          done_at?: string | null
+          night_of?: string
+          to_hotel_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "car_relocations_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "car_relocations_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "car_relocations_to_hotel_id_fkey"
+            columns: ["to_hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cars: {
         Row: {
           archived_at: string | null
@@ -412,6 +464,7 @@ export type Database = {
           notes: string | null
           photo_path: string | null
           plate: string
+          stationed_at: string | null
           updated_at: string
           year: number | null
         }
@@ -424,6 +477,7 @@ export type Database = {
           notes?: string | null
           photo_path?: string | null
           plate: string
+          stationed_at?: string | null
           updated_at?: string
           year?: number | null
         }
@@ -436,6 +490,7 @@ export type Database = {
           notes?: string | null
           photo_path?: string | null
           plate?: string
+          stationed_at?: string | null
           updated_at?: string
           year?: number | null
         }
@@ -445,6 +500,13 @@ export type Database = {
             columns: ["model_id"]
             isOneToOne: false
             referencedRelation: "car_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cars_stationed_at_fkey"
+            columns: ["stationed_at"]
+            isOneToOne: false
+            referencedRelation: "hotels"
             referencedColumns: ["id"]
           },
         ]
@@ -834,6 +896,7 @@ export type Database = {
           area: string | null
           created_at: string
           id: string
+          is_depot: boolean
           name: string
         }
         Insert: {
@@ -842,6 +905,7 @@ export type Database = {
           area?: string | null
           created_at?: string
           id?: string
+          is_depot?: boolean
           name: string
         }
         Update: {
@@ -850,6 +914,7 @@ export type Database = {
           area?: string | null
           created_at?: string
           id?: string
+          is_depot?: boolean
           name?: string
         }
         Relationships: []
@@ -1213,6 +1278,14 @@ export type Database = {
         }
         Returns: number
       }
+      admin_clear_relocation: {
+        Args: { p_car: string; p_night: string }
+        Returns: undefined
+      }
+      admin_complete_relocation: {
+        Args: { p_car: string; p_night: string; p_to: string }
+        Returns: undefined
+      }
       admin_confirm_cash_handover: {
         Args: { p_id: string }
         Returns: undefined
@@ -1312,12 +1385,20 @@ export type Database = {
         Args: { p_car_id: string; p_notes: string }
         Returns: undefined
       }
+      admin_set_car_station: {
+        Args: { p_car: string; p_hotel: string }
+        Returns: undefined
+      }
       admin_set_cover: {
         Args: { p_covers: boolean; p_hotel_id: string; p_profile_id: string }
         Returns: undefined
       }
       admin_set_home_hotel: {
         Args: { p_hotel_id: string; p_profile_id: string }
+        Returns: undefined
+      }
+      admin_set_relocation: {
+        Args: { p_car: string; p_night: string; p_to: string }
         Returns: undefined
       }
       admin_set_user_active: {

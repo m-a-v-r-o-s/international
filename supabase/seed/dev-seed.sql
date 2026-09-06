@@ -69,11 +69,15 @@ join lateral (
 ) m on m.rn = 1 + (n % 16)
 on conflict (plate) do nothing;
 
-insert into public.hotels (name, area)
+-- Three hotels and the yard. The depot row is here so A13's destination list
+-- has something to sort first in development (docs/01-DECISIONS.md §45); on a
+-- real project the office is added through /admin/hotels like any other row.
+insert into public.hotels (name, area, is_depot)
 values
-  ('Hotel Placeholder One',   'Rethymno'),
-  ('Hotel Placeholder Two',   'Chania'),
-  ('Hotel Placeholder Three', 'Heraklion')
+  ('Hotel Placeholder One',   'Rethymno',  false),
+  ('Hotel Placeholder Two',   'Chania',    false),
+  ('Hotel Placeholder Three', 'Heraklion', false),
+  ('Γραφείο (placeholder)',   'Rethymno',  true)
 on conflict do nothing;
 
 -- One season, four periods, roughly the shape described in

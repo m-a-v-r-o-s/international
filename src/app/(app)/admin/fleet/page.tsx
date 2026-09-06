@@ -43,9 +43,11 @@ export default async function FleetPage({
   const supabase = await supabaseServer()
   const today = todayAthens()
 
-  const [{ data: cars }, { data: models }, { data: categories }, { data: todaysHolds }] = await Promise.all([
+  const [
+    { data: cars }, { data: models }, { data: categories }, { data: todaysHolds }, { data: hotels },
+  ] = await Promise.all([
     supabase.from('cars')
-      .select('id, plate, model_id, year, colour, photo_path, archived_at, created_at, updated_at')
+      .select('id, plate, model_id, year, colour, photo_path, stationed_at, archived_at, created_at, updated_at')
       .order('plate'),
     supabase.from('car_models')
       .select('id, make, model, category_id, transmission, fuel_type, seats, doors, tank_litres, engine_cc, horsepower, photo_path')
@@ -56,12 +58,17 @@ export default async function FleetPage({
       .select('id, car_id, kind, status, start_date, end_date, cust_first, cust_last')
       .in('status', ['booked', 'out', 'blocked'])
       .lte('start_date', today).gte('end_date', today),
+    // Only to name each plate's base (docs/01-DECISIONS.md §45). Inactive
+    // hotels are included: a car can still be stationed at one, and "Hotel
+    // Beta" reads better than a bare dash.
+    supabase.from('hotels').select('id, name, is_depot'),
   ])
 
   const allCars = (cars ?? []) as CarRow[]
   const allModels = (models ?? []) as CarModelRow[]
   const allCategories = (categories ?? []) as CategoryRow[]
   const modelById = new Map(allModels.map((m) => [m.id, m]))
+  const stationById = new Map((hotels ?? []).map((h) => [h.id, h.name]))
   const catById = new Map(allCategories.map((c) => [c.id, c]))
 
   type Hold = Pick<BookingRow, 'id' | 'car_id' | 'kind' | 'status' | 'start_date' | 'end_date' | 'cust_first' | 'cust_last'>
@@ -211,6 +218,13 @@ export default async function FleetPage({
                           {[
                             car.year,
                             car.colour,
+                            // Where the plate is based. Shown on the list and
+                            // not only on the record, so the boss can see the
+                            // yard's spread at a glance rather than opening a
+                            // hundred cars to find out (§45).
+                            car.stationed_at
+                              ? stationById.get(car.stationed_at) ?? ''
+                              : t('stationUnplaced'),
                             status === 'out' || status === 'backToday'
                               ? `${hold?.cust_first ?? ''} ${hold?.cust_last ?? ''}`.trim()
                               : '',

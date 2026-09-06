@@ -132,7 +132,9 @@ mode to be in the wrong one of. Both header buttons (R3b, R4b) are his as well.
 
 ### A1 · Movements sheet
 The paper day-sheet, replaced. Any chosen day, all hotels: pickups then returns, in time
-order, with car, guest, hotel, room and rep. Printable. This is the boss's morning screen.
+order, with car, guest, hotel, room and rep. Printable. This is the boss's morning screen —
+A13 is the evening one, and answers a different question: not what happens today, but which
+cars have to be driven where tonight so that today's 09:00 pick-ups have a car standing there.
 
 ### A2 · Fleet  *(A3 · Car management folded in)*
 One screen, one list: all ~100 cars grouped by model, each plate carrying today's status —
@@ -205,6 +207,28 @@ longer zeroes anything by itself. Almost always at most one row per rep, the usu
 hand-over at the end of the morning shift; a second row for the same rep the same day is the
 rare, legitimate case — a night-shift pickup or a delayed payment, handed over again before
 the first is confirmed.
+
+### A13 · Μετακινήσεις οχημάτων
+The boss's **evening** screen, the way A1 is his morning one (docs/01-DECISIONS.md §45). Any
+chosen night, every car that has to be driven somewhere before the morning: `Μικρή Πόλη →
+Belvedere`, with the plate, the model, who is bringing it back and when, and what time it is
+due out again. Printable, because the person doing the driving is standing in a car park at
+22:00.
+
+Three things put a car on the sheet: it comes back tonight; it is sitting idle somewhere and
+booked tomorrow morning somewhere else (the case no other screen shows); or the boss has
+decided something about it himself. A returning car with nowhere to go is listed under
+**Παραμένουν** rather than hidden — that list is exactly what he reads to **send a car to a
+hotel with no booking behind it**, which nothing else in the app lets him do.
+
+Per row: a destination `<select>` that saves itself on change (the yard first, labelled
+Γραφείο), `Έγινε` to tick the move off, and `Επαναφορά` to drop his override and go back to
+what the bookings imply. Ticking a move off is what moves the car's base — one action, both
+writes. **Admin only**, and not by hiding a link: `car_relocations` has no rep policy, so a
+rep selecting from it gets an empty set.
+
+A2's plate rows and each car's record now carry that base too, and the record is where a wrong
+one is corrected.
 
 ---
 

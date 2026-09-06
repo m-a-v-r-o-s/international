@@ -47,3 +47,19 @@ export function nowTimeAthens(): string {
     timeZone: 'Europe/Athens', hour: '2-digit', minute: '2-digit', hour12: false,
   })
 }
+
+/**
+ * The calendar day `n` days after `date`, as `YYYY-MM-DD`.
+ *
+ * Pure date arithmetic on a plain date string, done in UTC on purpose: a
+ * `YYYY-MM-DD` has no zone, and parsing it as local time is what makes
+ * "tomorrow" occasionally land on today in the western half of the world.
+ * `Date.UTC` plus `toISOString()` cannot drift, and neither March nor October
+ * has a 23- or 25-hour *day number*.
+ *
+ * A13 (relocations) asks for exactly one thing: the morning after a night.
+ */
+export function addDays(date: string, n: number): string {
+  const [y, m, d] = date.split('-').map(Number) as [number, number, number]
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10)
+}

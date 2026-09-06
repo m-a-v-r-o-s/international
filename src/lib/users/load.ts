@@ -35,7 +35,7 @@ type Client = SupabaseClient<Database>
 export async function loadHotels(supabase: Client): Promise<HotelRow[]> {
   const { data } = await supabase
     .from('hotels')
-    .select('id, name, area, address, active, created_at')
+    .select('id, name, area, address, active, is_depot, created_at')
     .order('name')
   return (data ?? []) as HotelRow[]
 }
