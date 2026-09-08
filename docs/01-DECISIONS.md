@@ -2256,3 +2256,21 @@ it.
 See `supabase/migrations/20260906090000_car_stations.sql`, `src/lib/relocations/data.ts`,
 `src/app/(app)/admin/relocations/`, `tests/db/admin-relocations.test.ts` and
 `tests/unit/relocations.test.ts`. Screen A13 in docs/04-SCREENS.md.
+
+## 46. A corporate client is invoiced and settled later, not paid at handover
+
+8 Sep 2026. §44's addendum left one question open and named it as the owner's alone: does a
+corporate client pay at handover like a tourist, or is the rental invoiced and settled after
+the fact? **Answered: invoiced later.**
+
+That fixes the value the Wrapp payload needs — `payment_method_type: 1` (Credit) on every B2B
+document, never `0` or `3`. It also confirms what §44's addendum already flagged: this is a
+receivables concept, and the app has had no reason to carry one before now. A B2B booking can
+complete, the car can go out and come back, and the invoice Wrapp issues stays unpaid on our
+side at that moment — settlement is a later event, not part of pickup or return.
+
+**Still open, and now the next question rather than this one:** how a later settlement gets
+recorded. Nothing in the schema currently represents "this B2B invoice was paid on such a
+date" — `cash_handovers` is shaped around a rep's daily cash, not a company's account. Design
+that once the accountant's ruling on §43's πάροχος question lands, since if the answer there
+closes the B2B e-invoicing path entirely, a settlement state for it would be built for nothing.
