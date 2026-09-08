@@ -2269,6 +2269,13 @@ receivables concept, and the app has had no reason to carry one before now. A B2
 complete, the car can go out and come back, and the invoice Wrapp issues stays unpaid on our
 side at that moment — settlement is a later event, not part of pickup or return.
 
+**And it is the manager who issues them, not a rep.** Owner, same day: every B2B document is
+the admin account's own act. A rep can still hand a corporate booking's car over like any
+other — nothing above says otherwise — but triggering the TΠΥ itself is not theirs to do. That
+keeps the company's details, its credit terms and the settlement question above off a rep's
+screen entirely, and it is not a new kind of rule: it matches §37's exceptions being the boss's
+own act, and §44's printing already being manager-account-only.
+
 **Still open, and now the next question rather than this one:** how a later settlement gets
 recorded. Nothing in the schema currently represents "this B2B invoice was paid on such a
 date" — `cash_handovers` is shaped around a rep's daily cash, not a company's account. Design
