@@ -2251,6 +2251,83 @@ chase, which is Euronet/epay's and Worldline's to answer rather than Wrapp's. Ev
 the project had outstanding with them is now answered. What remains open on the fiscal path is
 the accountant's, q2 above most of all, and no vendor can close it.
 
+### Primer weighed against Wrapp, and the voucher that is not open (9 Sep 2026)
+
+Primer Software's «Primer MyData για κατασκευαστές» page was put up for comparison. It is a
+real alternative and it is worth having the reasoning on record, because the page reads well
+and the conclusion is not obvious until the POS question is asked.
+
+**It is a different commercial shape, not just a different vendor.** Wrapp: the client buys the
+subscription, Wrapp bills him directly, we integrate against his key, and §44's operating-surface
+rule keeps him out of their screens. Primer: **our software** is licensed by Primer as an
+approved provider-connected issuance software (they quote about seven days for licensing plus
+technical connection), we hold a My Data Connect package sized by monthly document volume, and
+clients sit under it. They court ISVs openly, which is the opposite of the partner track §44
+rejected at Wrapp for paying nothing.
+
+**The POS answer is what decides it, and it goes against them.** Primer's retail-without-ταμειακή
+route is an app that runs **on the terminal**: the compatible device is the Πειραιώς/epay PAX
+A920 pro, or one of their own Sunmi/Omni devices, card acceptance runs through ePay, and an
+external ERP triggers a receipt plus card payment through their e-Ταμειακή Bridge. Their own FAQ
+is explicit that if you do not have a Πειραιώς terminal you go to a Πειραιώς branch to get one.
+Set that beside §44's four terminals across three acquirers and the finding that Wrapp's
+interconnection is **cloud, server to server, with nothing installed at the desk**. Moving to
+Primer would not be an integration change, it would be an acquirer-estate change: Viva and
+Worldline have no visible path into it, and the softPOS a rep carries to a hotel would have to
+become epay's. That is a larger and riskier cutover than the one §44 already calls the fiddliest
+part of the project.
+
+**Cost, and the difference is not the money.** Primer's live shop prices, annual, VAT excluded
+by their own note, two variations per tier being B2G off and on: 50 documents/month €74,40 or
+€173,60; 1.000/month €104,16 or €163,68; 2.000/month €119,04 or €292,64; 5.000/month €178,56 or
+€401,76. The Ψηφιακό Πελατολόγιο is a separate module, and there is a **rentals-specific one**
+(Ενοικιάσεων) at €43,40/yr. At this client's volume that totals roughly €148/yr against Wrapp's
+€179,50, a difference of about €30 a year, which is noise. What is not noise: **under Primer the
+subscription is ours**, so provider cost lands on our books and is rebilled, and the volume cap
+becomes ours to police. Under Wrapp the client pays and we carry nothing. Their eΤαμειακή line
+also carries a €50/yr activation-and-support item and €50/yr for ERP Invoicing, so the tier price
+is not the whole bill.
+
+**Two things Primer has that Wrapp does not.** A rentals Ψηφιακό Πελατολόγιο module, which
+suggests they have shipped this vertical before; and a manufacturer track that wants resellers,
+against Wrapp's partner track which publishes no compensation. Neither outweighs the POS finding
+today. If the multi-client ambition becomes real and Wrapp's Partners Onboarding turns out to
+bill through us rather than each client directly, Primer is the first place to look again.
+
+**Not switching, and the reasons are procedural as much as technical.** Wrapp's documentation is
+public, its sandbox is free, self-serve and already provisioned, and it answered seven questions
+inside a day. Primer publishes no API documentation and gates it behind a licensing conversation,
+so an evaluation cannot even start without a commitment. Against a March 2027 cutover that is
+the decisive cost. **Four questions would reopen it**, if it is ever worth asking: whether the
+manufacturer API can issue λιανική and drive a card payment on a terminal we do not own; whether
+the document tier is per client ΑΦΜ or per our account across all clients; whether the Ψηφιακό
+Πελατολόγιο module is API-callable or ERP-only; and whether a sandbox exists before licensing.
+
+**The €300 voucher on that page is closed, and the page is stale.** Primer advertises the
+«ψηφιακές συναλλαγές» programme as open, with a €300 voucher for e-invoicing through a πάροχος,
+and offers to enrol us as a προμηθευτής so we could redeem our own clients' vouchers. The link
+goes to greece20.gov.gr, so it is the RRF-funded **Ψηφιακές Συναλλαγές Β'**, Πρόγραμμα III. Its
+own final milestones, from the programme page and the last announcement of 30 Jan 2026:
+applications 23 Jun 2025 to **30 Sep 2025**, supplier applications closed **16 Dec 2025**,
+purchases with vouchers until **20 Feb 2026**, cooling-off to 6 Mar 2026, and completion of all
+payments on **31 Mar 2026**. Every date is behind us, no successor cycle is announced, and the
+parent vehicle (Ελλάδα 2.0, NextGenerationEU) is itself at its end. The same page still says the
+manufacturer connection is free for anyone signing up before 30/6/2021, which is the tell:
+**vendor pages are marketing, and dates on them are checked against the issuing authority, never
+believed.**
+
+**What the mechanism was worth, for when a cycle reopens.** Category 3 covered «λήψη υπηρεσιών
+παρόχου ηλεκτρονικής τιμολόγησης & λογισμικών τιμολόγησης» at €300 nominal, up to €900 by
+turnover, subsidised 100%. Two things follow, both for us rather than for this build. First, the
+voucher is the **client's** subsidy redeemed against an approved product held by an approved
+supplier, and the registry is the state's, not Primer's, so being in it is ours to arrange
+directly, with our own invoicing software as the listed product. Second, an eligibility rule
+that has to be checked per client before any promise is made: a business cannot be funded twice
+in the same action category across cycles, and many Kos businesses consumed theirs on POS or
+ταμειακή in the earlier rounds. **Ask the owner's accountant whether International already
+redeemed one.** None of this is money that exists today, and nothing in the design should assume
+it will.
+
 ## 45. Cars have a base, and the night before is when they get to it
 
 Asked for by the owner 5 Sep 2026, in his own words: *a page that shows for the end of every
