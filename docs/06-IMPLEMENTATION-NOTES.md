@@ -266,6 +266,61 @@ acceptable and it is a deliberate, recorded choice. It must not be the state on
 where a loss is worse than a breach is reportable. Upgrading to a plan with
 PITR is a hard pre-production item, not a nice-to-have.
 
+**The hosted schema is not the repo's schema, and its migration history will
+not tell you so.** Found on 10 September 2026 while applying
+`20260909120000_adhoc_hotel_select_grant.sql`, which turned out to be
+inapplicable on its own: `bookings.adhoc_hotel_name` did not exist on the
+hosted project at all. It was six migrations behind, sitting at
+`20260903120000_model_photos_and_engine`.
+
+Applied since, and verified: `20260903140000_adhoc_hotel` and the grant on top
+of it. `authenticated` now holds INSERT, SELECT and UPDATE on
+`bookings.adhoc_hotel_name` there, all three CHECK constraints landed with the
+definitions the file writes, and the replaced `app.bookings_before_write()`
+hashes identically to the repo file's function body. No row of client data was
+touched: 4 profiles, 9 hotels, 4 cars, 4 categories, 0 bookings, before and
+after.
+
+Still unapplied, in the order they must go:
+
+| Migration | What is missing without it |
+|---|---|
+| `20260903130000_drop_notifications` | `push_subscriptions`, `profiles.notify_*` and `incidents.notified_at` all still EXIST there, and five dropped functions with them |
+| `20260903150000_ledger_search` | `customers.email`, `customers.search_text`, the trigram index |
+| `20260903160000_accountant_questionnaire` | `accountant_replies` and its policies |
+| `20260906090000_car_stations` | `hotels.is_depot`, `cars.stationed_at`, `car_relocations` and four RPCs |
+
+So the app at HEAD still cannot run whole against that project. The movements
+sheet works now, because its select names only booking columns plus
+`cars(id, plate, model_id)`, but anything reaching the ledger search bar, the
+accountant questionnaire or car stations will fail there, and the notification
+machinery the app deleted is still standing in the database.
+
+Two things about the history table itself, because they are why this drift was
+invisible:
+
+- **Its versions are not the repo's filenames.** They are timestamps generated
+  at apply time, so `20260902130000_admin_only_exceptions.sql` is recorded
+  there as `20260902232340_admin_only_exceptions`. The names match, the
+  versions never will.
+- **The base schema is not recorded at all.** The history starts at
+  `20260831190200_customers`; everything from `20260830090100_extensions`
+  through `20260831140000_admin_creates_rentals` was applied by some route that
+  wrote no history row, and the SQL recorded for the entries that do exist has
+  had its comments stripped.
+
+The practical consequence: **do not trust `supabase migration list` against
+this project.** Diff the schema itself. `information_schema.columns` and
+`to_regclass`/`to_regprocedure` over the objects each migration creates is what
+established the state above, and it is what should establish it next time.
+
+When the remaining four are applied, note that `drop_notifications` is the only
+destructive one: it drops a table, three `profiles` columns, one `incidents`
+column and five functions. On 10 September 2026 every table it touches had zero
+rows, so nothing real was at stake then. That will not stay true after the
+pilot starts, and it is an argument for doing it before October rather than
+after.
+
 ## Decisions taken while building — Phase 5
 
 **Creating a rep is a new category of service-role use, and it is the only
@@ -989,6 +1044,15 @@ first.
 
 ## Not done, and where it belongs
 
+- **Four migrations the hosted project has never had.**
+  `20260903130000_drop_notifications`, `20260903150000_ledger_search`,
+  `20260903160000_accountant_questionnaire` and
+  `20260906090000_car_stations`, in that order. The project was six behind on
+  10 September 2026; two were applied then and these four were not. Until they
+  are, the app at HEAD cannot run whole against it. Full account, including why
+  the migration history there does not show the drift, under "What the real
+  project confirmed". Best done before the pilot puts rows in the tables
+  `drop_notifications` deletes from.
 - **A7 reports and CSV export.** The only screen in the inventory still
   unbuilt. `docs/05-BUILD-PLAN.md` defers it until genuine data has
   accumulated, and the October pilot is what produces that data — building
