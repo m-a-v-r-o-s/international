@@ -2148,11 +2148,108 @@ partner track outright — Wrapp publishes no compensation of any kind and the o
 threshold is a discount to tenants, not a payout. The provisioning key arrived anyway. An
 unused privileged credential is exposure with no offsetting benefit, so it is deliberately not
 stored anywhere in this project and Wrapp should be asked to revoke it.
+*(The revocation ask is withdrawn 9 Sep 2026: that key is how a second rental client is
+onboarded. See the subsection below.)*
 
 **Added to the list of things to obtain in writing**, alongside §44's existing three (portal
 and PDF link lifetimes, any cap on `customer_emails`, confirmation of no rate limit): a
 billing book for 5.1, the three undocumented response fields above, and whether any test
-facility exists for the Worldline and epay terminals.
+facility exists for the Worldline and epay terminals. *(All six answered 9 Sep 2026, in
+the subsection below.)*
+
+### The last open questions come back answered (9 Sep 2026)
+
+The six questions above went to Wrapp before production, together with one the project had
+not asked before: whether this build is tied to a single client, since the intention is to
+bring other rental companies onto it. All seven came back the same day. Four confirm what was
+assumed or hoped, two change a decision, and one closes a hole in the delivery design that
+nothing above had noticed.
+
+**Other rental companies change nothing about the integration.** Their answer is that nothing
+in its shape changes, and that future clients are registered as merchants through the
+**Partners Onboarding API**. So there is no per-client fork to design for, and no reason to
+build one speculatively. The provider seam §43 mandates is still what carries reuse across
+clients; what this adds is a named mechanism for the account side, which the project had
+assumed would be a manual signup each time.
+
+**Which withdraws the instruction to hand the Partners key back.** The paragraph above called
+the unasked provisioning key exposure with no offsetting benefit. The benefit now has a name:
+it is the credential a second rental client is onboarded with. §44's rejection of the partner
+track is untouched, because that finding was about compensation (Wrapp publishes none) rather
+than about mechanism, and nothing here changes who gets paid. What survives is the narrower
+half already decided: **the key is stored nowhere in this project**, and stays out of the
+app's configuration until a second client actually exists. One question to ask on the day it
+does, and not before: whether a merchant onboarded through the partner API is still billed
+directly by Wrapp, per the arrangement §44 recorded as an ordinary vendor relationship, or
+billed through us, which would be a different business entirely.
+
+**The 5.1 billing book is ours to create, not theirs to grant.** The answer is
+`POST /billing_books`, with a pointer to the documented endpoint. So the gap the staging
+account exposed is a setup step rather than a dependency on the vendor: it joins billing books
+and POS devices in the one-time configuration the operating-surface rule already puts on our
+side. The timing rule is unchanged, before the first B2B document rather than after the first
+mistake.
+
+**`authentication_code` is the ΑΑΔΕ authentication string, and it lands with the ΜΑΡΚ.** In
+their words: ΑΑΔΕ returns it together with the ΜΑΡΚ after issuance, it validates the issuance,
+and it goes on the document for the document to be legal. The field is real, and absent only
+from the published response list. It is also the άρ.7 §6 σήμανση element a custom PDF would
+need, which puts that option on firmer ground than the addendum left it (the decision not to
+take it stands: rendering our own buys nothing). **What it does not do is soften Correction
+1.** The hope was that a synchronous authentication code would give the counter something at
+handover while an issue was still pending. It cannot, because it arrives with the ΜΑΡΚ rather
+than ahead of it. Before issuance there is an id and nothing else, and on the card path the
+σήμανση fields come back empty by design.
+
+**The three POS webhook fields are card detail, and the vendor's instruction is to ignore
+them.** `transaction_id`, `card_type` and `card_number` are not needed for issuance or
+transmission. That closes the second verification item without a staging test, and it agrees
+with our own instinct: a card number, masked or otherwise, is data this app has no reason to
+hold, store or log.
+
+**Worldline and epay can be rehearsed after all, but the demo comes from the acquirer.**
+Testing against the other POS providers is fine as far as Wrapp is concerned, provided those
+providers supply demo accounts; Wrapp has instructions only for Viva. So the risk named above
+is pursuable rather than something to accept, and the chase moves off Wrapp and onto
+Euronet/epay and Worldline. **It belongs on the cutover checklist now, with an owner and a
+date**, because only the acquirers can say whether a test facility exists at all, and the
+terminal most exposed by a negative answer is the Πειραιώς softPOS a rep carries to a hotel.
+
+**Portal and PDF links live seven years.** That answers the lifetime half of the question and
+covers a fiscal retention period comfortably. **The decision to keep our own copy of the bytes
+stands**, with its reasoning narrowed to the half still unanswered: seven years is a promise
+about time, not about what happens to those links if the subscription lapses, and an archive
+we control was never really about link rot.
+
+**One email per invoice, at issuance only, and this is the answer with teeth.**
+`customer_emails` is an array in the documentation and reads like one; the cap is a single
+address per document, honoured only on the issuing call. Three things follow, and none of them
+was in the delivery design:
+
+- **The address has to be right before the call, not after.** A mistyped address at the
+  counter is unrecoverable through Wrapp, because there is no second send. The pickup screen
+  owns that, and it is a reason to show the renter what was typed rather than trust the
+  typing.
+- **Resend is ours, so the division of labour gains its first exception.** Handing receipt
+  delivery to Wrapp entirely was item 2 of that list. The first delivery is still theirs;
+  every later one, a wrong address, a tourist asking a week later, a copy for a company, is a
+  `wrapp_invoice_url` or a PDF we send from our own mail. That does not re-block issuance on
+  client item 8, since the first send still leaves from Wrapp, but it moves the domain from
+  cosmetics back to a small real dependency.
+- **A B2B document has to pick one recipient.** It cannot go to the booker and the accounts
+  address at once. The manager who issues it per §46 chooses, and the other copy is a forward.
+
+**500 API calls per minute.** The division of labour above says the documentation names no
+rate limit anywhere in it, which was true of the documentation and not of the API. The real
+number sits far above anything one rental desk can produce, including the peak-season morning
+burst that motivated the question: an hour of handovers is tens of calls, not thousands.
+Closed, and a constraint on nothing decided above.
+
+**What is left with the vendor after this.** Two items, both deferred rather than open: the
+partner-billing question, which waits for a second client to be real, and the acquirer demo
+chase, which is Euronet/epay's and Worldline's to answer rather than Wrapp's. Everything else
+the project had outstanding with them is now answered. What remains open on the fiscal path is
+the accountant's, q2 above most of all, and no vendor can close it.
 
 ## 45. Cars have a base, and the night before is when they get to it
 
