@@ -26,6 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
     // Internal tool: it should never turn up in a search result.
     robots: { index: false, follow: false, nocache: true },
     icons: { icon: '/icon.svg' },
+    manifest: '/manifest.webmanifest',
     openGraph: {
       title: t('name'),
       description: t('description'),

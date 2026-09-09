@@ -75,7 +75,10 @@ screen when it was needed, what the reps worked around.
 - Act on pilot feedback — this is the point of the October date, so leave real room for it.
 - Reports (A7) and CSV export, once genuine data has accumulated.
 - Push notifications: rep day reminders, admin incidents.
-- TWA wrapper, Play Store listing and internal-testing track.
+- TWA wrapper, Play Store listing and internal-testing track. The execution
+  plan is `docs/08-PLAY-STORE.md`, split into what an agent can do, what waits
+  for the domain, and what only Akos can do in a browser. Part A is done: the
+  manifest, the icons, the store assets and the listing copy are in the repo.
 - Retention purge job, privacy/terms/cookie components, 404, favicon, OG image.
 - WCAG 2.1 AA audit. Core Web Vitals verification on a real mid-range Android on 4G.
 - Load test the movements sheet at 200 rows and the availability screen at 100 cars.

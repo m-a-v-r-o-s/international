@@ -402,6 +402,7 @@
     "toEligibility": "Continue to the check",
     "toFuel": "Continue to fuel",
     "toDamage": "Continue to damage",
+    "damageIntro": "Mark any damage the car already has, before the guest drives away. Tap the drawing where it is.",
     "toPayment": "Continue to payment",
     "toConfirm": "Continue to confirm",
     "priceDue": "Price for this booking:",

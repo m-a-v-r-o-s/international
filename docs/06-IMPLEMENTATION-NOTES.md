@@ -1021,11 +1021,40 @@ first.
   `SMTP_*` variables are the only missing part.
 - **The real contract terms and company details.** Client items 5 and 7. Until
   they arrive every agreement is a stamped DRAFT and the signing step refuses.
-- **The TWA wrapper, the Play listing and `manifest.webmanifest`.** All three
-  are blocked on client item 8 — a domain and a Play developer account — and
-  none should be started without the domain, because the TWA's asset-links
-  verification is bound to it. `src/proxy.ts` already excludes the manifest
-  path from its matcher, so adding one is a file and not a change.
+- **The TWA wrapper and the Play listing.** Everything that does not need the
+  domain is now done (`docs/08-PLAY-STORE.md` Part A): `public/manifest.webmanifest`
+  exists and is wired into the metadata in `src/app/layout.tsx`, the three PNG
+  icons it names are generated from `src/app/icon.svg` by
+  `scripts/gen-app-icons.mjs`, `tests/unit/manifest.test.ts` keeps the two from
+  drifting, and all four paths were checked to return 200 with no session (the
+  matcher in `src/proxy.ts` does exclude them, as assumed). The store assets are
+  in `assets/play/`: eight phone screenshots in both languages, the 1024x500
+  feature graphic, the listing copy and the Data safety answers.
+
+  What is left is genuinely domain-bound and should not be started early,
+  because Digital Asset Links verification is bound to an exact origin:
+  Bubblewrap itself, and `public/.well-known/assetlinks.json`, which cannot be
+  written until Play has re-signed the first upload and its App Signing
+  fingerprint can be read back out. Client item 8, still.
+
+  **What the throwaway Bubblewrap run established, so Part B starts from a known
+  answer.** `@bubblewrap/cli` **1.25.0**, and it emits **`targetSdkVersion 36`**
+  and `compileSdkVersion 36` already, which is what Play has required of new
+  apps and updates since 31 August 2026. No correction is needed.
+
+  Two things about that worth having written down before the real run:
+
+  - `targetSdkVersion` is **not** a field in `twa-manifest.json`, so the check
+    described in `docs/08-PLAY-STORE.md` A10 cannot be made there. That file
+    carries `minSdkVersion` and nothing else about SDK levels; both target and
+    compile levels are fixed in the generated `app/build.gradle` (lines 54 and
+    59 of the CLI's `template_project`). Read it there, and if a future CLI ever
+    emits something lower, that is the file to correct.
+  - The run needs a JDK and the Android SDK, which Bubblewrap offers to download
+    into `~/.bubblewrap` on first use. The offer works and the download starts,
+    but it is several hundred megabytes and did not finish inside this session.
+    Budget real time for it on the afternoon the domain lands, which is exactly
+    what A10 exists to warn about.
 - **WebAuthn / fingerprint unlock.** §21 offers "PIN or fingerprint"; the PIN is
   built. Rep-side password change has left this list rather than been done:
   §32 removed the password entirely, and the PIN it replaced it with is the

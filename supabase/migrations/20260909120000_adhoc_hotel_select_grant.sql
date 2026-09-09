@@ -1,0 +1,26 @@
+-- ─────────────────────────────────────────────────────────────────────────────
+-- The one grant 20260903140000_adhoc_hotel.sql forgot.
+--
+-- That migration gave `authenticated` INSERT and UPDATE on
+-- bookings.adhoc_hotel_name and stopped there, so staff could write the column
+-- and nobody could read it back. Column privileges are enumerated for this
+-- table (20260830200000_privileges.sql), so a new column is not covered by
+-- anything until it is named, and PostgREST answers a select that touches an
+-- ungranted column with 403 for the WHOLE request rather than omitting the
+-- column.
+--
+-- What that broke, silently: every screen whose select list names the column.
+-- The admin movements sheet and the rep's day list both call
+-- `.select(... adhoc_hotel_name ...)`, take `data` as null on error, and render
+-- "no pickups on this day" over a database with pickups in it. The boss's
+-- morning sheet has been empty by construction since 3 September, and it looks
+-- like a quiet day rather than a failure. It went unnoticed because the testing
+-- project has no bookings in it.
+--
+-- Read access to this column needs no narrowing of its own: it holds a hotel
+-- name a rep typed because the hotel was not on the list, it is already exposed
+-- through the same RLS policies as hotel_id and room_number beside it, and
+-- those are granted.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+grant select (adhoc_hotel_name) on public.bookings to authenticated;

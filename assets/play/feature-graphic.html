@@ -1,0 +1,108 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>International Rentals: Play feature graphic</title>
+<!--
+  Play's feature graphic, 1024x500. One HTML file rendered headless at 2x and
+  supersampled down, which is how every other piece of marketing material on
+  this machine is built. `assets/play/render.sh` is the only supported way to
+  render it: it pins the size and fails if the output is a pixel off.
+
+  Deliberately absent, both being generated-UI tells: decorative grid-line
+  overlays, and radial glow halos behind the type. The board is grounded with a
+  plain directional tonal shift instead, dark where the words sit and lighter
+  where the mark does.
+-->
+<style>
+  /* Fonts are the ones actually installed on this machine (fc-list), because
+     the render is local and a webfont fetch would be one more thing to fail. */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body { width: 1024px; height: 500px; }
+
+  body {
+    display: flex;
+    align-items: center;
+    gap: 64px;
+    padding: 0 76px;
+    font-family: 'Fira Sans', system-ui, sans-serif;
+    color: #ffffff;
+    /* The tonal shift. 100deg rather than 90 so it reads as light falling
+       across the board and not as a horizontal band. */
+    /* The light end stops short of the brand blue itself: run it all the way
+       to #10456a and the badge, which IS #10456a, dissolves into it. */
+    background: linear-gradient(100deg, #05090f 0%, #0a2138 52%, #0c2f4e 100%);
+    overflow: hidden;
+  }
+
+  .words { flex: 1 1 auto; }
+
+  .eyebrow {
+    font-family: 'Fira Mono', ui-monospace, monospace;
+    font-size: 15px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #8fb6d4;
+    margin-bottom: 22px;
+  }
+
+  h1 {
+    font-size: 62px;
+    line-height: 1.02;
+    font-weight: 600;
+    letter-spacing: -0.018em;
+  }
+
+  h1 .second { display: block; color: #cfe2f0; font-weight: 400; }
+
+  p {
+    margin-top: 26px;
+    font-size: 23px;
+    line-height: 1.42;
+    font-weight: 300;
+    color: #b9cfe2;
+    max-width: 27ch;
+  }
+
+  /* The badge, at the size it will actually be recognised at on a store shelf:
+     the same rounded square as public/icon-512.png, not a redrawn one. */
+  .mark {
+    flex: 0 0 auto;
+    width: 256px;
+    height: 256px;
+    border-radius: 56px;
+    background: #10456a;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22);
+    display: grid;
+    place-items: center;
+  }
+
+  .mark svg { width: 176px; height: 176px; }
+
+  .watermark {
+    position: absolute;
+    left: 76px;
+    bottom: 34px;
+    font-family: 'Fira Mono', ui-monospace, monospace;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    color: #6b8ba6;
+  }
+</style>
+
+<div class="words">
+  <div class="eyebrow">Staff app · Crete</div>
+  <h1>International<span class="second">Rentals</span></h1>
+  <p>Availability, bookings, pickups and returns. One phone, at the desk, with the guest still standing there.</p>
+</div>
+
+<div class="mark">
+  <svg viewBox="0 0 64 64" aria-hidden="true">
+    <path d="M12 39h40M17 39l4-11a5 5 0 0 1 4.7-3.4h12.6A5 5 0 0 1 43 28l4 11"
+          fill="none" stroke="#ffffff" stroke-width="4"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="22" cy="43" r="4" fill="#ffffff"/>
+    <circle cx="42" cy="43" r="4" fill="#ffffff"/>
+  </svg>
+</div>
+
+<div class="watermark">Akos Digital Services · akosds.com</div>
