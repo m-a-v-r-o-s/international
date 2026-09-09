@@ -15,6 +15,7 @@ rent-a-car company with ~100 cars, one boss and 6–10 hotel-based reps.
 | `docs/03-SECURITY.md` | Permission matrix, RLS model, threat model | Before any endpoint or query |
 | `docs/04-SCREENS.md` | Screen-by-screen inventory | Before any UI work |
 | `docs/05-BUILD-PLAN.md` | Phases, order, required tests, risks | To know what to pick up |
+| `docs/08-PLAY-STORE.md` | Getting the TWA into the Play Store, split into what an agent can do and what only Akos can | Phase 5, and its Part C starts now |
 | `db/schema.sql` | Reference schema draft | Phase 1 |
 
 ## The five things that will sink this project if you get them wrong
