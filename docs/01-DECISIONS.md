@@ -226,8 +226,16 @@ Today's movements sheet · live fleet board · full booking search · simple rev
 > keeping the free-tier Supabase project awake.
 
 ## 23. Platform
-**Android only.** A Next.js web app **wrapped as a Trusted Web Activity** and published to
-the Play Store. The boss additionally uses it in a desktop browser.
+**Android only.** A Next.js web app, **installed from Chrome as a web app** (Menu ⋮ →
+Install app). No Play Store. The boss additionally uses it in a desktop browser.
+
+Changed 26 Sep 2026 (Akos). The Play Store plan (`docs/08-PLAY-STORE.md`) was a TWA, which
+is Chrome showing the same site full screen, so the Chrome install behaves the same. It also
+drops the $25 account, the verification, the D-U-N-S number and the store review, all of
+which bought nothing for 8 to 15 staff installing from a link. Deploys reach everyone on
+their next open. The manifest and icons from Part A are what make the install work. If the
+Chrome install ever causes trouble, the fallback is a Bubblewrap APK sent to each phone
+directly, not the store.
 **Online connection required** — with safe retention of an in-progress form if signal drops.
 
 ## 24. Language

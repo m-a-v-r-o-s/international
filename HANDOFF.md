@@ -15,7 +15,7 @@ rent-a-car company with ~100 cars, one boss and 6–10 hotel-based reps.
 | `docs/03-SECURITY.md` | Permission matrix, RLS model, threat model | Before any endpoint or query |
 | `docs/04-SCREENS.md` | Screen-by-screen inventory | Before any UI work |
 | `docs/05-BUILD-PLAN.md` | Phases, order, required tests, risks | To know what to pick up |
-| `docs/08-PLAY-STORE.md` | Getting the TWA into the Play Store, split into what an agent can do and what only Akos can | Phase 5, and its Part C starts now |
+| `docs/08-PLAY-STORE.md` | **Shelved.** The Play Store plan, replaced by the Chrome install (DECISIONS §23) | Only if the store comes back |
 | `db/schema.sql` | Reference schema draft | Phase 1 |
 
 ## The five things that will sink this project if you get them wrong
@@ -36,8 +36,8 @@ rent-a-car company with ~100 cars, one boss and 6–10 hotel-based reps.
 
 ## Working rules
 
-**Stack is decided** — Next.js App Router + TypeScript, Supabase, Railway, deployed to the
-Play Store as a TWA. Do not substitute. If you believe a decision is wrong, say so in your
+**Stack is decided** — Next.js App Router + TypeScript, Supabase, Railway, installed on Android
+from Chrome as a web app (no store). Do not substitute. If you believe a decision is wrong, say so in your
 report; do not quietly build something else.
 
 **Authorisation lives in the database.** Every table has RLS on with real policies. A route

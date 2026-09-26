@@ -1,5 +1,9 @@
 # Play Store publication
 
+> **Shelved 26 Sep 2026.** Replaced by installing from Chrome, see `docs/01-DECISIONS.md`
+> §23. Part A stays useful: the manifest and icons are what the Chrome install reads. Parts
+> B and C are not needed. Kept in case the store is ever wanted.
+
 **Read `HANDOFF.md` and `docs/01-DECISIONS.md` §23 before this file.** The platform
 decision is already made and is not reopened here: a Next.js app wrapped as a Trusted Web
 Activity, Android only, the boss additionally on desktop.

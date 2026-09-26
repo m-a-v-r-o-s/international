@@ -7,11 +7,11 @@
 | App | **Next.js (App Router, TypeScript)** | Server-side authorisation on every request, server-only price + availability logic, one codebase for phone and the boss's desktop |
 | Hosting | **Railway** | Standing default |
 | Data / auth / storage | **Supabase** (Postgres, Auth, Storage, RLS) | Standing default; RLS is the backbone of the rep-isolation rule |
-| Android app | **Trusted Web Activity** via Bubblewrap → Play Store | Play listing without a second codebase; updates deploy instantly, no store review |
+| Android app | **Installed web app** from Chrome, via `public/manifest.webmanifest` | No second codebase, no store; updates deploy instantly (DECISIONS §23) |
 | OCR | **Claude vision** (`claude-sonnet-5`) server-side | Licence read; never called from the browser |
 | PDF | **@react-pdf/renderer** + Noto Sans (Greek + Latin glyphs) | Deterministic, no headless browser on Railway, handles bilingual text and the damage diagram |
 | Signature | HTML canvas → PNG → embedded in the PDF | No dependency needed |
-| Push | Web Push (VAPID) — works in a TWA on Android | Rep day reminders, admin incidents |
+| Push | Web Push (VAPID) — works in an installed web app on Android | Rep day reminders, admin incidents |
 | i18n | `next-intl` | Greek / English, per-user preference |
 
 **Escalation justified:** this is not a static site. It needs authenticated multi-user
@@ -20,7 +20,7 @@ LLM call. Next.js is the correct rung on the ladder here, not the reflexive one.
 
 ### Why NOT React Native
 A second codebase for a single-boss desktop view, plus a Play review queue on every
-mid-season bugfix. A TWA gives the Play listing, the camera and push, with instant deploys.
+mid-season bugfix. The installed web app gives the camera and push, with instant deploys.
 
 ---
 

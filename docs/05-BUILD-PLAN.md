@@ -16,10 +16,10 @@ Ranked by what must be right before anyone can judge the system:
 3. The pickup and return flows — where the reps live all day
 4. The contract PDF and signature — the actual paper replacement
 5. Licence OCR — a convenience over manual entry, which always works
-6. Reports, push, Play Store listing — valuable, not load-bearing for a test
+6. Reports, push — valuable, not load-bearing for a test
 
 **If something must give, it gives from the bottom.** OCR degrades gracefully to typing.
-The TWA wrapper can be added any time without touching the app. Reports can wait for real
+Reports can wait for real
 data to exist.
 
 ---
@@ -75,10 +75,9 @@ screen when it was needed, what the reps worked around.
 - Act on pilot feedback — this is the point of the October date, so leave real room for it.
 - Reports (A7) and CSV export, once genuine data has accumulated.
 - Push notifications: rep day reminders, admin incidents.
-- TWA wrapper, Play Store listing and internal-testing track. The execution
-  plan is `docs/08-PLAY-STORE.md`, split into what an agent can do, what waits
-  for the domain, and what only Akos can do in a browser. Part A is done: the
-  manifest, the icons, the store assets and the listing copy are in the repo.
+- Install on the reps' phones from Chrome once the domain is live (DECISIONS §23).
+  The Play Store plan in `docs/08-PLAY-STORE.md` is shelved; its manifest and
+  icons are what the Chrome install uses.
 - Retention purge job, privacy/terms/cookie components, 404, favicon, OG image.
 - WCAG 2.1 AA audit. Core Web Vitals verification on a real mid-range Android on 4G.
 - Load test the movements sheet at 200 rows and the availability screen at 100 cars.
@@ -136,5 +135,4 @@ feature — do not spend it early.
 | OCR accuracy on worn or non-EU licences | Manual entry is a first-class path, not a fallback screen. Never let OCR block a pickup |
 | Reps work around the app under pressure | One-hotel pilot in parallel with paper; watch what they actually do |
 | A rep discovers an aggregate the design didn't anticipate | The isolation test suite above runs in CI on every change |
-| Play Store review delays near launch | TWA means bugfixes deploy as web updates and bypass review entirely |
 | Peak-season load (200 movements/day) | Indexed queries, load-tested in Phase 5, well before May |
