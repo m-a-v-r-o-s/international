@@ -106,14 +106,16 @@ describe('quoting fails loudly rather than guessing', () => {
     expect(await errcode(() => quote(f.catA, '2026-05-01', '2026-05-03'))).toBe('IR100')
   })
 
-  test('a pickup date covered by two periods', async () => {
-    // Two seasons defined over the same dates is a data error, not a choice to
-    // make on the customer's behalf.
-    await db.sql(
-      `insert into public.pricing_periods (season_year, name, start_date, end_date)
-       values (2027, 'Overlapping', '2026-07-01', '2026-07-31')`)
-    expect(await errcode(() => quote(f.catA, '2026-07-06', '2026-07-08'))).toBe('IR101')
-    await db.sql(`delete from public.pricing_periods where season_year = 2027`)
+  test('a pickup date covered by two periods cannot even be set up', async () => {
+    // Two sheets over the same dates is a data error, not a choice to make on
+    // the customer's behalf. It is refused when saved, even across seasons, so
+    // quote()'s IR101 branch is now only a backstop.
+    const other = await db.one<{ id: string }>(
+      `insert into public.pricing_periods (season_year, name) values (2027, 'Overlapping') returning id`)
+    expect(await errcode(() => db.sql(
+      `insert into public.pricing_period_ranges (period_id, start_date, end_date)
+       values ($1, '2026-07-01', '2026-07-31')`, [other.id]))).toBe('23P01')
+    await db.sql(`delete from public.pricing_periods where id = $1`, [other.id])
   })
 
   test('a duration with no price row', async () => {

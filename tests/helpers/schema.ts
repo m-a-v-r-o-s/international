@@ -24,7 +24,8 @@ export async function applySchema(client: Client): Promise<void> {
     try {
       await client.query(sql)
     } catch (err) {
-      throw new Error(`migration ${file} failed: ${(err as Error).message}`)
+      const detail = (err as { detail?: string }).detail
+      throw new Error(`migration ${file} failed: ${(err as Error).message}${detail ? `\n${detail}` : ''}`)
     }
   }
 }

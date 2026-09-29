@@ -83,13 +83,19 @@ on conflict do nothing;
 -- One season, four periods, roughly the shape described in
 -- docs/01-DECISIONS.md §6 — low start, mid, peak, low end. The DATES are a
 -- guess and the MONEY is invented.
-insert into public.pricing_periods (season_year, name, start_date, end_date)
-values
-  (2027, 'Low start — PLACEHOLDER', '2027-05-01', '2027-06-15'),
-  (2027, 'Mid — PLACEHOLDER',       '2027-06-16', '2027-07-31'),
-  (2027, 'Peak — PLACEHOLDER',      '2027-08-01', '2027-09-15'),
-  (2027, 'Low end — PLACEHOLDER',   '2027-09-16', '2027-10-31')
-on conflict do nothing;
+with sheets(name, start_date, end_date) as (values
+  ('Low start — PLACEHOLDER', date '2027-05-01', date '2027-06-15'),
+  ('Mid — PLACEHOLDER',       date '2027-06-16', date '2027-07-31'),
+  ('Peak — PLACEHOLDER',      date '2027-08-01', date '2027-09-15'),
+  ('Low end — PLACEHOLDER',   date '2027-09-16', date '2027-10-31')
+), inserted as (
+  insert into public.pricing_periods (season_year, name)
+  select 2027, name from sheets
+  where not exists (select 1 from public.pricing_periods p where p.season_year = 2027 and p.name = sheets.name)
+  returning id, name
+)
+insert into public.pricing_period_ranges (period_id, start_date, end_date)
+select i.id, s.start_date, s.end_date from inserted i join sheets s using (name);
 
 -- Totals for 1–7 days, plus the per-extra-day rate for 8+.
 -- These are placeholders with a plausible shape only: the per-day rate eases off

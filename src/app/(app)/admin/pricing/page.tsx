@@ -3,12 +3,13 @@ import { getTranslations } from 'next-intl/server'
 import { requireAdmin } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
 import { Disclosure } from '@/components/Disclosure'
-import { PeriodForm } from './PeriodForm'
+import { AdjustPricesForm, PeriodForm, PeriodRanges } from './PeriodForm'
 import { PriceGridRow, PricePreview, type ExtraDayData, type PriceRowData } from './PriceGrid'
 import { BulkPasteForm } from './BulkPasteForm'
 import type { CategoryRow, Database } from '@/lib/supabase/database.types'
 
 type PeriodRow = Database['public']['Tables']['pricing_periods']['Row']
+type RangeRow = Database['public']['Tables']['pricing_period_ranges']['Row']
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('admin.pricing')
@@ -29,9 +30,9 @@ export default async function PricingPage() {
 
   const [{ data: periods }, { data: categories }] = await Promise.all([
     supabase.from('pricing_periods')
-      .select('id, season_year, name, start_date, end_date, created_at')
+      .select('id, season_year, name, created_at')
       .order('season_year', { ascending: false })
-      .order('start_date'),
+      .order('name'),
     supabase.from('categories')
       .select('id, code, name_el, name_en, min_driver_age, min_licence_years, sort_order')
       .order('sort_order'),
@@ -50,12 +51,19 @@ export default async function PricingPage() {
   }
 
   const periodIds = allPeriods.map((p) => p.id)
-  const [{ data: rows }, { data: extras }] = periodIds.length > 0
+  const [{ data: rows }, { data: extras }, { data: ranges }] = periodIds.length > 0
     ? await Promise.all([
         supabase.from('price_rows').select('period_id, category_id, days, total').in('period_id', periodIds),
         supabase.from('price_extra_day').select('period_id, category_id, price').in('period_id', periodIds),
+        supabase.from('pricing_period_ranges').select('id, period_id, start_date, end_date, created_at')
+          .in('period_id', periodIds).order('start_date'),
       ])
-    : [{ data: [] }, { data: [] }]
+    : [{ data: [] }, { data: [] }, { data: [] }]
+
+  const rangesByPeriod = new Map<string, RangeRow[]>()
+  for (const r of (ranges ?? []) as RangeRow[]) {
+    rangesByPeriod.set(r.period_id, [...(rangesByPeriod.get(r.period_id) ?? []), r])
+  }
 
   const rowsByPeriod = new Map<string, PriceRowData[]>()
   for (const r of (rows ?? []) as (PriceRowData & { period_id: string })[]) {
@@ -88,11 +96,16 @@ export default async function PricingPage() {
               <h2 className="text-[1.25rem] font-semibold">
                 {period.name} <span className="font-normal text-ink-soft">{period.season_year}</span>
               </h2>
-              <p className="text-[0.875rem] text-ink-soft">{period.start_date} → {period.end_date}</p>
             </div>
+
+            <PeriodRanges periodId={period.id} ranges={rangesByPeriod.get(period.id) ?? []} />
 
             <Disclosure summary={t('editPeriod')}>
               <PeriodForm period={period} />
+            </Disclosure>
+
+            <Disclosure summary={t('adjust')}>
+              <AdjustPricesForm periodId={period.id} />
             </Disclosure>
 
             <Disclosure summary={t('bulkPaste')}>

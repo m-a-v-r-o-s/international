@@ -30,8 +30,10 @@ beforeAll(async () => {
   // refusing to guess. So the history the purge sweeps gets the price table it
   // would really have had, rather than the trigger being switched off.
   const historic = await db.one<{ id: string }>(
-    `insert into public.pricing_periods (season_year, name, start_date, end_date)
-     values (2020, 'Archive', '2020-01-01', '2026-05-31') returning id`)
+    `insert into public.pricing_periods (season_year, name) values (2020, 'Archive') returning id`)
+  await db.sql(
+    `insert into public.pricing_period_ranges (period_id, start_date, end_date)
+     values ($1, '2020-01-01', '2026-05-31')`, [historic.id])
   const table = [[1, 30], [2, 55], [3, 80], [4, 100],
                  [5, 120], [6, 135], [7, 150]] as const
   for (const [days, euros] of table) {

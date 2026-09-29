@@ -16,31 +16,29 @@ const yearSchema = z.coerce.number().int().min(2020).max(2100)
 const nameSchema = z.string().trim().min(1).max(60)
 
 /**
- * A4 · Pricing periods — arbitrary date ranges, re-editable every season
- * (docs/01-DECISIONS.md §6). Nothing about months or season boundaries is
- * hard-coded; the exclusion constraint on `pricing_periods` is what actually
- * prevents two periods in one season overlapping — this action just surfaces
- * the resulting error.
+ * A4 · Price sheets (docs/01-DECISIONS.md §6). A sheet is a name, a season
+ * and its prices; WHEN it applies lives in `pricing_period_ranges`, any number
+ * of stretches per sheet, so May and October can share one set of numbers.
+ * A sheet with no ranges is a draft the quote engine never picks. The
+ * exclusion constraint on the ranges is what stops two sheets claiming one
+ * date; these actions just surface the resulting error.
  */
+function parsePeriod(formData: FormData) {
+  const parsed = z.object({ season_year: yearSchema, name: nameSchema }).safeParse({
+    season_year: formData.get('season_year'),
+    name: formData.get('name'),
+  })
+  return parsed.success ? parsed.data : null
+}
+
 export async function createPeriod(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin()
 
-  const parsed = z.object({
-    season_year: yearSchema,
-    name: nameSchema,
-    start_date: dateSchema,
-    end_date: dateSchema,
-  }).safeParse({
-    season_year: formData.get('season_year'),
-    name: formData.get('name'),
-    start_date: formData.get('start_date'),
-    end_date: formData.get('end_date'),
-  })
-  if (!parsed.success) return { error: 'IR104' }
-  if (parsed.data.end_date < parsed.data.start_date) return { error: 'IR104' }
+  const period = parsePeriod(formData)
+  if (!period) return { error: 'IR104' }
 
   const supabase = await supabaseServer()
-  const { error } = await supabase.from('pricing_periods').insert(parsed.data)
+  const { error } = await supabase.from('pricing_periods').insert(period)
 
   if (error) return { error: errorKey(error) }
 
@@ -51,25 +49,50 @@ export async function createPeriod(_prev: FormState, formData: FormData): Promis
 export async function updatePeriod(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin()
 
+  const id = uuidSchema.safeParse(formData.get('id'))
+  const period = parsePeriod(formData)
+  if (!id.success || !period) return { error: 'IR104' }
+
+  const supabase = await supabaseServer()
+  const { error } = await supabase.from('pricing_periods').update(period).eq('id', id.data)
+
+  if (error) return { error: errorKey(error) }
+
+  revalidatePath('/admin/pricing')
+  return undefined
+}
+
+export async function addPeriodRange(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin()
+
   const parsed = z.object({
-    id: uuidSchema,
-    season_year: yearSchema,
-    name: nameSchema,
+    period_id: uuidSchema,
     start_date: dateSchema,
     end_date: dateSchema,
   }).safeParse({
-    id: formData.get('id'),
-    season_year: formData.get('season_year'),
-    name: formData.get('name'),
+    period_id: formData.get('period_id'),
     start_date: formData.get('start_date'),
     end_date: formData.get('end_date'),
   })
   if (!parsed.success) return { error: 'IR104' }
   if (parsed.data.end_date < parsed.data.start_date) return { error: 'IR104' }
 
-  const { id, ...rest } = parsed.data
   const supabase = await supabaseServer()
-  const { error } = await supabase.from('pricing_periods').update(rest).eq('id', id)
+  const { error } = await supabase.from('pricing_period_ranges').insert(parsed.data)
+
+  if (error) return { error: errorKey(error) }
+
+  revalidatePath('/admin/pricing')
+  return undefined
+}
+
+export async function deletePeriodRange(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin()
+  const id = uuidSchema.safeParse(formData.get('id'))
+  if (!id.success) return { error: 'IR104' }
+
+  const supabase = await supabaseServer()
+  const { error } = await supabase.from('pricing_period_ranges').delete().eq('id', id.data)
 
   if (error) return { error: errorKey(error) }
 
@@ -233,6 +256,34 @@ export async function bulkPastePrices(
   const { error: extraErr } = await supabase.from('price_extra_day')
     .upsert(extras, { onConflict: 'period_id,category_id' })
   if (extraErr) return { error: errorKey(extraErr) }
+
+  revalidatePath('/admin/pricing')
+  return undefined
+}
+
+/**
+ * "+€5 on everything": adds a whole-euro amount (negative lowers) to every
+ * total and extra-day rate on one sheet, atomically, in the database.
+ */
+export async function adjustPeriodPrices(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin()
+
+  const parsed = z.object({
+    period_id: uuidSchema,
+    delta: z.coerce.number().int().min(-1000).max(1000).refine((n) => n !== 0),
+  }).safeParse({
+    period_id: formData.get('period_id'),
+    delta: formData.get('delta'),
+  })
+  if (!parsed.success) return { error: 'IR104' }
+
+  const supabase = await supabaseServer()
+  const { error } = await supabase.rpc('adjust_period_prices', {
+    p_period_id: parsed.data.period_id,
+    p_delta: parsed.data.delta,
+  })
+
+  if (error) return { error: errorKey(error) }
 
   revalidatePath('/admin/pricing')
   return undefined

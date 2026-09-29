@@ -1088,30 +1088,56 @@ export type Database = {
           },
         ]
       }
-      pricing_periods: {
+      pricing_period_ranges: {
         Row: {
           created_at: string
           end_date: string
           id: string
-          name: string
-          season_year: number
+          period_id: string
           start_date: string
         }
         Insert: {
           created_at?: string
           end_date: string
           id?: string
-          name: string
-          season_year: number
+          period_id: string
           start_date: string
         }
         Update: {
           created_at?: string
           end_date?: string
           id?: string
+          period_id?: string
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_period_ranges_period_id_fkey"
+            columns: ["period_id"]
+            isOneToOne: false
+            referencedRelation: "pricing_periods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pricing_periods: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          season_year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          season_year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
           name?: string
           season_year?: number
-          start_date?: string
         }
         Relationships: []
       }
@@ -1537,6 +1563,10 @@ export type Database = {
           lang: string
           profile_id: string
         }[]
+      }
+      adjust_period_prices: {
+        Args: { p_delta: number; p_period_id: string }
+        Returns: undefined
       }
       quote: {
         Args: { p_category_id: string; p_end: string; p_start: string }

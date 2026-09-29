@@ -105,10 +105,13 @@ async function insertCar(db: TestDb, plate: string, modelId: string) {
 async function insertPeriod(
   db: TestDb, year: number, name: string, start: string, end: string,
 ) {
-  return insertReturningId(db,
-    `insert into public.pricing_periods (season_year, name, start_date, end_date)
-     values ($1, $2, $3, $4) returning id`,
-    [year, name, start, end])
+  const id = await insertReturningId(db,
+    `insert into public.pricing_periods (season_year, name) values ($1, $2) returning id`,
+    [year, name])
+  await db.sql(
+    `insert into public.pricing_period_ranges (period_id, start_date, end_date) values ($1, $2, $3)`,
+    [id, start, end])
+  return id
 }
 
 async function insertPrices(

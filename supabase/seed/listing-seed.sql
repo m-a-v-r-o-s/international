@@ -171,11 +171,17 @@ begin
   -- ── Pricing ───────────────────────────────────────────────────────────────
   -- Four bands over the whole calendar year rather than a May-to-October
   -- season, so that a quote resolves whenever these screenshots are retaken.
-  insert into public.pricing_periods (season_year, name, start_date, end_date) values
-    (v_year, 'Χαμηλή περίοδος', make_date(v_year,  1,  1), make_date(v_year,  5, 31)),
-    (v_year, 'Μεσαία περίοδος', make_date(v_year,  6,  1), make_date(v_year,  7, 15)),
-    (v_year, 'Υψηλή περίοδος',  make_date(v_year,  7, 16), make_date(v_year,  9, 10)),
-    (v_year, 'Τέλος σεζόν',     make_date(v_year,  9, 11), make_date(v_year, 12, 31));
+  with sheets(name, start_date, end_date) as (values
+    ('Χαμηλή περίοδος', make_date(v_year,  1,  1), make_date(v_year,  5, 31)),
+    ('Μεσαία περίοδος', make_date(v_year,  6,  1), make_date(v_year,  7, 15)),
+    ('Υψηλή περίοδος',  make_date(v_year,  7, 16), make_date(v_year,  9, 10)),
+    ('Τέλος σεζόν',     make_date(v_year,  9, 11), make_date(v_year, 12, 31))
+  ), inserted as (
+    insert into public.pricing_periods (season_year, name)
+    select v_year, name from sheets returning id, name
+  )
+  insert into public.pricing_period_ranges (period_id, start_date, end_date)
+  select i.id, s.start_date, s.end_date from inserted i join sheets s using (name);
 
   select id into v_low  from public.pricing_periods where name = 'Χαμηλή περίοδος';
   select id into v_mid  from public.pricing_periods where name = 'Μεσαία περίοδος';

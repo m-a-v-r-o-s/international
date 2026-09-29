@@ -23,8 +23,10 @@ describe('a rep cannot touch pricing at all', () => {
     await db.asUser(f.repA, async () => {
       expect(await db.sql(`select id from public.pricing_periods`)).toEqual([])
       expect(await errcode(() => db.sql(
-        `insert into public.pricing_periods (season_year, name, start_date, end_date)
-         values (2026, 'Mine', '2026-10-01', '2026-10-31')`))).toBe('42501')
+        `insert into public.pricing_periods (season_year, name) values (2026, 'Mine')`))).toBe('42501')
+      expect(await errcode(() => db.sql(
+        `insert into public.pricing_period_ranges (period_id, start_date, end_date)
+         values ($1, '2026-10-01', '2026-10-31')`, [f.low]))).toBe('42501')
       expect(await errcode(() => db.sql(
         `insert into public.price_rows (period_id, category_id, days, total)
          values ($1, $2, 1, 1)`, [f.low, f.catA]))).toBe('42501')
@@ -38,8 +40,10 @@ describe('a rep cannot touch pricing at all', () => {
 describe('the admin can manage periods and the grid', () => {
   test('add a period, then a full week of totals and the extra-day rate for one category', async () => {
     const period = await db.asUser(f.admin, () => db.one<{ id: string }>(
-      `insert into public.pricing_periods (season_year, name, start_date, end_date)
-       values (2027, 'Test season', '2027-06-01', '2027-06-30') returning id`))
+      `insert into public.pricing_periods (season_year, name) values (2027, 'Test season') returning id`))
+    await db.asUser(f.admin, () => db.sql(
+      `insert into public.pricing_period_ranges (period_id, start_date, end_date)
+       values ($1, '2027-06-01', '2027-06-30')`, [period.id]))
 
     for (let day = 1; day <= 7; day++) {
       await db.asUser(f.admin, () => db.sql(
@@ -73,17 +77,15 @@ describe('the admin can manage periods and the grid', () => {
     expect(row.total).toBe(40)
   })
 
-  test('two periods in the same season cannot overlap', async () => {
-    expect(await errcode(() => db.asUser(f.admin, () => db.sql(
-      `insert into public.pricing_periods (season_year, name, start_date, end_date)
-       values (2026, 'Clashes with Peak', '2026-08-15', '2026-09-15')`)))).toBe('23P01')
-  })
-
-  test('the same date range in a different season is fine', async () => {
-    const row = await db.asUser(f.admin, () => db.one<{ id: string }>(
-      `insert into public.pricing_periods (season_year, name, start_date, end_date)
-       values (2027, 'Same dates, different season', '2026-08-01', '2026-08-31') returning id`))
-    expect(row.id).toBeTruthy()
+  test('two sheets cannot cover the same date, whatever season they are filed under', async () => {
+    for (const season of [2026, 2027]) {
+      const sheet = await db.asUser(f.admin, () => db.one<{ id: string }>(
+        `insert into public.pricing_periods (season_year, name) values ($1, 'Clashes with Peak') returning id`,
+        [season]))
+      expect(await errcode(() => db.asUser(f.admin, () => db.sql(
+        `insert into public.pricing_period_ranges (period_id, start_date, end_date)
+         values ($1, '2026-08-15', '2026-09-15')`, [sheet.id])))).toBe('23P01')
+    }
   })
 })
 
@@ -116,5 +118,62 @@ describe('quoting fails loudly rather than guessing', () => {
   test('a pickup date outside every defined period is IR100, not a fallback price', async () => {
     expect(await errcode(() => db.asUser(f.admin, () => db.sql(
       `select * from public.quote($1, '2099-01-01', '2099-01-03')`, [f.catA])))).toBe('IR100')
+  })
+})
+
+describe('price sheets: undated drafts and whole-sheet adjustment', () => {
+  test('a sheet with no dates is a draft: it prices nothing', async () => {
+    const draft = await db.asUser(f.admin, () => db.one<{ id: string }>(
+      `insert into public.pricing_periods (season_year, name) values (2026, 'Draft') returning id`))
+    await db.asUser(f.admin, () => db.sql(
+      `insert into public.price_rows (period_id, category_id, days, total) values ($1, $2, 1, 999)`,
+      [draft.id, f.catA]))
+
+    expect(await errcode(() => db.asUser(f.admin, () => db.sql(
+      `select * from public.quote($1, '2029-05-10', '2029-05-10')`, [f.catA])))).toBe('IR100')
+  })
+
+  test('one sheet, two separate stretches: both price from the same numbers', async () => {
+    const sheet = await db.asUser(f.admin, () => db.one<{ id: string }>(
+      `insert into public.pricing_periods (season_year, name) values (2029, 'Shoulder') returning id`))
+    await db.asUser(f.admin, () => db.sql(
+      `insert into public.pricing_period_ranges (period_id, start_date, end_date)
+       values ($1, '2029-05-01', '2029-05-31'), ($1, '2029-10-01', '2029-10-31')`, [sheet.id]))
+    await db.asUser(f.admin, () => db.sql(
+      `insert into public.price_rows (period_id, category_id, days, total) values ($1, $2, 1, 60)`,
+      [sheet.id, f.catA]))
+
+    for (const day of ['2029-05-10', '2029-10-10']) {
+      const q = await db.asUser(f.admin, () => db.one<{ total: number; period_id: string }>(
+        `select total, period_id from public.quote($1, $2, $2)`, [f.catA, day]))
+      expect(q).toEqual({ total: 60, period_id: sheet.id })
+    }
+  })
+
+  test('+5 moves every total and extra-day rate on one sheet, and no other sheet', async () => {
+    const snapshot = (period: string) => db.sql<{ n: number }>(
+      `select total as n from public.price_rows where period_id = $1
+       union all select price from public.price_extra_day where period_id = $1
+       order by 1`, [period])
+    const low = await snapshot(f.low)
+    const peak = await snapshot(f.peak)
+
+    await db.asUser(f.admin, () => db.sql(`select public.adjust_period_prices($1, 5)`, [f.low]))
+
+    expect(await snapshot(f.low)).toEqual(low.map((r) => ({ n: r.n + 5 })))
+    expect(await snapshot(f.peak)).toEqual(peak)
+
+    await db.asUser(f.admin, () => db.sql(`select public.adjust_period_prices($1, -5)`, [f.low]))
+    expect(await snapshot(f.low)).toEqual(low)
+  })
+
+  test('going below zero refuses the whole sheet, and a rep cannot adjust at all', async () => {
+    const low = await db.sql(`select total from public.price_rows where period_id = $1 order by 1`, [f.low])
+    expect(await errcode(() => db.asUser(f.admin, () => db.sql(
+      `select public.adjust_period_prices($1, -100000)`, [f.low])))).toBe('IR104')
+    expect(await db.sql(`select total from public.price_rows where period_id = $1 order by 1`, [f.low])).toEqual(low)
+
+    expect(await errcode(() => db.asUser(f.repA, () => db.sql(
+      `select public.adjust_period_prices($1, 5)`, [f.low])))).not.toBeNull()
   })
 })
