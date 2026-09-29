@@ -23,7 +23,7 @@ import { absoluteUrl } from './lib/http/publicUrl'
  * `robots: noindex`.
  */
 const PUBLIC_PATHS = [
-  '/login', '/privacy', '/signed-out', '/session/resume', '/accountant-questionnaire',
+  '/login', '/privacy', '/signed-out', '/session/resume', '/accountant-questionnaire', '/health',
 ]
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])

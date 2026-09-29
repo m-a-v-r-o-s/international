@@ -167,6 +167,10 @@ Run this before the first rep of the new season needs to sign in.
 8. **Confirm the `keep-alive` cron is still green** in the Railway dashboard
    — its last run should be within the last few minutes. Nothing else to
    smoke-test here: there is no notification path left to go stale.
+9. **Confirm the uptime monitor is still watching** and its alert email
+   still reaches someone. It checks `https://app.internationalrentals.gr/health`,
+   which answers 200 `ok` only when the app can read the database and 503
+   otherwise, so a paused Supabase alerts the same as a dead server.
 
 ## Scope note
 
