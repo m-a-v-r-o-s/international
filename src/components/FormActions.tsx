@@ -84,6 +84,7 @@ export function FormActions({
   const baseline = useRef('')
   const wasPending = useRef(false)
   const [changed, setChanged] = useState(false)
+  const [inPanel, setInPanel] = useState(false)
   const { pending } = useFormStatus()
 
   const formOf = useCallback(() => anchor.current?.closest('form') ?? null, [])
@@ -98,6 +99,7 @@ export function FormActions({
     if (!form) return
     baseline.current = snapshot(form)
     setChanged(false)
+    setInPanel(Boolean(form.closest('details')))
     form.addEventListener('input', measure)
     form.addEventListener('change', measure)
     return () => {
@@ -129,11 +131,15 @@ export function FormActions({
           type="button"
           className="ir-btn-quiet"
           onClick={() => {
-            formOf()?.reset()
+            const form = formOf()
+            form?.reset()
+            // Inside a Disclosure, cancelling also folds the panel away.
+            const panel = form?.closest('details')
+            if (panel) panel.open = false
             onCancel?.()
             measure()
           }}
-          disabled={pending || (!changed && !onCancel)}
+          disabled={pending || (!changed && !onCancel && !inPanel)}
         >
           {cancelLabel ?? tc('cancel')}
         </button>
