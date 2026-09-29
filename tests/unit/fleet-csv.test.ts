@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { parseFleetCsv, toFleetCsv } from '../../src/lib/fleet/csv'
+import { parseFleetCsv, toCsv } from '../../src/lib/fleet/csv'
 
 describe('the fleet import', () => {
   test('reads the agreed columns', () => {
@@ -81,9 +81,9 @@ describe('plate normalisation', () => {
   })
 })
 
-describe('toFleetCsv', () => {
+describe('toCsv', () => {
   test('round-trips through parseFleetCsv', () => {
-    const csv = toFleetCsv(
+    const csv = toCsv(
       ['Πινακίδα', 'Μάρκα', 'Μοντέλο', 'Έτος', 'Χρώμα', 'Σταθμός'],
       [['KXZ 8287', 'Fiat', 'Panda; 4x4', 2022, null, '=cmd']],
     )

@@ -49,6 +49,7 @@ export async function send(message: {
   to: string
   subject: string
   text: string
+  html?: string
   attachments?: Attachment[]
 }): Promise<MailResult> {
   const config = smtpConfig()
@@ -76,6 +77,7 @@ export async function send(message: {
       to: message.to,
       subject: message.subject,
       text: message.text,
+      html: message.html,
       attachments: message.attachments?.map((a) => ({
         filename: a.filename,
         content: Buffer.from(a.content),

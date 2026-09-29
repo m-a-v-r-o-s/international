@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
 import { todayAthens } from '@/lib/dates'
-import { toFleetCsv } from '@/lib/fleet/csv'
+import { toCsv } from '@/lib/fleet/csv'
 
 /**
  * The whole fleet as a spreadsheet, so the client's original Excel can be
@@ -40,7 +40,7 @@ export async function GET() {
       ]
     })
 
-  const csv = toFleetCsv([
+  const csv = toCsv([
     'Πινακίδα', 'Μάρκα', 'Μοντέλο', 'Έτος', 'Χρώμα',
     'Group', 'Κιβώτιο', 'Καύσιμο', 'Θέσεις', 'Πόρτες', 'Ρεζερβουάρ (λ)', 'Κυβικά', 'Ίπποι',
     'Σταθμός', 'Αρχειοθετήθηκε',

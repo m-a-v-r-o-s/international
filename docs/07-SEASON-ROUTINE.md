@@ -172,6 +172,34 @@ Run this before the first rep of the new season needs to sign in.
    which answers 200 `ok` only when the app can read the database and 503
    otherwise, so a paused Supabase alerts the same as a dead server.
 
+## Outage sheet
+
+`scripts/outage-sheet.ts` (`npm run outage-sheet`) emails the owner, every
+evening, what he needs to run the next 48 hours on paper if the app is down:
+pickups, returns, cars out, cars free for the whole window, reps' phones, and
+what to do. HTML tables in the body, the same rows as a CSV attachment. It is
+sent before an outage because a dead app cannot read its own bookings; when
+the uptime monitor on `/health` alerts, the answer is "open last night's
+sheet". A night with no pickups, returns or cars out sends nothing.
+
+**Built but off (decided 30 Sep 2026: not started yet).** To switch it on:
+
+1. Resend: verify `internationalrentals.gr`, create an API key, and set on the
+   `international` service `SMTP_HOST=smtp.resend.com`, `SMTP_PORT=465`,
+   `SMTP_USER=resend`, `SMTP_PASSWORD=<api key>`,
+   `SMTP_FROM=International Rentals <noreply@internationalrentals.gr>`. This
+   also turns on the guest confirmation and agreement emails, which read the
+   same variables.
+2. Create a Railway cron service `outage-sheet`, same shape as `keep-alive`
+   (build command `true`, restart policy `NEVER`, variables as
+   `${{international.…}}` references including the five `SMTP_*`), start
+   command `npm run outage-sheet`, schedule `0 17 * * *` (Railway schedules in
+   UTC: 20:00 Athens in summer, 19:00 in winter).
+3. Set `OUTAGE_SHEET_TO=nikosrentals@gmail.com` on that service only. Without
+   it the job logs `off` and exits 0.
+4. Check a run's log says `sent` or `nothing in the next 48 hours`. A missing
+   SMTP config fails the run on purpose.
+
 ## Scope note
 
 This is deliberately a checklist, not a feature. Nothing above needed new

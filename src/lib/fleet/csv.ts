@@ -213,7 +213,7 @@ function mapColumns(header: string[]): Partial<Record<keyof Omit<FleetRow, 'line
  * A cell starting with = + - @ is prefixed with ' so Excel shows it as text
  * rather than running it as a formula.
  */
-export function toFleetCsv(header: string[], rows: (string | number | null)[][]): string {
+export function toCsv(header: string[], rows: (string | number | null)[][]): string {
   const cell = (value: string | number | null) => {
     let text = value === null ? '' : String(value)
     if (/^[=+\-@]/.test(text)) text = `'${text}`
