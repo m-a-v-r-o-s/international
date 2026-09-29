@@ -502,7 +502,6 @@
       "cash": "Cash",
       "settings": "Settings",
       "users": "Staff",
-      "audit": "Audit log",
       "customers": "Customer ledger",
       "deskSection": "Front desk",
       "adminSection": "Admin desk"
@@ -844,55 +843,6 @@
       "isDepot": "This location is our own office",
       "isDepotHint": "The company's own yard rather than a hotel. It sorts first in every relocation destination list.",
       "depotBadge": "Office"
-    },
-    "audit": {
-      "title": "Audit log",
-      "intro": "Every change ever made, with who made it and what it was before. Read-only and permanent.",
-      "filtersLabel": "Filter the log",
-      "filterActor": "Who",
-      "anyActor": "Anyone",
-      "filterEntity": "What",
-      "anyEntity": "Anything",
-      "filterFrom": "From",
-      "filterTo": "To",
-      "apply": "Apply",
-      "empty": "Nothing matches those filters.",
-      "actor": "By",
-      "unknownActor": "A deleted account",
-      "systemActor": "The system",
-      "changes": "{n, plural, one {# field changed} other {# fields changed}}",
-      "field": "Field",
-      "before": "Before",
-      "after": "After",
-      "none": "empty",
-      "pagination": "More entries",
-      "newer": "Newer",
-      "older": "Older",
-      "page": "Page {n}",
-      "action": {
-        "insert": "created",
-        "update": "changed",
-        "delete": "deleted"
-      },
-      "entity": {
-        "bookings": "Booking",
-        "cars": "Car",
-        "car_models": "Model",
-        "categories": "Group",
-        "pricing_periods": "Pricing period",
-        "price_rows": "Price",
-        "price_extra_day": "Extra-day rate",
-        "profiles": "Staff member",
-        "hotels": "Hotel",
-        "hotel_reps": "Hotel assignment",
-        "booking_drivers": "Driver",
-        "exceptions": "Exception",
-        "handovers": "Handover",
-        "cash_handovers": "Cash handover",
-        "app_settings": "Settings",
-        "contracts": "Agreement",
-        "damage_marks": "Damage mark"
-      }
     }
   },
   "errors": {
