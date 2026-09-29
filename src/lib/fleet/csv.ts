@@ -201,3 +201,23 @@ function mapColumns(header: string[]): Partial<Record<keyof Omit<FleetRow, 'line
   }
   return index
 }
+
+/**
+ * Fleet export: the other half of the import above. The client's original
+ * spreadsheet goes stale the moment a car is added or retired in the app, so
+ * the manager can download the fleet as it stands.
+ *
+ * Written the way a Greek-locale Excel reads it without an import wizard:
+ * semicolons and a UTF-8 BOM. The first five headers are ones parseFleetCsv()
+ * recognises, so an export can be fed back through scripts/import-fleet.ts.
+ * A cell starting with = + - @ is prefixed with ' so Excel shows it as text
+ * rather than running it as a formula.
+ */
+export function toFleetCsv(header: string[], rows: (string | number | null)[][]): string {
+  const cell = (value: string | number | null) => {
+    let text = value === null ? '' : String(value)
+    if (/^[=+\-@]/.test(text)) text = `'${text}`
+    return /[;"\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
+  }
+  return '﻿' + [header, ...rows].map((r) => r.map(cell).join(';')).join('\r\n') + '\r\n'
+}

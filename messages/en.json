@@ -572,6 +572,7 @@
         "blocked": "Blocked"
       },
       "count": "{n, plural, one {# car} other {# cars}}",
+      "export": "Export to Excel",
       "add": "Add a plate",
       "plate": "Plate",
       "model": "Model",

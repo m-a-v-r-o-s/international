@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { parseFleetCsv } from '../../src/lib/fleet/csv'
+import { parseFleetCsv, toFleetCsv } from '../../src/lib/fleet/csv'
 
 describe('the fleet import', () => {
   test('reads the agreed columns', () => {
@@ -78,5 +78,20 @@ describe('plate normalisation', () => {
     expect(normalisePlate('YΤΧ 1064')).toBe('YTX 1064')
     expect(normalisePlate('ΚΧΖ4136')).toBe('KXZ 4136')
     expect(normalisePlate('ΡΘΚ-1234')).toBe('ΡΘΚ-1234')
+  })
+})
+
+describe('toFleetCsv', () => {
+  test('round-trips through parseFleetCsv', () => {
+    const csv = toFleetCsv(
+      ['Πινακίδα', 'Μάρκα', 'Μοντέλο', 'Έτος', 'Χρώμα', 'Σταθμός'],
+      [['KXZ 8287', 'Fiat', 'Panda; 4x4', 2022, null, '=cmd']],
+    )
+    expect(csv.startsWith('﻿')).toBe(true)
+    expect(csv).toContain(`"Panda; 4x4"`)
+    expect(csv).toContain(`'=cmd`)
+    const { rows, issues } = parseFleetCsv(csv)
+    expect(issues).toEqual([])
+    expect(rows[0]).toMatchObject({ plate: 'KXZ 8287', make: 'Fiat', model: 'Panda; 4x4', year: 2022, colour: null })
   })
 })

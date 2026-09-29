@@ -141,7 +141,11 @@ export default async function FleetPage({
             {t('summary', { free: counts.free, out: counts.out, blocked: counts.blocked, backToday: counts.backToday })}
           </p>
         </div>
-        <p className="text-[0.9375rem] text-ink-soft">{t('count', { n: active.length })}</p>
+        <div className="flex items-baseline gap-3">
+          <p className="text-[0.9375rem] text-ink-soft">{t('count', { n: active.length })}</p>
+          {/* A plain link: the route answers with a file, so there is nothing to prefetch. */}
+          <a href="/admin/fleet/export" className="ir-btn-quiet !w-auto" download>{t('export')}</a>
+        </div>
       </div>
 
       <form className="flex flex-wrap items-end gap-3">
