@@ -70,3 +70,13 @@ describe('the fleet import', () => {
     expect(parseFleetCsv('   \n\n').issues).toEqual([{ line: 0, code: 'empty' }])
   })
 })
+
+describe('plate normalisation', () => {
+  test('Greek and Latin spellings of the same plate become one', async () => {
+    const { normalisePlate } = await import('../../src/lib/fleet/csv')
+    expect(normalisePlate('ΚΧΖ 8287')).toBe('KXZ 8287')
+    expect(normalisePlate('YΤΧ 1064')).toBe('YTX 1064')
+    expect(normalisePlate('ΚΧΖ4136')).toBe('KXZ 4136')
+    expect(normalisePlate('ΡΘΚ-1234')).toBe('ΡΘΚ-1234')
+  })
+})

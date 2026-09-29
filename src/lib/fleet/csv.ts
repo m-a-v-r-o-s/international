@@ -170,8 +170,25 @@ function normaliseHeader(value: string): string {
     .replace(/\s+/g, ' ')
 }
 
-function normalisePlate(value: string): string {
-  return value.trim().replace(/\s+/g, ' ').toUpperCase()
+/** Greek plate letters are exactly the ones with a Latin twin. */
+const GREEK_TO_LATIN: Record<string, string> = {
+  Α: 'A', Β: 'B', Ε: 'E', Ζ: 'Z', Η: 'H', Ι: 'I', Κ: 'K',
+  Μ: 'M', Ν: 'N', Ο: 'O', Ρ: 'P', Τ: 'T', Υ: 'Y', Χ: 'X',
+}
+
+/**
+ * "ΚΧΖ 8287" and "KXZ 8287" look identical and are the same car, but are
+ * different text, so one would slip past the unique index and the other would
+ * never be found by a search typed on the other keyboard. Fold to Latin when
+ * every letter has a twin; anything else (a Θ, a foreign plate) stays as typed.
+ */
+export function normalisePlate(value: string): string {
+  const plate = value.trim().replace(/\s+/g, ' ').toUpperCase()
+  const letters = plate.replace(/[^\p{L}]/gu, '')
+  const folded = [...letters].every((c) => /[A-Z]/.test(c) || c in GREEK_TO_LATIN)
+    ? plate.replace(/[Α-Ω]/g, (c) => GREEK_TO_LATIN[c]!)
+    : plate
+  return folded.replace(/^([A-Z]{3})(\d{4})$/, '$1 $2')
 }
 
 function mapColumns(header: string[]): Partial<Record<keyof Omit<FleetRow, 'line'>, number>> {

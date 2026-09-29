@@ -6,6 +6,7 @@ import { requireAdmin } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
 import { sqlNull } from '@/lib/supabase/args'
 import { errorKey, type ErrorKey } from '@/lib/errors'
+import { normalisePlate } from '@/lib/fleet/csv'
 
 export type FormState = { error?: ErrorKey; fieldErrors?: Record<string, string> } | undefined
 
@@ -39,7 +40,7 @@ export async function createCar(_prev: FormState, formData: FormData): Promise<F
 
   const supabase = await supabaseServer()
   const { error } = await supabase.from('cars').insert({
-    plate: parsed.data.plate.toUpperCase(),
+    plate: normalisePlate(parsed.data.plate),
     model_id: parsed.data.model_id,
     year: parsed.data.year,
     colour: parsed.data.colour,
@@ -73,7 +74,7 @@ export async function updateCar(_prev: FormState, formData: FormData): Promise<F
   const supabase = await supabaseServer()
   const { error } = await supabase.from('cars')
     .update({
-      plate: parsed.data.plate.toUpperCase(),
+      plate: normalisePlate(parsed.data.plate),
       model_id: parsed.data.model_id,
       year: parsed.data.year,
       colour: parsed.data.colour,
