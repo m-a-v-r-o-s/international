@@ -674,7 +674,6 @@
       "horsepower": "Horsepower",
       "photo": "Photo",
       "photoHint": "Shown to reps on the availability screen. JPEG, PNG or WebP, up to 5 MB.",
-      "photoRequired": "A photo is required for a new model.",
       "photoCurrent": "Current photo",
       "photoReplace": "Replace the photo",
       "photoAlt": "{make} {model}",

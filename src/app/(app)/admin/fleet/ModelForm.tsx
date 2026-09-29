@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
 import { FormActions } from '@/components/FormActions'
@@ -35,11 +35,6 @@ export function ModelForm({
   const locale = useLocale()
   const action = model ? updateModel : createModel
   const [state, formAction] = useActionState<ModelState, FormData>(action, undefined)
-
-  // A new model cannot be saved without a picture, and the button says so
-  // before the round trip rather than after it. The server re-checks: this is
-  // the hint, never the control.
-  const [hasPhoto, setHasPhoto] = useState(false)
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -94,12 +89,10 @@ export function ModelForm({
         <input
           id={`photo-${model?.id ?? 'new'}`} name="photo" type="file"
           accept="image/jpeg,image/png,image/webp"
-          required={!model}
-          onChange={(e) => setHasPhoto(Boolean(e.currentTarget.files?.length))}
           className="ir-field !py-2.5 file:mr-3 file:rounded-field file:border-0 file:bg-brand
                      file:px-3 file:py-2 file:text-[0.9375rem] file:font-semibold file:text-brand-ink"
         />
-        <p className="ir-hint">{model ? t('photoHint') : `${t('photoRequired')} ${t('photoHint')}`}</p>
+        <p className="ir-hint">{t('photoHint')}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -150,7 +143,6 @@ export function ModelForm({
       <FormActions
         label={model ? tc('save') : t('add')}
         requireChanges={Boolean(model)}
-        disabled={!model && !hasPhoto}
         saved={state?.saved}
         onCancel={onDone}
       />

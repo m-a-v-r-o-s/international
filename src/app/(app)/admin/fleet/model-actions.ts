@@ -82,13 +82,10 @@ export async function createModel(_prev: ModelState, formData: FormData): Promis
   const parsed = z.object(modelFields).safeParse(readFields(formData))
   if (!parsed.success) return { error: 'IR104' }
 
-  // A new model must arrive with a picture: R2 is a visual list, and a model
-  // with no photo is a hole in it. An existing model may be saved without one
-  // — see updateModel — because the seeded placeholder models predate the
-  // bucket and must stay editable.
+  // The photo is optional: a model can be added now and pictured later.
   const photo = formData.get('photo')
-  if (!(photo instanceof File) || photo.size === 0) return { error: 'IR104' }
-  if (photo.size > MAX_MODEL_PHOTO_BYTES) return { photoError: 'fileTooLarge' }
+  const hasPhoto = photo instanceof File && photo.size > 0
+  if (hasPhoto && photo.size > MAX_MODEL_PHOTO_BYTES) return { photoError: 'fileTooLarge' }
 
   const supabase = await supabaseServer()
 
@@ -98,6 +95,11 @@ export async function createModel(_prev: ModelState, formData: FormData): Promis
   const { data: model, error } = await supabase.from('car_models')
     .insert(parsed.data).select('id').single()
   if (error || !model) return { error: errorKey(error) }
+
+  if (!hasPhoto) {
+    revalidate()
+    return { saved: true }
+  }
 
   const uploaded = await uploadModelPhoto(supabase, {
     modelId: model.id,
