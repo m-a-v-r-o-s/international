@@ -46,10 +46,13 @@ export function CarPicker({
         <select
           id="car_group" className="ir-field" value={groupId}
           onChange={(e) => {
-            setGroupId(e.target.value)
-            if (e.target.value && !cars.some((c) => c.model_id === modelId && c.category_id === e.target.value)) {
-              pickModel('')
-            }
+            const id = e.target.value
+            setGroupId(id)
+            if (!id) return
+            // A group with one model fills the model in (and so maybe the plate).
+            const groupModels = new Set(cars.filter((c) => c.category_id === id).map((c) => c.model_id))
+            if (groupModels.size === 1) pickModel([...groupModels][0]!)
+            else if (!groupModels.has(modelId)) pickModel('')
           }}
         >
           <option value="">{t('anyGroup')}</option>
