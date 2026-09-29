@@ -289,13 +289,17 @@ Still unapplied, in the order they must go:
 | `20260903150000_ledger_search` | `customers.email`, `customers.search_text`, the trigram index |
 | `20260903160000_accountant_questionnaire` | `accountant_replies` and its policies |
 | `20260906090000_car_stations` | `hotels.is_depot`, `cars.stationed_at`, `car_relocations` and four RPCs |
-| `20260929120000_price_sheets` | `pricing_period_ranges` and `adjust_period_prices()`; `pricing_periods` still has its date columns, so the pricing screen at HEAD fails there. Independent of the four above, safe to apply first |
 
 So the app at HEAD still cannot run whole against that project. The movements
 sheet works now, because its select names only booking columns plus
 `cars(id, plate, model_id)`, but anything reaching the ledger search bar, the
 accountant questionnaire or car stations will fail there, and the notification
 machinery the app deleted is still standing in the database.
+
+`20260929120000_price_sheets` was applied on 29 September 2026, ahead of the four
+above, which it does not depend on. The hosted project had no pricing sheets at
+the time, so no dates had to move. Τιμοκατάλογος 3 was loaded right after it as
+an undated draft: 77 totals and 11 extra-day rates, no date ranges yet.
 
 Two things about the history table itself, because they are why this drift was
 invisible:
