@@ -6,7 +6,6 @@ import { requireAdmin } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
 import { errorKey, type ErrorKey } from '@/lib/errors'
 import { euroAmountSchema } from '@/lib/money'
-import { parseBulkPaste } from '@/lib/pricing/bulk-paste'
 
 export type FormState = { error?: ErrorKey } | undefined
 
@@ -209,56 +208,6 @@ export async function previewQuote(_prev: PreviewState, formData: FormData): Pro
   if (!row) return { error: 'unknown' }
 
   return { total: row.total, days: row.days }
-}
-
-/**
- * Bulk paste from a spreadsheet (docs/04-SCREENS.md, A4). Rows are
- * `category_code\tday1\tday2\t...\tday7\textra`, one line per category —
- * exactly what pasting a block out of a spreadsheet into a textarea produces.
- * Every row is validated before anything is written; a bad row stops the
- * whole paste rather than writing half a table.
- */
-export type BulkPasteState = { error?: ErrorKey; badLine?: number } | undefined
-
-export async function bulkPastePrices(
-  _prev: BulkPasteState, formData: FormData,
-): Promise<BulkPasteState> {
-  await requireAdmin()
-
-  const periodId = uuidSchema.safeParse(formData.get('period_id'))
-  const text = z.string().max(20_000).safeParse(formData.get('paste'))
-  if (!periodId.success || !text.success) return { error: 'IR104' }
-
-  const supabase = await supabaseServer()
-  const { data: categories, error: catErr } = await supabase
-    .from('categories').select('id, code')
-  if (catErr) return { error: errorKey(catErr) }
-
-  const byCode = new Map((categories ?? []).map((c) => [(c as { code: string }).code, (c as { id: string }).id]))
-  const parsed = parseBulkPaste(text.data, new Set(byCode.keys()))
-  if (!parsed.ok) return { error: 'IR104', badLine: parsed.badLine }
-
-  const rows: { period_id: string; category_id: string; days: number; total: number }[] = []
-  const extras: { period_id: string; category_id: string; price: number }[] = []
-
-  for (const row of parsed.rows) {
-    const categoryId = byCode.get(row.categoryCode)!
-    for (let day = 1; day <= 7; day++) {
-      rows.push({ period_id: periodId.data, category_id: categoryId, days: day, total: row.euros[day - 1]! })
-    }
-    extras.push({ period_id: periodId.data, category_id: categoryId, price: row.euros[7] })
-  }
-
-  const { error: rowsErr } = await supabase.from('price_rows')
-    .upsert(rows, { onConflict: 'period_id,category_id,days' })
-  if (rowsErr) return { error: errorKey(rowsErr) }
-
-  const { error: extraErr } = await supabase.from('price_extra_day')
-    .upsert(extras, { onConflict: 'period_id,category_id' })
-  if (extraErr) return { error: errorKey(extraErr) }
-
-  revalidatePath('/admin/pricing')
-  return undefined
 }
 
 /**

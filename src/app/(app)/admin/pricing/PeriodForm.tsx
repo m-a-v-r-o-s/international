@@ -20,7 +20,6 @@ export function PeriodForm({ period, onDone }: { period?: PeriodRow; onDone?: ()
   const te = useTranslations('errors')
   const action = period ? updatePeriod : createPeriod
   const [state, formAction] = useActionState<FormState, FormData>(action, undefined)
-  const [deleteState, deleteAction] = useActionState<FormState, FormData>(deletePeriod, undefined)
 
   return (
     <div className="flex flex-col gap-4">
@@ -46,23 +45,31 @@ export function PeriodForm({ period, onDone }: { period?: PeriodRow; onDone?: ()
           onCancel={onDone}
         />
       </form>
-
-      {period ? (
-        <form
-          action={deleteAction}
-          className="border-t border-line pt-4"
-          onSubmit={(e) => { if (!confirm(t('deletePeriodConfirm'))) e.preventDefault() }}
-        >
-          <input type="hidden" name="id" value={period.id} />
-          {deleteState?.error ? (
-            <p className="ir-notice border-danger bg-danger-tint text-danger mb-3" role="alert">
-              {te(deleteState.error)}
-            </p>
-          ) : null}
-          <SubmitButton label={t('deletePeriod')} variant="quiet" />
-        </form>
-      ) : null}
     </div>
+  )
+}
+
+/**
+ * Deleting a sheet takes its prices and dates with it. A sheet that already
+ * priced a booking is refused by the bookings FK and shows `inUse`.
+ */
+export function DeletePeriodForm({ periodId }: { periodId: string }) {
+  const t = useTranslations('admin.pricing')
+  const te = useTranslations('errors')
+  const [state, formAction] = useActionState<FormState, FormData>(deletePeriod, undefined)
+
+  return (
+    <form
+      action={formAction}
+      className="flex flex-col items-end gap-2"
+      onSubmit={(e) => { if (!confirm(t('deletePeriodConfirm'))) e.preventDefault() }}
+    >
+      <input type="hidden" name="id" value={periodId} />
+      <SubmitButton label={t('deletePeriod')} variant="quiet" />
+      {state?.error ? (
+        <p className="ir-notice border-danger bg-danger-tint text-danger" role="alert">{te(state.error)}</p>
+      ) : null}
+    </form>
   )
 }
 
