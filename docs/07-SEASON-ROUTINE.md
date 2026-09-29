@@ -184,10 +184,11 @@ sheet". A night with no pickups, returns or cars out sends nothing.
 
 **Built but off (decided 30 Sep 2026: not started yet).** To switch it on:
 
-1. Resend: verify `internationalrentals.gr`, create an API key, and set on the
+1. Resend: once `mail.internationalrentals.gr` is verified (its DNS records are
+   in `assets/dns-request-email.md`), create an API key, and set on the
    `international` service `SMTP_HOST=smtp.resend.com`, `SMTP_PORT=465`,
    `SMTP_USER=resend`, `SMTP_PASSWORD=<api key>`,
-   `SMTP_FROM=International Rentals <noreply@internationalrentals.gr>`. This
+   `SMTP_FROM=International Rentals <noreply@mail.internationalrentals.gr>`. This
    also turns on the guest confirmation and agreement emails, which read the
    same variables.
 2. Create a Railway cron service `outage-sheet`, same shape as `keep-alive`
