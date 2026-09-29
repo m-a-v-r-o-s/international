@@ -7,7 +7,7 @@ import { SignOutButton } from '@/components/SignOutButton'
 import { contractReadiness, parseCompany } from '@/lib/contract/company'
 import { FuelChargeForm, WindowsForm } from './RetentionForms'
 import { ClearLedgerForm } from '../customers/LedgerForms'
-import { SettingsLinkCard } from './SettingsLinkCard'
+import { SettingsLinkCard, SettingsSummary } from './SettingsLinkCard'
 import { Disclosure } from '@/components/Disclosure'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -87,9 +87,9 @@ export default async function AdminSettingsPage() {
         <p className="text-ink-soft">{t('intro')}</p>
       </div>
 
-      <section className="ir-card flex flex-col gap-3 p-5" aria-labelledby="lang-heading">
-        <h2 id="lang-heading" className="text-[1.125rem] font-semibold">{ts('language')}</h2>
-        <p className="text-[0.9375rem] text-ink-soft">{ts('languageHelp')}</p>
+      <section className="ir-card flex flex-col gap-3 p-4" aria-labelledby="lang-heading">
+        <h2 id="lang-heading" className="text-[1.0625rem] font-semibold">{ts('language')}</h2>
+        <p className="text-[0.9375rem] opacity-80">{ts('languageHelp')}</p>
         <LanguageSwitcher />
       </section>
 
@@ -121,11 +121,17 @@ export default async function AdminSettingsPage() {
         warning={readiness.ready ? undefined : t('notReadyTitle')}
       />
 
-      <Disclosure summary={t('windowsTitle')}>
+      <Disclosure
+        className="group"
+        summary={<SettingsSummary title={t('windowsTitle')} description={t('windowsDesc')} />}
+      >
         <WindowsForm windows={{ pickupFrom, pickupTo, dropoffFrom, dropoffTo }} />
       </Disclosure>
 
-      <Disclosure summary={t('fuelChargeTitle')}>
+      <Disclosure
+        className="group"
+        summary={<SettingsSummary title={t('fuelChargeTitle')} description={t('fuelChargeDesc')} />}
+      >
         <div className="flex flex-col gap-4">
           <p className="text-[0.9375rem] text-ink-soft">{t('fuelChargeIntro')}</p>
           <FuelChargeForm perEighth={settings?.fuel_charge_per_eighth ?? 10} />
@@ -142,24 +148,24 @@ export default async function AdminSettingsPage() {
       <SettingsLinkCard
         href="/admin/settings/recycle-bin"
         title={t('binTitle')}
-        description={t('binIntro')}
+        description={t('binDesc')}
         meta={t('binCount', { n: bin?.length ?? 0 })}
       />
 
       <Disclosure
-        summary={t('dangerZoneTitle')}
-        className="border-danger"
-        summaryClassName="text-danger"
+        summary={<SettingsSummary title={t('dangerZoneTitle')} description={t('dangerZoneDesc')} />}
+        className="group border-danger bg-danger"
+        summaryClassName="text-white"
       >
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 rounded-field bg-surface p-4 text-ink">
           <h3 className="text-[0.9375rem] font-semibold">{tl('clearTitle')}</h3>
           <p className="text-[0.9375rem] text-ink-soft">{tl('clearIntro')}</p>
           <ClearLedgerForm total={ledgerTotal} />
         </div>
       </Disclosure>
 
-      <section className="ir-card flex flex-col gap-3 p-5" aria-labelledby="acct-heading">
-        <h2 id="acct-heading" className="text-[1.125rem] font-semibold">{ts('account')}</h2>
+      <section className="ir-card flex flex-col gap-3 p-4" aria-labelledby="acct-heading">
+        <h2 id="acct-heading" className="text-[1.0625rem] font-semibold">{ts('account')}</h2>
         <SignOutButton className="ir-btn-quiet">{tc('signOut')}</SignOutButton>
       </section>
     </div>

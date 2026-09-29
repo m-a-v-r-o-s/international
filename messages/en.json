@@ -1058,7 +1058,11 @@
     "binCar": "Car",
     "binSheet": "Price list",
     "binRange": "Price list dates",
-    "binBlock": "Block"
+    "binBlock": "Block",
+    "windowsDesc": "The hours reps can book pick-ups in, and the usual drop-off time.",
+    "dangerZoneDesc": "Actions that permanently delete data.",
+    "fuelChargeDesc": "The charge per missing eighth of a tank at return.",
+    "binDesc": "Everything deleted in the last 30 days, ready to restore."
   },
   "contractStep": {
     "agreementTitle": "Rental agreement",

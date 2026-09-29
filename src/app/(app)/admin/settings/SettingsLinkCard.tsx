@@ -1,12 +1,37 @@
 import Link from 'next/link'
 
 /**
- * A setting big enough to need its own screen — a list, a multi-field form,
- * or both — gets a card here instead of being shown inline. The whole card is
- * the tap target (WCAG's 44px minimum), but the title is what reads as the
- * link: brand-coloured and underlined, the same way every other in-app link
- * is styled.
+ * Every entry on the Settings screen has one shape, whether it opens a screen
+ * (SettingsLinkCard) or unfolds in place (a Disclosure with SettingsSummary):
+ * title, one line of description, an optional count, and a chevron. The
+ * chevron points right for a link and turns down when a panel is open.
  */
+function Row({
+  title, description, meta, warning, chevron,
+}: {
+  title: string
+  description: string
+  meta?: string
+  warning?: string
+  chevron: string
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+          <span className="text-[1.0625rem] font-semibold">{title}</span>
+          {meta ? <span className="text-[0.875rem] font-normal opacity-80">{meta}</span> : null}
+        </div>
+        <p className="text-[0.9375rem] font-normal opacity-80">{description}</p>
+        {warning ? <p className="text-[0.875rem] font-semibold text-warn">{warning}</p> : null}
+      </div>
+      <svg aria-hidden="true" viewBox="0 0 20 20" className={`size-5 shrink-0 opacity-70 ${chevron}`}>
+        <path d="M7.5 4.5 13 10l-5.5 5.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  )
+}
+
 export function SettingsLinkCard({
   href, title, description, meta, warning,
 }: {
@@ -19,16 +44,20 @@ export function SettingsLinkCard({
   return (
     <Link
       href={href}
-      className="ir-card flex flex-col gap-1.5 p-4 transition-colors duration-150 ease-ui hover:bg-brand-tint"
+      className="ir-card p-4 text-ink transition-colors duration-150 ease-ui hover:bg-brand-tint"
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <span className="text-[1.0625rem] font-semibold text-brand underline underline-offset-2">
-          {title}
-        </span>
-        {meta ? <span className="text-[0.875rem] text-ink-soft">{meta}</span> : null}
-      </div>
-      <p className="text-[0.9375rem] text-ink-soft">{description}</p>
-      {warning ? <p className="text-[0.875rem] font-semibold text-warn">{warning}</p> : null}
+      <Row title={title} description={description} meta={meta} warning={warning} chevron="" />
     </Link>
+  )
+}
+
+/** The summary for a Disclosure given `className="group"`, so the chevron can turn. */
+export function SettingsSummary({ title, description }: { title: string; description: string }) {
+  return (
+    <Row
+      title={title}
+      description={description}
+      chevron="transition-transform duration-150 group-open:rotate-90"
+    />
   )
 }
