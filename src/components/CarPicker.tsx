@@ -19,7 +19,7 @@ export function CarPicker({
 }) {
   const t = useTranslations('newBooking')
   const initial = cars.find((c) => c.id === carId)
-  const [groupId, setGroupId] = useState('')
+  const [groupId, setGroupId] = useState(initial?.category_id ?? '')
   const [modelId, setModelId] = useState(initial?.model_id ?? '')
 
   const groups = [...new Map(cars.map((c) => [c.category_id, c.category_code])).entries()]
@@ -30,9 +30,13 @@ export function CarPicker({
   ).entries()].sort((a, b) => a[1].localeCompare(b[1]))
   const plates = cars.filter((c) => c.model_id === modelId)
 
+  // A model fills its group in, and a model with one plate fills the plate in.
   const pickModel = (id: string) => {
     setModelId(id)
-    onChange('')
+    const modelPlates = cars.filter((c) => c.model_id === id)
+    const [first] = modelPlates
+    if (first) setGroupId(first.category_id)
+    onChange(first && modelPlates.length === 1 ? first.id : '')
   }
 
   return (
