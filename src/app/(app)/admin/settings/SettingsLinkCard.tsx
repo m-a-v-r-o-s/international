@@ -18,13 +18,11 @@ function Row({
   return (
     <div className="flex items-center gap-3">
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-          <span className="text-[1.0625rem] font-semibold">{title}</span>
-          {meta ? <span className="text-[0.875rem] font-normal opacity-80">{meta}</span> : null}
-        </div>
+        <span className="text-[1.0625rem] font-semibold">{title}</span>
         <p className="text-[0.9375rem] font-normal opacity-80">{description}</p>
         {warning ? <p className="text-[0.875rem] font-semibold text-warn">{warning}</p> : null}
       </div>
+      {meta ? <span className="shrink-0 text-[0.875rem] font-normal opacity-80">{meta}</span> : null}
       <svg aria-hidden="true" viewBox="0 0 20 20" className={`size-5 shrink-0 opacity-70 ${chevron}`}>
         <path d="M7.5 4.5 13 10l-5.5 5.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
