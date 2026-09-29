@@ -1285,6 +1285,18 @@ export type Database = {
           id: number
         }[]
       }
+      admin_recycle_bin: {
+        Args: never
+        Returns: {
+          actor_name: string
+          at: string
+          entity: string
+          entity_id: string
+          id: number
+          row_data: Json
+        }[]
+      }
+      admin_restore_deleted: { Args: { p_id: number }; Returns: undefined }
       admin_blocks: {
         Args: { p_from: string; p_to: string }
         Returns: {

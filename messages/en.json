@@ -1097,7 +1097,18 @@
     "purgeNothingDue": "Nothing is due for deletion. The scheduled job runs on its own; this button is only for running it early.",
     "purgeDone": "Deleted {images, plural, one {# licence photo} other {# licence photos}} across {bookings, plural, one {# booking} other {# bookings}}.",
     "purgeRefused": "{n, plural, one {# file was skipped because its name did not look like a licence photo} other {# files were skipped because their names did not look like licence photos}}. Report this.",
-    "dangerZoneTitle": "Danger zone"
+    "dangerZoneTitle": "Danger zone",
+    "binTitle": "Recycle bin",
+    "binIntro": "Hotels, cars, price lists, date ranges and blocks deleted in the last 30 days. Restoring one brings back everything that was deleted with it.",
+    "binEmpty": "Nothing was deleted in the last 30 days.",
+    "binRestore": "Restore",
+    "binDeleted": "Deleted {when} by {who}",
+    "binCount": "{n, plural, =0 {Empty} one {# item} other {# items}}",
+    "binHotel": "Hotel",
+    "binCar": "Car",
+    "binSheet": "Price list",
+    "binRange": "Price list dates",
+    "binBlock": "Block"
   },
   "contractStep": {
     "agreementTitle": "Rental agreement",

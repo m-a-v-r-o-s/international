@@ -200,3 +200,22 @@ export async function runLicencePurge(
     },
   }
 }
+
+/**
+ * Recycle bin: put back one deleted hotel, car, price sheet, date range or
+ * block, with whatever cascaded with it (20260930120000_recycle_bin.sql).
+ */
+export async function restoreDeleted(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
+  await requireAdmin()
+  const id = z.coerce.number().int().positive().safeParse(formData.get('id'))
+  if (!id.success) return { error: 'IR112' }
+
+  const supabase = await supabaseServer()
+  const { error } = await supabase.rpc('admin_restore_deleted', { p_id: id.data })
+  if (error) return { error: errorKey(error) }
+
+  for (const path of ['/admin/settings/recycle-bin', '/admin/hotels', '/admin/fleet', '/admin/pricing', '/availability']) {
+    revalidatePath(path)
+  }
+  return { saved: true }
+}

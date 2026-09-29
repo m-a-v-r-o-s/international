@@ -56,6 +56,7 @@ export default async function AdminSettingsPage() {
     { count: hotelsCount },
     { count: categoriesCount },
     { data: staff },
+    { data: bin },
   ] = await Promise.all([
     supabase.from('app_settings')
       .select('id, company, pickup_window, dropoff_window, fuel_charge_per_eighth')
@@ -65,6 +66,7 @@ export default async function AdminSettingsPage() {
     supabase.from('hotels').select('id', { count: 'exact', head: true }),
     supabase.from('categories').select('id', { count: 'exact', head: true }),
     supabase.rpc('admin_list_users'),
+    supabase.rpc('admin_recycle_bin'),
   ])
 
   const readiness = contractReadiness(parseCompany(data?.company))
@@ -135,6 +137,13 @@ export default async function AdminSettingsPage() {
         title={t('retentionTitle')}
         description={t('retentionIntro')}
         meta={status && status.due_count > 0 ? `${t('retentionDue')}: ${status.due_count}` : undefined}
+      />
+
+      <SettingsLinkCard
+        href="/admin/settings/recycle-bin"
+        title={t('binTitle')}
+        description={t('binIntro')}
+        meta={t('binCount', { n: bin?.length ?? 0 })}
       />
 
       <Disclosure
