@@ -187,7 +187,7 @@ export function ClearLedgerForm({ total }: { total: number }) {
         <span>{t('clearConfirm3')}</span>
       </label>
 
-      <SubmitButton label={t('clearAction')} variant="quiet" disabled={!ready} />
+      <SubmitButton label={t('clearAction')} variant="danger" disabled={!ready} />
     </form>
   )
 }

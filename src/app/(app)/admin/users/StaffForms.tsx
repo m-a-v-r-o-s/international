@@ -223,7 +223,7 @@ export function RemoveCoverForm({
       <input type="hidden" name="id" value={personId} />
       <input type="hidden" name="hotel_id" value={hotel.id} />
       <input type="hidden" name="covers" value="false" />
-      <SubmitButton label={`${t('coverRemove')}: ${hotel.name}`} variant="quiet" />
+      <SubmitButton label={`${t('coverRemove')}: ${hotel.name}`} variant="danger" />
     </form>
   )
 }
@@ -325,7 +325,7 @@ export function RemoveAccessForm({
       <Notice state={state} />
       <p className="text-[0.9375rem] text-ink-soft">{t('accessHint')}</p>
 
-      <button type="button" onClick={() => setOpen(true)} className="ir-btn-quiet">
+      <button type="button" onClick={() => setOpen(true)} className="ir-btn-danger">
         {t('removeAccess')}
       </button>
 
@@ -363,7 +363,7 @@ export function RemoveAccessForm({
               <div className="flex-1">
                 <SubmitButton
                   label={ready ? t('removeConfirm') : t('removeConfirmWait', { seconds: secondsLeft })}
-                  variant="quiet"
+                  variant="danger"
                   disabled={!ready}
                 />
               </div>

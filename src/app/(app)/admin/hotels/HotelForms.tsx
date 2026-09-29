@@ -131,7 +131,7 @@ export function HotelStateForms({ hotel }: { hotel: HotelRow }) {
         }}
       >
         <input type="hidden" name="id" value={hotel.id} />
-        <SubmitButton label={t('delete')} variant="quiet" />
+        <SubmitButton label={t('delete')} variant="danger" />
       </form>
     </div>
   )

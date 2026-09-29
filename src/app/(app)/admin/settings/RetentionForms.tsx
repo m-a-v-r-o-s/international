@@ -149,7 +149,7 @@ export function PurgeForm({ dueCount }: { dueCount: number }) {
             />
             <span>{t('purgeConfirm', { n: dueCount })}</span>
           </label>
-          <SubmitButton label={t('purgeNow')} variant="quiet" />
+          <SubmitButton label={t('purgeNow')} variant="danger" />
         </>
       )}
     </form>

@@ -43,7 +43,7 @@ export function DeleteCarForm({ id }: { id: string }) {
       {state?.error ? (
         <p className="ir-notice border-danger bg-danger-tint text-danger mb-3" role="alert">{te(state.error)}</p>
       ) : null}
-      <SubmitButton label={t('delete')} variant="quiet" />
+      <SubmitButton label={t('delete')} variant="danger" />
     </form>
   )
 }

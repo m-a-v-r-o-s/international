@@ -65,7 +65,7 @@ export function DeletePeriodForm({ periodId }: { periodId: string }) {
       onSubmit={(e) => { if (!confirm(t('deletePeriodConfirm'))) e.preventDefault() }}
     >
       <input type="hidden" name="id" value={periodId} />
-      <SubmitButton label={t('deletePeriod')} variant="quiet" />
+      <SubmitButton label={t('deletePeriod')} variant="danger" />
       {state?.error ? (
         <p className="ir-notice border-danger bg-danger-tint text-danger" role="alert">{te(state.error)}</p>
       ) : null}
@@ -123,7 +123,7 @@ export function PeriodRanges({ periodId, ranges }: { periodId: string; ranges: R
               <span>{range.start_date} → {range.end_date}</span>
               <form action={deleteAction} onSubmit={(e) => { if (!confirm(t('deleteRangeConfirm'))) e.preventDefault() }}>
                 <input type="hidden" name="id" value={range.id} />
-                <SubmitButton label={t('deleteRange')} variant="quiet" />
+                <SubmitButton label={t('deleteRange')} variant="danger" />
               </form>
             </li>
           ))}

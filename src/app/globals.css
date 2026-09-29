@@ -125,7 +125,8 @@ button.ir-rail:focus-visible {
 
   .ir-btn,
   .ir-btn-primary,
-  .ir-btn-quiet {
+  .ir-btn-quiet,
+  .ir-btn-danger {
     @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-field
            px-5 text-[1.0625rem] font-semibold transition-colors duration-150 ease-ui
            disabled:opacity-60;
@@ -135,6 +136,10 @@ button.ir-rail:focus-visible {
   }
   .ir-btn-quiet {
     @apply border border-control bg-surface text-ink hover:bg-brand-tint;
+  }
+  /* Anything that deletes or removes, so it never reads like a routine action. */
+  .ir-btn-danger {
+    @apply bg-danger text-white hover:brightness-90 disabled:hover:brightness-100;
   }
 
   /* The phone nav drawer slides in from the edge it is anchored to, which is

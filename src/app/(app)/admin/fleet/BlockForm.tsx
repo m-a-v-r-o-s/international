@@ -63,7 +63,7 @@ export function BlockForm({ carId, block, onDone }: { carId: string; block?: Blo
               {te(deleteState.error)}
             </p>
           ) : null}
-          <SubmitButton label={t('remove')} variant="quiet" />
+          <SubmitButton label={t('remove')} variant="danger" />
         </form>
       ) : null}
     </div>

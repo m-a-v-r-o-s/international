@@ -13,7 +13,7 @@ export function SubmitButton({
   disabled = false,
 }: {
   label: string
-  variant?: 'primary' | 'quiet'
+  variant?: 'primary' | 'quiet' | 'danger'
   /**
    * For a form that is not yet safe to submit — the ledger clear-all, whose
    * three confirmations must all be satisfied first. It is a hint to the
@@ -30,7 +30,7 @@ export function SubmitButton({
       type="submit"
       disabled={pending || disabled}
       aria-busy={pending}
-      className={variant === 'primary' ? 'ir-btn-primary' : 'ir-btn-quiet'}
+      className={`ir-btn-${variant}`}
     >
       {pending ? (
         <>
