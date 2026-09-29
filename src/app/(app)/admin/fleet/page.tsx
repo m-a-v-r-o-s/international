@@ -43,9 +43,7 @@ export default async function FleetPage({
   const supabase = await supabaseServer()
   const today = todayAthens()
 
-  const [
-    { data: cars }, { data: models }, { data: categories }, { data: todaysHolds }, { data: hotels },
-  ] = await Promise.all([
+  const results = await Promise.all([
     supabase.from('cars')
       .select('id, plate, model_id, year, colour, photo_path, stationed_at, archived_at, created_at, updated_at')
       .order('plate'),
@@ -63,6 +61,12 @@ export default async function FleetPage({
     // Beta" reads better than a bare dash.
     supabase.from('hotels').select('id, name, is_depot'),
   ])
+  // A failed read must not render as an empty fleet; (app)/error.tsx says so.
+  const failed = results.find((r) => r.error)
+  if (failed?.error) throw new Error(failed.error.message)
+  const [
+    { data: cars }, { data: models }, { data: categories }, { data: todaysHolds }, { data: hotels },
+  ] = results
 
   const allCars = (cars ?? []) as CarRow[]
   const allModels = (models ?? []) as CarModelRow[]

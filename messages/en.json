@@ -24,7 +24,8 @@
     "required": "Required",
     "tryAgain": "Try again",
     "skipToContent": "Skip to content",
-    "noResults": "Nothing found."
+    "noResults": "Nothing found.",
+    "loadFailed": "This page could not load its data. Nothing was changed."
   },
   "roles": {
     "admin": "Manager",
