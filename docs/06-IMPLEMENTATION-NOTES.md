@@ -281,20 +281,20 @@ hashes identically to the repo file's function body. No row of client data was
 touched: 4 profiles, 9 hotels, 4 cars, 4 categories, 0 bookings, before and
 after.
 
-Still unapplied, in the order they must go:
+Still unapplied: none.
 
-| Migration | What is missing without it |
-|---|---|
-| `20260903130000_drop_notifications` | `push_subscriptions`, `profiles.notify_*` and `incidents.notified_at` all still EXIST there, and five dropped functions with them |
-| `20260903150000_ledger_search` | `customers.email`, `customers.search_text`, the trigram index |
-| `20260903160000_accountant_questionnaire` | `accountant_replies` and its policies |
-| `20260906090000_car_stations` | `hotels.is_depot`, `cars.stationed_at`, `car_relocations` and four RPCs |
-
-So the app at HEAD still cannot run whole against that project. The movements
-sheet works now, because its select names only booking columns plus
-`cars(id, plate, model_id)`, but anything reaching the ledger search bar, the
-accountant questionnaire or car stations will fail there, and the notification
-machinery the app deleted is still standing in the database.
+`20260903130000_drop_notifications`, `20260903150000_ledger_search`,
+`20260903160000_accountant_questionnaire` and `20260906090000_car_stations`
+were applied on 30 September 2026, in that order, and each verified with a
+read-only query: `push_subscriptions`, `profiles.notify_*`,
+`incidents.notified_at` and the five push functions are gone (both tables were
+empty first: 0 subscriptions, 0 notified incidents); `customers.email`,
+`customers.search_text` and the trigram index exist; `accountant_replies` has
+RLS on, both policies and its bucket; `hotels.is_depot`, `cars.stationed_at`,
+`car_relocations`, the return trigger and the four RPCs exist. 91 active cars
+before and after. The fleet page's empty list was this: it selects
+`cars.stationed_at` and `hotels.is_depot`, which did not exist there until the
+last of the four.
 
 `20260929120000_price_sheets` was applied on 29 September 2026, ahead of the four
 above, which it does not depend on. The hosted project had no pricing sheets at
