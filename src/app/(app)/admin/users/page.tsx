@@ -32,6 +32,7 @@ export default async function AdminUsersPage({
 }) {
   await requireAdmin()
   const t = await getTranslations('admin.users')
+  const ts = await getTranslations('adminSettings')
   const th = await getTranslations('admin.hotels')
   const tr = await getTranslations('roles')
   const format = await getFormatter()
@@ -45,6 +46,10 @@ export default async function AdminUsersPage({
 
   return (
     <div className="flex flex-col gap-5">
+      <Link href="/admin/settings" className="text-[0.9375rem] text-brand underline-offset-2 hover:underline">
+        ← {ts('title')}
+      </Link>
+
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h1 className="text-[1.75rem] font-bold tracking-tight">{t('title')}</h1>
