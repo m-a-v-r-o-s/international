@@ -5,7 +5,7 @@ import { requireAdmin } from '@/lib/auth/session'
 import { supabaseServer } from '@/lib/supabase/server'
 import { Disclosure } from '@/components/Disclosure'
 import { AdjustPricesForm, DeletePeriodForm, PeriodForm, PeriodRanges } from './PeriodForm'
-import { PriceGridRow, PricePreview, type ExtraDayData, type PriceRowData } from './PriceGrid'
+import { PriceGridRow, type ExtraDayData, type PriceRowData } from './PriceGrid'
 import { todayAthens } from '@/lib/dates'
 import type { CategoryRow, Database } from '@/lib/supabase/database.types'
 
@@ -177,8 +177,6 @@ export default async function PricingPage({
                 />
               ))}
             </div>
-
-            <PricePreview categories={cats} />
           </section>
         )
       })}

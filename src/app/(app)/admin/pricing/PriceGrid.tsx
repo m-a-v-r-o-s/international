@@ -2,11 +2,9 @@
 
 import { useActionState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
-import { Field } from '@/components/Field'
 import { categoryName } from '@/lib/fleet/categories'
-import { SubmitButton } from '@/components/SubmitButton'
 import { FormActions } from '@/components/FormActions'
-import { setPriceRow, setExtraDayRate, previewQuote, type FormState, type PreviewState } from './actions'
+import { setPriceRow, setExtraDayRate, type FormState } from './actions'
 import type { CategoryRow } from '@/lib/supabase/database.types'
 
 const DAYS = [1, 2, 3, 4, 5, 6, 7] as const
@@ -95,50 +93,5 @@ export function PriceGridRow({
         <FormActions label={t('saveRow')} variant="quiet" saved={state && !state.error} />
       </div>
     </form>
-  )
-}
-
-/**
- * A preview of what a sample rental would cost. This calls quote() — the same
- * RPC a real booking prices through — so the preview can never drift from
- * what a guest is actually charged (docs/02-ARCHITECTURE.md, Engine 2).
- */
-export function PricePreview({ categories }: { categories: CategoryRow[] }) {
-  const t = useTranslations('admin.pricing')
-  const tc = useTranslations('common')
-  const te = useTranslations('errors')
-  const [state, formAction] = useActionState<PreviewState, FormData>(previewQuote, undefined)
-
-  const today = new Date().toISOString().slice(0, 10)
-
-  return (
-    <div className="ir-card p-4">
-      <h3 className="mb-3 text-[1.0625rem] font-semibold">{t('previewTitle')}</h3>
-      <p className="mb-3 text-[0.875rem] text-ink-soft">{t('previewHint')}</p>
-
-      <form action={formAction} className="flex flex-col gap-3">
-        <div className="grid grid-cols-3 gap-3">
-          <div>
-            <label className="ir-label" htmlFor="preview-category">{t('previewCategory')}</label>
-            <select id="preview-category" name="category_id" className="ir-field" defaultValue={categories[0]?.id}>
-              {categories.map((c) => <option key={c.id} value={c.id}>{c.code}</option>)}
-            </select>
-          </div>
-          <Field id="preview-start" name="start_date" type="date" label={t('previewPickup')} defaultValue={today} required />
-          <Field id="preview-days" name="days" type="number" label={t('previewDays')} defaultValue={3} min={1} max={60} required />
-        </div>
-
-        <SubmitButton label={t('previewButton')} variant="quiet" />
-
-        {state?.error ? (
-          <p className="ir-notice border-danger bg-danger-tint text-danger" role="alert">{te(state.error)}</p>
-        ) : null}
-        {state?.total !== undefined ? (
-          <p className="ir-notice border-ok bg-ok-tint text-ok" role="status">
-            {t('previewResult', { days: state.days ?? 0, total: state.total })}
-          </p>
-        ) : null}
-      </form>
-    </div>
   )
 }

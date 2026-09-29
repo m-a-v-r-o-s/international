@@ -171,45 +171,6 @@ export async function setExtraDayRate(_prev: FormState, formData: FormData): Pro
   return undefined
 }
 
-export type PreviewState = { error?: ErrorKey; total?: number; days?: number } | undefined
-
-/**
- * A preview of what a sample rental would cost (docs/04-SCREENS.md, A4). This
- * calls the same quote() engine a booking uses — the preview and the real
- * price can never disagree, because they are the same code path.
- */
-export async function previewQuote(_prev: PreviewState, formData: FormData): Promise<PreviewState> {
-  await requireAdmin()
-
-  const parsed = z.object({
-    category_id: uuidSchema,
-    start_date: dateSchema,
-    days: z.coerce.number().int().min(1).max(60),
-  }).safeParse({
-    category_id: formData.get('category_id'),
-    start_date: formData.get('start_date'),
-    days: formData.get('days'),
-  })
-  if (!parsed.success) return { error: 'IR104' }
-
-  const end = new Date(`${parsed.data.start_date}T00:00:00Z`)
-  end.setUTCDate(end.getUTCDate() + parsed.data.days - 1)
-  const endDate = end.toISOString().slice(0, 10)
-
-  const supabase = await supabaseServer()
-  const { data, error } = await supabase.rpc('quote', {
-    p_category_id: parsed.data.category_id,
-    p_start: parsed.data.start_date,
-    p_end: endDate,
-  })
-
-  if (error) return { error: errorKey(error) }
-  const row = data?.[0]
-  if (!row) return { error: 'unknown' }
-
-  return { total: row.total, days: row.days }
-}
-
 /**
  * "+€5 on everything": adds a whole-euro amount (negative lowers) to every
  * total and extra-day rate on one sheet, atomically, in the database.
