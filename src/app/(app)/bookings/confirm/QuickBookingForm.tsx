@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
 import { HotelLocationField } from '@/components/HotelLocationField'
 import { SubmitButton } from '@/components/SubmitButton'
+import { CarPicker } from '@/components/CarPicker'
 import { MAX_SEAT_QTY, SEAT_TYPES, type QuickBookingNext, type SeatType } from '@/lib/bookings/quick'
 import { createQuickBooking, type QuickBookingState } from './actions'
 import {
@@ -172,16 +173,8 @@ export function QuickBookingForm({
 
       <section className="ir-card p-4">
         <h2 className="mb-3 text-[1.0625rem] font-semibold">{tn('carTitle')}</h2>
-        <label className="ir-label" htmlFor="car_id">{tn('chooseCar')} *</label>
-        <select
-          id="car_id" name="car_id" className="ir-field" value={carId}
-          onChange={(e) => setCarId(e.target.value)} required
-        >
-          <option value="" disabled>{tn('chooseCarPlaceholder')}</option>
-          {cars.map((c) => (
-            <option key={c.id} value={c.id}>{c.plate} · {c.make} {c.model} ({c.category_code})</option>
-          ))}
-        </select>
+        <CarPicker cars={cars} carId={carId} onChange={setCarId} />
+        <input type="hidden" name="car_id" value={carId} />
       </section>
 
       <section className="ir-card p-4">

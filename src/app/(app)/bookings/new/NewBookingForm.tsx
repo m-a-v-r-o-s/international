@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
 import { HotelLocationField } from '@/components/HotelLocationField'
 import { SubmitButton } from '@/components/SubmitButton'
+import { CarPicker } from '@/components/CarPicker'
 import {
   previewBookingQuote, createBooking, lookupCustomer,
   type QuoteState, type CreateBookingState, type CustomerLookupState,
@@ -217,18 +218,7 @@ export function NewBookingForm({
             </button>
           </div>
         ) : (
-          <div>
-            <label className="ir-label" htmlFor="car_id">{t('chooseCar')} *</label>
-            <select
-              id="car_id" className="ir-field" value={carId}
-              onChange={(e) => setCarId(e.target.value)} required
-            >
-              <option value="" disabled>{t('chooseCarPlaceholder')}</option>
-              {cars.map((c) => (
-                <option key={c.id} value={c.id}>{c.plate} · {c.make} {c.model} ({c.category_code})</option>
-              ))}
-            </select>
-          </div>
+          <CarPicker cars={cars} carId={carId} onChange={setCarId} />
         )}
         <input type="hidden" name="car_id" value={carId} />
       </section>
