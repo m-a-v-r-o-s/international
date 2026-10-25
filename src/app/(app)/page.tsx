@@ -5,6 +5,7 @@ import { supabaseServer } from '@/lib/supabase/server'
 import { todayAthens } from '@/lib/dates'
 import { CashStrip } from './CashStrip'
 import { loadDayMovements, movementLocation } from '@/lib/movements/data'
+import { hiddenWaivedIds } from '@/lib/bookings/waived'
 import { MovementCard } from '@/components/MovementCard'
 
 /**
@@ -48,7 +49,7 @@ export default async function HomePage() {
   const supabase = await supabaseServer()
 
   const [{ pickups, returns, carById, modelById, hotelById }, { data: cash }, { data: ready }] = await Promise.all([
-    loadDayMovements(supabase, today),
+    loadDayMovements(supabase, today, await hiddenWaivedIds(supabase, staff)),
     supabase.rpc('my_cash_in_hand'),
     supabase.rpc('my_cash_ready_to_hand_over'),
   ])

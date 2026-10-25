@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { requireAdmin } from '@/lib/auth/session'
+import { hiddenWaivedIds } from '@/lib/bookings/waived'
 import { supabaseServer } from '@/lib/supabase/server'
 import { todayAthens } from '@/lib/dates'
 import { PrintButton } from './PrintButton'
@@ -33,7 +34,7 @@ export default async function MovementsPage({
 }: {
   searchParams: Promise<Record<string, string | undefined>>
 }) {
-  await requireAdmin()
+  const admin = await requireAdmin()
   const t = await getTranslations('admin.movements')
   const params = await searchParams
   const day = /^\d{4}-\d{2}-\d{2}$/.test(params.day ?? '') ? params.day! : todayAthens()
@@ -50,8 +51,9 @@ export default async function MovementsPage({
       .in('status', ['out', 'returned']),
   ])
 
-  const pickups = (pickupRows ?? []) as unknown as Movement[]
-  const returns = (returnRows ?? []) as unknown as Movement[]
+  const hidden = await hiddenWaivedIds(supabase, admin)
+  const pickups = ((pickupRows ?? []) as unknown as Movement[]).filter((b) => !hidden.has(b.id))
+  const returns = ((returnRows ?? []) as unknown as Movement[]).filter((b) => !hidden.has(b.id))
 
   const carIds = [...new Set([...pickups, ...returns].map((b) => b.car_id))]
   const hotelIds = [...new Set([...pickups, ...returns].map((b) => b.hotel_id).filter((h): h is string => h !== null))]

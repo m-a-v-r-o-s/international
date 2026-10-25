@@ -4,6 +4,7 @@ import { supabaseServer } from '@/lib/supabase/server'
 import { todayAthens } from '@/lib/dates'
 import { loadDayMovements, movementLocation } from '@/lib/movements/data'
 import { MovementCard } from '@/components/MovementCard'
+import { hiddenWaivedIds } from '@/lib/bookings/waived'
 
 /**
  * A rep's drop-offs for today on their own screen — the return-side twin of
@@ -11,13 +12,13 @@ import { MovementCard } from '@/components/MovementCard'
  * (lib/movements/data.ts).
  */
 export default async function ReturnsPage() {
-  await requireUnlocked()
+  const staff = await requireUnlocked()
   const t = await getTranslations('today')
   const tb = await getTranslations('bookingDetail')
 
   const today = todayAthens()
   const supabase = await supabaseServer()
-  const { returns, carById, modelById, hotelById } = await loadDayMovements(supabase, today)
+  const { returns, carById, modelById, hotelById } = await loadDayMovements(supabase, today, await hiddenWaivedIds(supabase, staff))
 
   return (
     <div className="flex min-h-full flex-col gap-6">

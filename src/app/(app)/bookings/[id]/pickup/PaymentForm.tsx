@@ -69,7 +69,12 @@ export function PaymentForm({
           <option value="">{t('noMethod')}</option>
           <option value="cash">{tb('payMethodCash')}</option>
           <option value="card">{tb('payMethodCard')}</option>
-          <option value="later">{t('payMethodLater')}</option>
+          {/* Not offered at all where the database would refuse it (a
+              first-time guest on a 1-day rental); kept on a booking that
+              already carries it, so the select never shows a value it lacks. */}
+          {payAfterUpfront !== null || payAfter
+            ? <option value="later">{t('payMethodLater')}</option>
+            : null}
         </select>
       </div>
 

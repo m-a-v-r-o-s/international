@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { requireAdmin } from '@/lib/auth/session'
+import { hiddenWaivedIds } from '@/lib/bookings/waived'
 import { supabaseServer } from '@/lib/supabase/server'
 import { filterIncidents } from './actions'
 import type { BookingRow, IncidentRow } from '@/lib/supabase/database.types'
@@ -27,7 +28,7 @@ export default async function IncidentsPage({
 }: {
   searchParams: Promise<Record<string, string | undefined>>
 }) {
-  await requireAdmin()
+  const admin = await requireAdmin()
   const t = await getTranslations('admin.incidents')
   const params = await searchParams
   const state = params.state === 'resolved' || params.state === 'all' ? params.state : 'open'
@@ -42,7 +43,8 @@ export default async function IncidentsPage({
   if (state === 'resolved') query = query.not('resolved_at', 'is', null)
 
   const { data } = await query
-  const rows = (data ?? []) as IncidentRow[]
+  const hidden = await hiddenWaivedIds(supabase, admin)
+  const rows = ((data ?? []) as IncidentRow[]).filter((r) => !hidden.has(r.booking_id))
 
   const bookingIds = [...new Set(rows.map((r) => r.booking_id))]
   const repIds = [...new Set(rows.map((r) => r.raised_by).filter((v): v is string => v !== null))]

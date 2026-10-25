@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { requireUnlocked } from '@/lib/auth/session'
+import { hiddenWaivedIds } from '@/lib/bookings/waived'
 import { supabaseServer } from '@/lib/supabase/server'
 import { EditBookingForm } from './EditBookingForm'
 import { ExtendBookingForm } from './ExtendBookingForm'
@@ -45,7 +46,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
     .eq('id', id).eq('kind', 'rental')
     .maybeSingle()
 
-  if (!booking) notFound()
+  if (!booking || (await hiddenWaivedIds(supabase, staff)).has(id)) notFound()
   const row = booking as unknown as Pick<BookingRow,
     'id' | 'ref' | 'status' | 'car_id' | 'category_id' | 'hotel_id' | 'adhoc_hotel_name' | 'room_number'
     | 'start_date' | 'end_date' | 'pickup_at' | 'dropoff_at'

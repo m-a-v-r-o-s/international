@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { requireUnlocked } from '@/lib/auth/session'
+import { hiddenWaivedIds } from '@/lib/bookings/waived'
 import { formatEuros } from '@/lib/money'
 import { supabaseServer } from '@/lib/supabase/server'
 import { searchMyBookings } from './actions'
@@ -24,7 +25,7 @@ export default async function MyBookingsPage({
 }: {
   searchParams: Promise<Record<string, string | undefined>>
 }) {
-  await requireUnlocked()
+  const staff = await requireUnlocked()
   const t = await getTranslations('myBookings')
   const params = await searchParams
   const q = params.q?.trim() ?? ''
@@ -40,10 +41,11 @@ export default async function MyBookingsPage({
     .order('start_date', { ascending: false })
     .limit(500)
 
-  let rows = (bookings ?? []) as Pick<
+  const hidden = await hiddenWaivedIds(supabase, staff)
+  let rows = ((bookings ?? []) as Pick<
     BookingRow, 'id' | 'ref' | 'status' | 'car_id' | 'start_date' | 'end_date'
     | 'cust_first' | 'cust_last' | 'total' | 'created_at'
-  >[]
+  >[]).filter((r) => !hidden.has(r.id))
 
   const carIds = [...new Set(rows.map((r) => r.car_id))]
   const { data: cars } = carIds.length > 0

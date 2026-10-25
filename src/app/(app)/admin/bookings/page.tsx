@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { requireAdmin } from '@/lib/auth/session'
+import { hiddenWaivedIds } from '@/lib/bookings/waived'
 import { formatEuros } from '@/lib/money'
 import { supabaseServer } from '@/lib/supabase/server'
 import { searchAllBookings } from './actions'
@@ -34,7 +35,7 @@ export default async function AdminBookingsPage({
 }: {
   searchParams: Promise<Record<string, string | undefined>>
 }) {
-  await requireAdmin()
+  const admin = await requireAdmin()
   const t = await getTranslations('admin.bookings')
   const params = await searchParams
   const q = params.q?.trim() ?? ''
@@ -47,7 +48,8 @@ export default async function AdminBookingsPage({
     .order('start_date', { ascending: false })
     .limit(1000)
 
-  let rows = (bookings ?? []) as unknown as Row[]
+  const hidden = await hiddenWaivedIds(supabase, admin)
+  let rows = ((bookings ?? []) as unknown as Row[]).filter((r) => !hidden.has(r.id))
 
   const carIds = [...new Set(rows.map((r) => r.car_id))]
   const hotelIds = [...new Set(rows.map((r) => r.hotel_id).filter((h): h is string => h !== null))]

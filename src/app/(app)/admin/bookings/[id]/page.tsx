@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { requireAdmin } from '@/lib/auth/session'
+import { hiddenWaivedIds } from '@/lib/bookings/waived'
 import { formatEuros } from '@/lib/money'
 import { supabaseServer } from '@/lib/supabase/server'
 import { AdminEditBookingForm } from './AdminEditBookingForm'
@@ -36,7 +37,7 @@ type Row = Pick<BookingRow,
  * screen adds no logging of its own.
  */
 export default async function AdminBookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireAdmin()
+  const admin = await requireAdmin()
   const { id } = await params
   const t = await getTranslations('admin.bookings')
   const tb = await getTranslations('bookingDetail')
@@ -46,7 +47,7 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
   const { data: booking } = await supabase.from('bookings')
     .select(COLUMNS).eq('id', id).eq('kind', 'rental').maybeSingle()
 
-  if (!booking) notFound()
+  if (!booking || (await hiddenWaivedIds(supabase, admin)).has(id)) notFound()
   const row = booking as unknown as Row
 
   const [

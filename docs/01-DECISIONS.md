@@ -2477,8 +2477,8 @@ screen:
   guest who never ticked the box still counts;
 - **anyone else pays the 1-day list price in cash first** (`price_rows`, days = 1, from the
   sheet that priced the booking; a hand-typed total falls back to that total per day). So a
-  1-day rental from a first-time guest can never be pay after (IR124), and less than the first
-  day is refused (IR125);
+  1-day rental from a first-time guest can never be pay after (IR124, and the option is not
+  even shown to the rep there), and less than the first day is refused (IR125);
 - **card is always the full amount**, so pay after is cash or nothing up front (IR123).
 
 The car stays `booked` / `out` / `returned` exactly as any other rental. Availability and the
@@ -2527,8 +2527,12 @@ manager side has two states on any one browser:
   again, or changes the code. The very first unlock chooses the code, typed twice; repeats and
   runs like 1234 are refused.
 
-**Gratis now also sets `paid`**, so a waived balance reads as settled anywhere `paid` is shown,
-and only A14, unlocked, tells it apart from Paid. Income is unchanged: only `settled_amount`
+**Locked, a waived rental does not show at all once the car is back** (owner, same day):
+`admin_hidden_waived_ids()` (gratis and `returned`) is dropped from the booking lists, both
+booking pages (404), today's and past movements sheets, Pickups/Returns and incidents. While a
+waived car is still out it stays in sight everywhere, because its return still has to be
+processed and the car is genuinely not free. Reps are never affected. Gratis also sets `paid`,
+so in that window the balance reads as settled. Income is unchanged: only `settled_amount`
 where `settlement = 'paid'`.
 
 The code hash lives in its own table, `gratis_lock`, with no grant but the service role's and
@@ -2536,7 +2540,9 @@ no audit trigger. Not `app_settings`, which every signed-in user can read and wh
 change lands in the audit log.
 
 **What this does not hide, recorded so nobody is surprised:**
-- a waived balance leaves "still owed" without ever appearing in "received";
+- a waived balance leaves "still owed" without ever appearing in "received", and the day-1
+  cash of a waived rental is still in "received" and in the rep's hand-over, because it is
+  real cash in the envelope;
 - the shortcut needs a keyboard, so on the phones gratis is simply never shown;
 - the message catalogue is sent to the browser whole, so the words are in the page source;
 - the accountant questionnaire (q19) and these docs describe gratis.

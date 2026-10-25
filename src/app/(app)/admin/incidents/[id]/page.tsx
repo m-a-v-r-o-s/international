@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { requireAdmin } from '@/lib/auth/session'
+import { hiddenWaivedIds } from '@/lib/bookings/waived'
 import { supabaseServer } from '@/lib/supabase/server'
 import { signBookingFiles } from '@/lib/storage/booking-files'
 import { ResolveForm } from './ResolveForm'
@@ -33,7 +34,7 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
 
   const { data: detailRows } = await supabase.rpc('admin_incident_detail', { p_id: id })
   const incident = detailRows?.[0]
-  if (!incident) notFound()
+  if (!incident || (await hiddenWaivedIds(supabase, staff)).has(incident.booking_id)) notFound()
 
   const [{ data: booking }, { data: raisedBy }, { data: photoRows }] = await Promise.all([
     supabase.from('bookings')

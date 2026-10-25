@@ -154,3 +154,27 @@ describe('the gratis code (§48)', () => {
     }
   })
 })
+
+describe('waived rentals on a locked manager browser (§48)', () => {
+  const hiddenIds = () => db.asUser(f.admin, () =>
+    db.sql<{ id: string }>(`select public.admin_hidden_waived_ids() as id`)).then((r) => r.map((x) => x.id))
+
+  test('hidden once waived AND returned, never while the car is still out', async () => {
+    const id = await readyForPickup('2026-07-06', '2026-07-08')
+    await pickUpPayingAfter(id, 35)
+    await db.asUser(f.admin, () => db.sql(`select public.admin_settle_pay_after($1, 'gratis', null)`, [id]))
+    expect(await hiddenIds()).toEqual([])
+
+    await db.asUser(f.admin, () => db.sql(`update public.bookings set status = 'returned' where id = $1`, [id]))
+    expect(await hiddenIds()).toEqual([id])
+  })
+
+  test('a paid balance is never hidden, and a rep cannot ask', async () => {
+    const id = await readyForPickup('2026-07-06', '2026-07-08')
+    await pickUpPayingAfter(id, 35)
+    await db.asUser(f.admin, () => db.sql(`select public.admin_settle_pay_after($1, 'paid', 'cash')`, [id]))
+    await db.asUser(f.admin, () => db.sql(`update public.bookings set status = 'returned' where id = $1`, [id]))
+    expect(await hiddenIds()).toEqual([])
+    expect(await errcode(() => db.asUser(f.repA, () => db.sql(`select public.admin_hidden_waived_ids()`)))).not.toBe('no-code')
+  })
+})

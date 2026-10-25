@@ -1433,6 +1433,7 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
         }[]
       }
+      admin_hidden_waived_ids: { Args: never; Returns: string[] }
       admin_money_summary: {
         Args: { p_from: string; p_to: string }
         Returns: {

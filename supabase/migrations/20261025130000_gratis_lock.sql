@@ -59,3 +59,26 @@ begin
   end if;
 end;
 $$;
+
+/*
+ * §48: what a locked manager browser leaves out of every list and history
+ * screen. Waived AND returned: while the car is still out the rental stays in
+ * sight, because its return still has to be processed.
+ */
+create function public.admin_hidden_waived_ids()
+returns setof uuid
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  perform app.assert_admin();
+  return query
+    select b.id from public.bookings b
+    where b.settlement = 'gratis' and b.status = 'returned';
+end;
+$$;
+
+revoke all on function public.admin_hidden_waived_ids() from public;
+grant execute on function public.admin_hidden_waived_ids() to authenticated, service_role;

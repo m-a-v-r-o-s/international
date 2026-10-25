@@ -30,6 +30,8 @@ export type DayMovements = {
 export async function loadDayMovements(
   supabase: Awaited<ReturnType<typeof supabaseServer>>,
   today: string,
+  /** §48: waived rentals a locked manager browser does not show. */
+  hidden: Set<string> = new Set(),
 ): Promise<DayMovements> {
   // Every booking on the day is shown. An exception booking used to be held
   // back until the boss approved it; since §37 there is nothing to approve —
@@ -43,8 +45,10 @@ export async function loadDayMovements(
   ])
 
   const pickups = ((pickupRows ?? []) as unknown as Movement[])
+    .filter((b) => !hidden.has(b.id))
     .sort((a, b) => (a.pickup_at ?? '').localeCompare(b.pickup_at ?? ''))
   const returns = ((returnRows ?? []) as unknown as Movement[])
+    .filter((b) => !hidden.has(b.id))
     .sort((a, b) => (a.dropoff_at ?? '').localeCompare(b.dropoff_at ?? ''))
 
   const carIds = [...new Set([...pickups, ...returns].map((b) => b.car_id))]
