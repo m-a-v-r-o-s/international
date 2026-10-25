@@ -18,8 +18,9 @@ export type GratisState = {
 
 const codeSchema = z.string().regex(/^\d{4}$/)
 
-async function storedHash(): Promise<string | null> {
-  const { data } = await supabaseAdmin().from('gratis_lock').select('code_hash').eq('id', 1).maybeSingle()
+/** Each manager login has its own code (§48). */
+async function storedHash(profileId: string): Promise<string | null> {
+  const { data } = await supabaseAdmin().from('gratis_lock').select('code_hash').eq('profile_id', profileId).maybeSingle()
   return data?.code_hash ?? null
 }
 
@@ -33,7 +34,7 @@ function newCodeProblem(code: string, confirm: FormDataEntryValue | null): Grati
 /**
  * §48 · Unlock gratis on this browser for 30 minutes. Ten thousand codes, so
  * the rate limit is what actually protects it, the same as a rep's PIN.
- * The very first use chooses the code.
+ * A login's very first use chooses that login's code.
  */
 export async function unlockGratis(_prev: GratisState, formData: FormData): Promise<GratisState> {
   const admin = await requireAdmin()
@@ -46,12 +47,12 @@ export async function unlockGratis(_prev: GratisState, formData: FormData): Prom
     return { error: 'rateLimited', setup: _prev?.setup }
   }
 
-  const stored = await storedHash()
+  const stored = await storedHash(admin.id)
   if (!stored) {
     if (formData.get('confirm') === null) return { setup: true }
     const problem = newCodeProblem(code.data, formData.get('confirm'))
     if (problem) return problem
-    const { error } = await supabaseAdmin().from('gratis_lock').insert({ id: 1, code_hash: await hashPin(code.data) })
+    const { error } = await supabaseAdmin().from('gratis_lock').insert({ profile_id: admin.id, code_hash: await hashPin(code.data) })
     if (error) return { error: 'wrong' }
   } else if (!(await verifyPin(code.data, stored))) {
     await logSecurityEvent({ kind: 'gratis_failed', profileId: admin.id, ipHash })
@@ -69,7 +70,7 @@ export async function lockGratis(): Promise<void> {
   revalidatePath('/', 'layout')
 }
 
-/** §48 · A new code, only from an unlocked browser. */
+/** §48 · A new code for this login, only from an unlocked browser. */
 export async function changeGratisCode(_prev: GratisState, formData: FormData): Promise<GratisState> {
   const admin = await requireAdmin()
   if (!(await gratisUnlocked(admin.id))) return { error: 'wrong' }
@@ -80,7 +81,7 @@ export async function changeGratisCode(_prev: GratisState, formData: FormData): 
   if (problem) return problem
 
   const { error } = await supabaseAdmin().from('gratis_lock')
-    .upsert({ id: 1, code_hash: await hashPin(code.data), updated_at: new Date().toISOString() })
+    .upsert({ profile_id: admin.id, code_hash: await hashPin(code.data), updated_at: new Date().toISOString() })
   if (error) return { error: 'wrong' }
   return { done: true }
 }

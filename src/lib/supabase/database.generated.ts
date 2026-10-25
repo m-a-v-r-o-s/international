@@ -862,20 +862,28 @@ export type Database = {
       gratis_lock: {
         Row: {
           code_hash: string
-          id: number
+          profile_id: string
           updated_at: string
         }
         Insert: {
           code_hash: string
-          id?: number
+          profile_id: string
           updated_at?: string
         }
         Update: {
           code_hash?: string
-          id?: number
+          profile_id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "gratis_lock_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       handovers: {
         Row: {

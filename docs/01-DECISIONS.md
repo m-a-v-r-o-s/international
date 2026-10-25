@@ -2579,8 +2579,10 @@ manager side has two states on any one browser:
   dialog asking for a 4-digit code. The code is checked on the server against an argon2 hash,
   rate-limited to 6 tries per 5 minutes, failures security-logged. Success sets `ir_gratis`, a
   signed httpOnly cookie for **30 minutes on that browser only**. The same shortcut locks it
-  again, or changes the code. The very first unlock chooses the code, typed twice; repeats and
-  runs like 1234 are refused.
+  again, or changes the code. **One code per manager login** (owner, same day): a login's first
+  unlock chooses that login's code, typed twice; repeats and runs like 1234 are refused. The
+  developer's login and the boss's have separate codes, so whoever is on the boss's login (his
+  father) needs the boss's code.
 
 **Locked, a waived rental does not show at all once the car is back** (owner, same day):
 `admin_hidden_waived_ids()` (gratis and `returned`) is dropped from the booking lists, both
@@ -2590,7 +2592,7 @@ processed and the car is genuinely not free. Reps are never affected. Gratis als
 so in that window the balance reads as settled. Income is unchanged: only `settled_amount`
 where `settlement = 'paid'`.
 
-The code hash lives in its own table, `gratis_lock`, with no grant but the service role's and
+The code hashes live in their own table, `gratis_lock` (one row per login), with no grant but the service role's and
 no audit trigger. Not `app_settings`, which every signed-in user can read and whose every
 change lands in the audit log.
 

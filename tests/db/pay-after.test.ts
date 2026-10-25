@@ -148,7 +148,7 @@ describe('what the boss sees and settles', () => {
 
 describe('the gratis code (§48)', () => {
   test('its hash is out of reach of every signed-in user, the boss included', async () => {
-    await db.sql(`insert into public.gratis_lock (code_hash) values ('x') on conflict (id) do nothing`)
+    await db.sql(`insert into public.gratis_lock (profile_id, code_hash) values ($1, 'x')`, [f.admin])
     for (const who of [f.admin, f.repA]) {
       expect(await errcode(() => db.asUser(who, () => db.sql(`select code_hash from public.gratis_lock`)))).toBe('42501')
     }
