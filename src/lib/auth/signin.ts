@@ -4,6 +4,7 @@ import { cookies, headers } from 'next/headers'
 import { supabaseAdmin } from '../supabase/admin'
 import { supabaseServer } from '../supabase/server'
 import { sha256Hex } from '../hash'
+import { clientIp } from '../http/client-ip'
 import { logSecurityEvent } from '../rate-limit'
 import { isProduction } from '../env'
 import { serverEnv } from '../env'
@@ -16,8 +17,7 @@ import {
 /** The caller's IP, hashed — for rate limiting and the security log, not for storage. */
 export async function requestIpHash(): Promise<string> {
   const h = await headers()
-  const forwarded = h.get('x-forwarded-for')?.split(',')[0]?.trim()
-  return sha256Hex(forwarded || h.get('x-real-ip') || 'unknown')
+  return sha256Hex(clientIp(h))
 }
 
 /**
