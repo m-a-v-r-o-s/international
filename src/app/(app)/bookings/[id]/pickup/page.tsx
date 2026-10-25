@@ -138,12 +138,18 @@ export default async function PickupPage({
     damage: pickup !== null,
     agreement: signed !== null,
     copy: signed?.emailed_to !== null && signed !== null,
-    payment: booking.pay_method !== null || booking.collected > 0,
+    payment: booking.pay_method !== null || booking.collected > 0 || booking.pay_after,
     confirm: false,
   }
 
   const requested = (STEPS as readonly string[]).includes(query.step ?? '') ? (query.step as Step) : 'drivers'
   const step: Step = reachable[requested] ? requested : 'drivers'
+
+  // The one number the payment step needs for pay after (§47): what to take
+  // in cash now, or null when the option is not on offer.
+  const payAfterUpfront = step === 'payment'
+    ? (await supabase.rpc('pay_after_upfront', { p_booking_id: booking.id })).data ?? null
+    : null
 
   // ── The returning guest (docs/01-DECISIONS.md §25a) ──────────────────────
   // Asked here rather than from the browser, so the lookup runs under this
@@ -450,6 +456,8 @@ export default async function PickupPage({
               collected={booking.collected}
               payMethod={booking.pay_method}
               paid={booking.paid}
+              payAfter={booking.pay_after}
+              payAfterUpfront={payAfterUpfront}
             />
           </div>
           <Link href={nextHref('payment')} className="ir-btn-primary">{t('toConfirm')}</Link>
@@ -484,7 +492,7 @@ export default async function PickupPage({
             <div>
               <dt className="text-ink-soft">{t('collectedSummary')}</dt>
               <dd className="font-medium">
-                {formatEuros(booking.collected)} · {booking.paid ? tb('paid') : tb('unpaid')}
+                {formatEuros(booking.collected)} · {booking.paid ? tb('paid') : booking.pay_after ? t('payMethodLater') : tb('unpaid')}
               </dd>
             </div>
           </dl>

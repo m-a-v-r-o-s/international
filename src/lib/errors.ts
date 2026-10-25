@@ -4,7 +4,7 @@
  * of "something went wrong". PostgREST forwards the Postgres SQLSTATE as
  * `error.code`, and the engines and guards in `supabase/migrations` raise
  * their errors with exactly the SQLSTATEs listed in `messages/en.json`'s
- * `errors` block (IR100…IR121) — so the code is the key, verbatim.
+ * `errors` block (IR100…IR126), so the code is the key, verbatim.
  *
  * `42501` is Postgres's own "insufficient privilege", thrown by RLS itself
  * rather than by application code; it always means the same thing here.
@@ -12,13 +12,13 @@
 const KNOWN_CODES = new Set([
   'IR001', 'IR100', 'IR101', 'IR102', 'IR103', 'IR104', 'IR105', 'IR106',
   'IR107', 'IR108', 'IR109', 'IR110', 'IR111', 'IR112', 'IR113', 'IR114', 'IR115', 'IR116',
-  'IR120', 'IR121', 'IR122',
+  'IR120', 'IR121', 'IR122', 'IR123', 'IR124', 'IR125', 'IR126',
 ])
 
 export type ErrorKey =
   | 'IR001' | 'IR100' | 'IR101' | 'IR102' | 'IR103' | 'IR104' | 'IR105' | 'IR106'
   | 'IR107' | 'IR108' | 'IR109' | 'IR110' | 'IR111' | 'IR112' | 'IR113' | 'IR114' | 'IR115' | 'IR116'
-  | 'IR120' | 'IR121' | 'IR122'
+  | 'IR120' | 'IR121' | 'IR122' | 'IR123' | 'IR124' | 'IR125' | 'IR126'
   | 'forbidden' | 'conflict' | 'unknown' | 'inUse' | 'duplicate'
   // Raised by the app rather than by Postgres: a file the upload path refused
   // before it ever reached the bucket, the caps around the OCR call, and a

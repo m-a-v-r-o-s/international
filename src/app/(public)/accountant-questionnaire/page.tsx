@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * /accountant-questionnaire — the seventeen questions from
+ * /accountant-questionnaire: the nineteen questions from
  * src/lib/accountant/questionnaire.ts as a form the company's accountant can
  * actually fill in, rather than a PDF they have to print.
  *

@@ -205,6 +205,7 @@ export type Database = {
           id: string
           kind: Database["public"]["Enums"]["booking_kind"]
           paid: boolean
+          pay_after: boolean
           pay_method: Database["public"]["Enums"]["pay_method"] | null
           period_id: string | null
           pickup_at: string | null
@@ -213,6 +214,11 @@ export type Database = {
           ref: string
           returned_at: string | null
           room_number: string | null
+          settled_amount: number | null
+          settled_at: string | null
+          settled_by: string | null
+          settled_method: Database["public"]["Enums"]["pay_method"] | null
+          settlement: string | null
           start_date: string
           status: Database["public"]["Enums"]["booking_status"]
           total: number | null
@@ -244,6 +250,7 @@ export type Database = {
           id?: string
           kind?: Database["public"]["Enums"]["booking_kind"]
           paid?: boolean
+          pay_after?: boolean
           pay_method?: Database["public"]["Enums"]["pay_method"] | null
           period_id?: string | null
           pickup_at?: string | null
@@ -252,6 +259,11 @@ export type Database = {
           ref: string
           returned_at?: string | null
           room_number?: string | null
+          settled_amount?: number | null
+          settled_at?: string | null
+          settled_by?: string | null
+          settled_method?: Database["public"]["Enums"]["pay_method"] | null
+          settlement?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["booking_status"]
           total?: number | null
@@ -283,6 +295,7 @@ export type Database = {
           id?: string
           kind?: Database["public"]["Enums"]["booking_kind"]
           paid?: boolean
+          pay_after?: boolean
           pay_method?: Database["public"]["Enums"]["pay_method"] | null
           period_id?: string | null
           pickup_at?: string | null
@@ -291,6 +304,11 @@ export type Database = {
           ref?: string
           returned_at?: string | null
           room_number?: string | null
+          settled_amount?: number | null
+          settled_at?: string | null
+          settled_by?: string | null
+          settled_method?: Database["public"]["Enums"]["pay_method"] | null
+          settlement?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["booking_status"]
           total?: number | null
@@ -1397,6 +1415,29 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
         }[]
       }
+      admin_money_summary: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          card: number
+          cash: number
+          gratis: number
+        }[]
+      }
+      admin_open_pay_after: {
+        Args: never
+        Returns: {
+          balance: number
+          booking_id: string
+          cust_name: string
+          cust_phone: string
+          end_date: string
+          ref: string
+          rep_id: string
+          rep_name: string
+          start_date: string
+          status: Database["public"]["Enums"]["booking_status"]
+        }[]
+      }
       admin_override_eligibility: {
         Args: { p_booking_id: string; p_note: string }
         Returns: undefined
@@ -1417,6 +1458,14 @@ export type Database = {
       }
       admin_set_booking_price: {
         Args: { p_booking_id: string; p_total: number }
+        Returns: undefined
+      }
+      admin_settle_pay_after: {
+        Args: {
+          p_booking_id: string
+          p_method?: Database["public"]["Enums"]["pay_method"]
+          p_outcome: string
+        }
         Returns: undefined
       }
       admin_set_car_notes: {
@@ -1580,6 +1629,7 @@ export type Database = {
         Args: { p_delta: number; p_period_id: string }
         Returns: undefined
       }
+      pay_after_upfront: { Args: { p_booking_id: string }; Returns: number }
       quote: {
         Args: { p_category_id: string; p_end: string; p_start: string }
         Returns: {

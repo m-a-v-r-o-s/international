@@ -236,3 +236,10 @@ one is corrected.
 Privacy policy · Terms · Cookie consent banner · Custom branded 404 · Login.
 Footer on every public page: **© {year} Akos Digital Services** — the name linking to
 `https://akosds.com`.
+
+### A14 · Money
+What actually came in over a period (defaults to this month so far): cash and card received,
+with **gratis** beside it and never inside it, and what is **still owed** on pay-after rentals
+right now. Below it, every open pay-after balance, oldest pickup first: booking, guest, dates,
+rep, amount, and three buttons, `Paid cash`, `Paid card`, `Gratis` (asks first, cannot be
+undone). docs/01-DECISIONS.md §47.

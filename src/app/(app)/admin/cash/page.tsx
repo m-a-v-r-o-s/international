@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { requireAdmin } from '@/lib/auth/session'
 import { formatEuros } from '@/lib/money'
@@ -29,8 +30,18 @@ export default async function CashPage() {
   const t = await getTranslations('admin.cash')
   const supabase = await supabaseServer()
 
-  const { data } = await supabase.rpc('admin_pending_cash_handovers')
+  const [{ data }, { data: openRows }] = await Promise.all([
+    supabase.rpc('admin_pending_cash_handovers'),
+    supabase.rpc('admin_open_pay_after'),
+  ])
   const rows = data ?? []
+
+  // What each rep's envelope is short by because of pay after (§47): every
+  // balance still open on the pickups they made. Settled on A14 · Money.
+  const owedByRep = new Map<string, number>()
+  for (const row of openRows ?? []) {
+    owedByRep.set(row.rep_id, (owedByRep.get(row.rep_id) ?? 0) + row.balance)
+  }
 
   const fmtTime = (iso: string) =>
     new Date(iso).toLocaleString('en-GB', {
@@ -53,6 +64,7 @@ export default async function CashPage() {
               <tr className="border-b border-line-strong text-[0.8125rem] uppercase tracking-wide text-ink-soft">
                 <th className="py-2 pr-3 font-medium">{t('rep')}</th>
                 <th className="py-2 pr-3 font-medium">{t('amount')}</th>
+                <th className="py-2 pr-3 font-medium">{t('owed')}</th>
                 <th className="py-2 pr-3 font-medium">{t('handedAt')}</th>
                 <th className="py-2 pr-3 font-medium" />
               </tr>
@@ -62,6 +74,13 @@ export default async function CashPage() {
                 <tr key={row.id} className="border-b border-line last:border-0">
                   <td className="py-2 pr-3 font-medium">{row.rep_name ?? '–'}</td>
                   <td className="py-2 pr-3 tabular-nums">{formatEuros(row.amount)}</td>
+                  <td className="py-2 pr-3 tabular-nums">
+                    {owedByRep.has(row.rep_id) ? (
+                      <Link href="/admin/money" className="text-brand underline underline-offset-2">
+                        {formatEuros(owedByRep.get(row.rep_id))}
+                      </Link>
+                    ) : '–'}
+                  </td>
                   <td className="py-2 pr-3 text-ink-soft tabular-nums">{fmtTime(row.handed_at)}</td>
                   <td className="py-2 pr-3">
                     <ConfirmForm id={row.id} />

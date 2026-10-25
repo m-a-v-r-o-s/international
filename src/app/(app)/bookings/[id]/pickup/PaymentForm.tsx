@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/Field'
 import { FormActions } from '@/components/FormActions'
@@ -18,15 +18,21 @@ import { savePayment, type PickupState } from './actions'
  *
  * Whole euros, both sides — the input rejects a decimal outright rather than
  * rounding it away.
+ *
+ * Pay after (§47) is the third option. `payAfterUpfront` is the one number
+ * the rep needs for it: what to take in cash now, or null when the option is
+ * not on offer. The database enforces the same rule on save.
  */
 export function PaymentForm({
-  bookingId, total, collected, payMethod, paid,
+  bookingId, total, collected, payMethod, paid, payAfter, payAfterUpfront,
 }: {
   bookingId: string
   total: number | null
   collected: number
   payMethod: 'cash' | 'card' | 'transfer' | null
   paid: boolean
+  payAfter: boolean
+  payAfterUpfront: number | null
 }) {
   const t = useTranslations('pickup')
   const tb = useTranslations('admin.bookings')
@@ -34,6 +40,7 @@ export function PaymentForm({
   const te = useTranslations('errors')
 
   const [state, formAction] = useActionState<PickupState, FormData>(savePayment, undefined)
+  const [method, setMethod] = useState<string>(payAfter ? 'later' : payMethod ?? '')
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -55,18 +62,31 @@ export function PaymentForm({
 
       <div>
         <label className="ir-label" htmlFor="pay_method">{tb('payMethod')}</label>
-        <select id="pay_method" name="pay_method" className="ir-field" defaultValue={payMethod ?? ''}>
+        <select
+          id="pay_method" name="pay_method" className="ir-field"
+          value={method} onChange={(e) => setMethod(e.target.value)}
+        >
           <option value="">{t('noMethod')}</option>
           <option value="cash">{tb('payMethodCash')}</option>
           <option value="card">{tb('payMethodCard')}</option>
-          <option value="transfer">{tb('payMethodTransfer')}</option>
+          <option value="later">{t('payMethodLater')}</option>
         </select>
       </div>
 
-      <div className="flex min-h-12 items-center gap-3">
-        <input id="paid" name="paid" type="checkbox" defaultChecked={paid} className="size-6 accent-brand" />
-        <label htmlFor="paid" className="text-[1.0625rem]">{t('paidInFull')}</label>
-      </div>
+      {method === 'later' ? (
+        <p className="ir-notice border-line bg-canvas" role="status">
+          {payAfterUpfront === null
+            ? t('payAfterUnavailable')
+            : payAfterUpfront === 0
+              ? t('payAfterNothingNow')
+              : t('payAfterTakeNow', { amount: formatEuros(payAfterUpfront) })}
+        </p>
+      ) : (
+        <div className="flex min-h-12 items-center gap-3">
+          <input id="paid" name="paid" type="checkbox" defaultChecked={paid} className="size-6 accent-brand" />
+          <label htmlFor="paid" className="text-[1.0625rem]">{t('paidInFull')}</label>
+        </div>
+      )}
 
       <FormActions label={tc('save')} variant="quiet" saved={state?.saved} />
       {state?.saved ? <p className="text-[0.875rem] text-ok" role="status">{t('paymentSaved')}</p> : null}

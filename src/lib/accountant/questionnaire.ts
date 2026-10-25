@@ -1,5 +1,5 @@
 /**
- * The seventeen questions the company's accountant has to answer before any
+ * The nineteen questions the company's accountant has to answer before any
  * myDATA work can start, plus the four assumptions the design rests on.
  *
  * WHY THE CONTENT IS HERE AND NOT IN `messages/*.json`.
@@ -402,6 +402,44 @@ export const SECTIONS: Section[] = [
         why: {
           el: 'Είναι δύο ξεχωριστά σετ. Τα πρώτα δημιουργούνται από τον λογαριασμό myDATA της επιχείρησης και χρειάζονται μόνο για το Πελατολόγιο. Τα δεύτερα τα δίνει ο Πάροχος. Και για τα δύο χρειάζομαι πρώτα δοκιμαστικά και, μετά την επιτυχή δοκιμή, παραγωγικά. Μην τα γράψετε σε αυτή τη φόρμα: θα συμφωνήσουμε ασφαλή τρόπο παράδοσης.',
           en: 'They are two separate sets. The first are created from the business’s own myDATA account and are needed only for the registry. The second come from the provider. For both I need sandbox credentials first and production ones after a successful test. Do not type them into this form: we will agree a secure way to hand them over.',
+        },
+      },
+    ],
+  },
+  {
+    id: 'payafter',
+    mark: 'ΣΤ',
+    title: {
+      el: 'Πληρωμή αργότερα και δωρεάν ενοικιάσεις',
+      en: 'Pay later and free rentals',
+    },
+    lede: {
+      el: 'Ο ιδιοκτήτης θέλει να μπορεί να παραδίδει όχημα χωρίς πλήρη είσπραξη. Ένας πελάτης που έχει ξαναενοικιάσει μπορεί να πληρώσει αργότερα, ενώ ένας νέος πελάτης πληρώνει την πρώτη μέρα μπροστά. Κάποιες φορές, μόνο για καλούς πελάτες και για να τους κρατήσει, χαρίζει το υπόλοιπο. Ποτέ για φίλους ή συγγενείς. Κάθε τέτοια ενοικίαση καταχωρείται κανονικά στο Ψηφιακό Πελατολόγιο κατά την παράδοση.',
+      en: 'The owner wants to be able to hand a vehicle over without collecting in full. A guest who has rented before may pay later, while a new guest pays the first day up front. Sometimes, only for good customers and to keep them, he waives the rest. Never for friends or family. Every such rental is entered in the Digital Customer Registry as normal at handover.',
+    },
+    questions: [
+      {
+        id: 'q18',
+        number: 18,
+        text: {
+          el: 'Όταν ένα όχημα παραδίδεται χωρίς πλήρη είσπραξη, εκδίδεται στην παράδοση παραστατικό για ολόκληρο το ποσό με τρόπο πληρωμής «Επί πιστώσει», και η μεταγενέστερη είσπραξη καταγράφεται απλώς ως είσπραξη απαίτησης;',
+          en: 'When a vehicle is handed over without full payment, is a document issued at handover for the full amount with payment method “On credit”, and the later collection recorded simply as collecting a receivable?',
+        },
+        why: {
+          el: 'Η απάντηση 10 ορίζει ως ημερομηνία έκδοσης την παράδοση. Θέλω να επιβεβαιώσω ότι αυτό ισχύει και όταν τα χρήματα έρχονται μέρες αργότερα, ώστε η εγγραφή του Πελατολογίου να συσχετίζεται με παραστατικό για την πλήρη αξία. Αν το παραστατικό κόβεται στην ταμειακή, χρειάζομαι να ξέρω αν υποστηρίζει πώληση επί πιστώσει ή αν αυτές οι περιπτώσεις πρέπει να περνούν από τον Πάροχο.',
+          en: 'Answer 10 sets the issue date at handover. I want to confirm that holds when the money arrives days later too, so the registry entry correlates with a document for the full value. If the document is cut on the cash register, I need to know whether it supports a sale on credit or whether these cases have to go through the provider.',
+        },
+      },
+      {
+        id: 'q19',
+        number: 19,
+        text: {
+          el: 'Όταν ο ιδιοκτήτης χαρίζει το υπόλοιπο σε καλό πελάτη, ποιος είναι ο σωστός τρόπος: παραστατικό με την πλήρη τιμή και έκπτωση έως 100%, ή πιστωτικό στοιχείο μετά την έκδοση; Οφείλεται ΦΠΑ στο ποσό που χαρίζεται;',
+          en: 'When the owner waives the rest for a good customer, what is the right way: a document at full price with a discount of up to 100%, or a credit note after issue? Is VAT due on the amount waived?',
+        },
+        why: {
+          el: 'Ο σκοπός είναι αποκλειστικά επιχειρηματικός, η διατήρηση πελατών, και ποτέ ιδιωτική χρήση. Η εφαρμογή κρατά το ποσό που χαρίστηκε χωριστά από τα έσοδα. Δεν θέλω καμία ενοικίαση να εμφανίζεται στο Πελατολόγιο χωρίς αντίστοιχο παραστατικό, και η επιλογή δεν θα χρησιμοποιηθεί πριν απαντηθεί αυτό.',
+          en: 'The purpose is purely business, keeping customers, and never private use. The app keeps the waived amount apart from income. I do not want any rental to appear in the registry without a matching document, and the option will not be used before this is answered.',
         },
       },
     ],

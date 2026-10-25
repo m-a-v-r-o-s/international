@@ -451,7 +451,11 @@
     "reuseHint": "Copies the photographs onto this rental so you do not have to scan the licence again. They are copied, not shared: this rental gets its own, deleted on its own schedule.",
     "reuseDone": "Copied {n, plural, =1 {one photograph} other {# photographs}}. Check them before continuing.",
     "reuseGone": "Those photographs are no longer available. Take new ones.",
-    "reuseNeedsDriver": "Save the driver first, then you can copy last time’s licence photos onto this rental."
+    "reuseNeedsDriver": "Save the driver first, then you can copy last time’s licence photos onto this rental.",
+    "payMethodLater": "Pay after",
+    "payAfterTakeNow": "Take {amount} in cash now. The rest is settled with the manager.",
+    "payAfterNothingNow": "Nothing to take now. The guest settles with the manager.",
+    "payAfterUnavailable": "Pay after is not available for this booking. The guest pays in full."
   },
   "writeContract": {
     "title": "Write up the contract",
@@ -504,7 +508,8 @@
       "users": "Staff",
       "customers": "Customer ledger",
       "deskSection": "Front desk",
-      "adminSection": "Admin desk"
+      "adminSection": "Admin desk",
+      "money": "Money"
     },
     "movements": {
       "title": "Movements sheet",
@@ -763,7 +768,8 @@
       "rep": "Rep",
       "amount": "Amount",
       "handedAt": "Handed over",
-      "confirm": "Confirm received"
+      "confirm": "Confirm received",
+      "owed": "Owed on pay after"
     },
     "users": {
       "title": "Staff",
@@ -844,6 +850,30 @@
       "isDepot": "This location is our own office",
       "isDepotHint": "The company's own yard rather than a hotel. It sorts first in every relocation destination list.",
       "depotBadge": "Office"
+    },
+    "money": {
+      "title": "Money",
+      "subtitle": "Money actually received, and what is still owed on pay-after rentals.",
+      "from": "From",
+      "to": "To",
+      "show": "Show",
+      "received": "Received",
+      "total": "Total",
+      "gratis": "Gratis",
+      "gratisHint": "Waived for good customers. Never counted as income.",
+      "owed": "Still owed",
+      "owedHint": "Right now, whatever the dates above.",
+      "unpaidTitle": "Unpaid",
+      "unpaidEmpty": "Nothing owed. Every pay-after rental is settled.",
+      "booking": "Booking",
+      "guest": "Guest",
+      "dates": "Dates",
+      "rep": "Rep",
+      "amount": "Owed",
+      "paidCash": "Paid cash",
+      "paidCard": "Paid card",
+      "gratisAction": "Gratis",
+      "gratisConfirm": "Waive {amount} for {name}? This cannot be undone."
     }
   },
   "errors": {
@@ -887,7 +917,11 @@
     "IR122": "Too many customer lookups in a short time. Type the details in by hand and try the lookup again later.",
     "emailInvalid": "That does not look like a real email address.",
     "emailUndeliverable": "That email's domain cannot receive mail: check it for a typo.",
-    "incidentEmpty": "Write what happened, or add a photo: an empty report tells the manager nothing."
+    "incidentEmpty": "Write what happened, or add a photo: an empty report tells the manager nothing.",
+    "IR123": "Pay after is cash only, and only while something is still owed.",
+    "IR124": "A first-time guest pays a one-day rental in full. Pay after is not available.",
+    "IR125": "A first-time guest pays the first day in cash before taking the car.",
+    "IR126": "There is no open balance on that booking."
   },
   "eligibility": {
     "title": "Eligibility",
@@ -1144,7 +1178,7 @@
   "accountant": {
     "eyebrow": "International Rentals · For the company accountant",
     "title": "myDATA questionnaire",
-    "standfirst": "Seventeen questions that need answering before any code is written for electronic invoicing and the AADE connection.",
+    "standfirst": "Nineteen questions that need answering before any code is written for electronic invoicing and the AADE connection.",
     "metaFromLabel": "From",
     "metaFrom": "Akos Digital Services",
     "metaSubjectLabel": "Subject",

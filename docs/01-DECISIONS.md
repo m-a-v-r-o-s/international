@@ -2463,3 +2463,50 @@ recorded. Nothing in the schema currently represents "this B2B invoice was paid 
 date" — `cash_handovers` is shaped around a rep's daily cash, not a company's account. Design
 that once the accountant's ruling on §43's πάροχος question lands, since if the answer there
 closes the B2B e-invoicing path entirely, a settlement state for it would be built for nothing.
+
+## 47. Pay after: a car out on trust, settled by the boss, and gratis for good customers
+
+25 Oct 2026, owner. Besides card and cash, some rentals go out without the full price being
+paid. **A rep sees exactly one new thing: a third payment option, "Pay after".** Every balance,
+every settlement and every total below is the boss's alone (§7 is untouched).
+
+**Who may pay after.** Decided in the database (`app.bookings_enforce_pay_after()`), not on the
+screen:
+- a guest with **any earlier returned rental under the same normalised phone** may take the
+  car paying nothing up front. Read from `bookings`, not from the consent ledger of §25a, so a
+  guest who never ticked the box still counts;
+- **anyone else pays the 1-day list price in cash first** (`price_rows`, days = 1, from the
+  sheet that priced the booking; a hand-typed total falls back to that total per day). So a
+  1-day rental from a first-time guest can never be pay after (IR124), and less than the first
+  day is refused (IR125);
+- **card is always the full amount**, so pay after is cash or nothing up front (IR123).
+
+The car stays `booked` / `out` / `returned` exactly as any other rental. Availability and the
+exclusion constraint never see the difference. The day-1 cash is ordinary pickup cash and
+lands in the rep's cash in hand and hand-over like any other.
+
+**Settling is all or nothing, and only the boss does it** (A14 · Money,
+`admin_settle_pay_after()`): **Paid** (cash or card) counts as income **on the day he marks
+it**; **Gratis** waives the rest and is reported as its own total, never as income. The
+settlement columns have no grant at all, so the RPC is the only door for the boss as much as
+for a rep. A12 · Cash shows, per rep, the pay-after money still open on their pickups.
+
+**What A14 calls income is cash flow, not tax revenue.** §43 answer 10 puts the fiscal issue
+date at the handover, so for myDATA the sale is the full price on the pickup day, however late
+the money comes. The two figures are meant to differ.
+
+**Gratis is a loyalty discount for good customers, never for friends or family**, and it never
+touches the Ψηφιακό Πελατολόγιο. The owner asked whether a gratis rental could be left out of
+the registry so ΑΑΔΕ would not see it; that was declined and is not to be built. Every rental
+gets its registry entry at handover, and the registry is cross-checked against fiscal
+documents by ΜΑΡΚ, so an entry with no matching document is exactly what an inspection finds
+(§43.3's penalty is per unrecorded vehicle). How the waived part is documented (full price with
+a 100% discount, or a credit note after issue) and whether VAT is due on it are the
+accountant's: questionnaire q18 (issue on credit at handover, which is §46's
+`payment_method_type: 1`) and q19 (gratis). **Gratis is not to be used in production until q19
+is answered.**
+
+The dead `transfer` value (§43 answer 11) is no longer offered on the rep's payment step.
+
+See `supabase/migrations/20261025120000_pay_after.sql`, `tests/db/pay-after.test.ts`,
+`src/app/(app)/admin/money/` and `src/app/(app)/bookings/[id]/pickup/PaymentForm.tsx`.

@@ -259,7 +259,8 @@ export async function saveFuelOut(_prev: HandoverState, formData: FormData): Pro
 
 /**
  * R4 step 7 — payment. Amount collected, method, paid/unpaid
- * (docs/01-DECISIONS.md §15). No deposit is taken and none is built.
+ * (docs/01-DECISIONS.md §15), or pay after (§47). No deposit is taken and
+ * none is built.
  *
  * A rep never sets the PRICE — `total` is not in their column grant and
  * the guard trigger would revert it anyway. What they record here is what the
@@ -272,7 +273,7 @@ export async function savePayment(_prev: PickupState, formData: FormData): Promi
   const parsed = z.object({
     booking_id: uuidSchema,
     collected: euroAmountSchema,
-    pay_method: z.enum(['cash', 'card', 'transfer']).nullable(),
+    pay_method: z.enum(['cash', 'card', 'later']).nullable(),
     paid: z.coerce.boolean(),
   }).safeParse({
     booking_id: formData.get('booking_id'),
@@ -282,7 +283,13 @@ export async function savePayment(_prev: PickupState, formData: FormData): Promi
   })
   if (!parsed.success) return { error: 'IR104' }
 
-  const { booking_id, ...fields } = parsed.data
+  // Pay after (§47) is not a method of its own: what changes hands now is
+  // cash or nothing, and app.bookings_enforce_pay_after() checks the amount.
+  const { booking_id, pay_method, collected, paid } = parsed.data
+  const later = pay_method === 'later'
+  const fields = later
+    ? { collected, pay_method: collected > 0 ? 'cash' as const : null, paid: false, pay_after: true }
+    : { collected, pay_method, paid, pay_after: false }
   const supabase = await supabaseServer()
   const { error } = await supabase.from('bookings').update(fields).eq('id', booking_id)
 
