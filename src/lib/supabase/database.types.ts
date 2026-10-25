@@ -73,7 +73,6 @@ export type IncidentPhotoRow = Row<'incident_photos'>
 export type CashHandoverRow = Row<'cash_handovers'>
 export type AuditLogRow = Row<'audit_log'>
 export type AppSettingsRow = Row<'app_settings'>
-export type PushSubscriptionRow = Row<'push_subscriptions'>
 
 /** Narrowed per note 2 above. */
 export type CarModelRow = Omit<Row<'car_models'>, 'transmission' | 'fuel_type'> & {

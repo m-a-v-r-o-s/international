@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      accountant_replies: {
+        Row: {
+          answers: Json
+          files: Json
+          id: string
+          ip_hash: string | null
+          locale: string
+          mail_status: string
+          respondent_email: string | null
+          respondent_name: string | null
+          respondent_note: string | null
+          submitted_at: string
+        }
+        Insert: {
+          answers?: Json
+          files?: Json
+          id?: string
+          ip_hash?: string | null
+          locale?: string
+          mail_status?: string
+          respondent_email?: string | null
+          respondent_name?: string | null
+          respondent_note?: string | null
+          submitted_at?: string
+        }
+        Update: {
+          answers?: Json
+          files?: Json
+          id?: string
+          ip_hash?: string | null
+          locale?: string
+          mail_status?: string
+          respondent_email?: string | null
+          respondent_name?: string | null
+          respondent_note?: string | null
+          submitted_at?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           company: Json
@@ -363,6 +402,13 @@ export type Database = {
             columns: ["period_id"]
             isOneToOne: false
             referencedRelation: "pricing_periods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_settled_by_fkey"
+            columns: ["settled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1000,7 +1046,6 @@ export type Database = {
           charge: number | null
           id: string
           note: string | null
-          notified_at: string | null
           raised_at: string
           raised_by: string | null
           resolution: string | null
@@ -1012,7 +1057,6 @@ export type Database = {
           charge?: number | null
           id?: string
           note?: string | null
-          notified_at?: string | null
           raised_at?: string
           raised_by?: string | null
           resolution?: string | null
@@ -1024,7 +1068,6 @@ export type Database = {
           charge?: number | null
           id?: string
           note?: string | null
-          notified_at?: string | null
           raised_at?: string
           raised_by?: string | null
           resolution?: string | null
@@ -1184,9 +1227,6 @@ export type Database = {
           full_name: string
           id: string
           lang: string
-          notify_evening: boolean
-          notify_incidents: boolean
-          notify_morning: boolean
           phone: string | null
           pin_hash: string | null
           pin_must_change: boolean
@@ -1199,9 +1239,6 @@ export type Database = {
           full_name?: string
           id: string
           lang?: string
-          notify_evening?: boolean
-          notify_incidents?: boolean
-          notify_morning?: boolean
           phone?: string | null
           pin_hash?: string | null
           pin_must_change?: boolean
@@ -1214,9 +1251,6 @@ export type Database = {
           full_name?: string
           id?: string
           lang?: string
-          notify_evening?: boolean
-          notify_incidents?: boolean
-          notify_morning?: boolean
           phone?: string | null
           pin_hash?: string | null
           pin_must_change?: boolean
@@ -1224,38 +1258,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      push_subscriptions: {
-        Row: {
-          created_at: string
-          endpoint: string
-          id: string
-          keys: Json
-          profile_id: string
-        }
-        Insert: {
-          created_at?: string
-          endpoint: string
-          id?: string
-          keys: Json
-          profile_id: string
-        }
-        Update: {
-          created_at?: string
-          endpoint?: string
-          id?: string
-          keys?: Json
-          profile_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "push_subscriptions_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       rep_devices: {
         Row: {
@@ -1294,6 +1296,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      adjust_period_prices: {
+        Args: { p_delta: number; p_period_id: string }
+        Returns: undefined
+      }
       admin_audit_entities: {
         Args: never
         Returns: {
@@ -1321,18 +1327,6 @@ export type Database = {
           id: number
         }[]
       }
-      admin_recycle_bin: {
-        Args: never
-        Returns: {
-          actor_name: string
-          at: string
-          entity: string
-          entity_id: string
-          id: number
-          row_data: Json
-        }[]
-      }
-      admin_restore_deleted: { Args: { p_id: number }; Returns: undefined }
       admin_blocks: {
         Args: { p_from: string; p_to: string }
         Returns: {
@@ -1393,6 +1387,7 @@ export type Database = {
           front_path: string
         }[]
       }
+      admin_hidden_waived_ids: { Args: never; Returns: string[] }
       admin_incident_detail: {
         Args: { p_id: string }
         Returns: {
@@ -1433,7 +1428,6 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
         }[]
       }
-      admin_hidden_waived_ids: { Args: never; Returns: string[] }
       admin_money_summary: {
         Args: { p_from: string; p_to: string }
         Returns: {
@@ -1471,20 +1465,24 @@ export type Database = {
           rep_name: string
         }[]
       }
+      admin_recycle_bin: {
+        Args: never
+        Returns: {
+          actor_name: string
+          at: string
+          entity: string
+          entity_id: string
+          id: number
+          row_data: Json
+        }[]
+      }
       admin_resolve_incident: {
         Args: { p_charge: number; p_id: string; p_resolution: string }
         Returns: undefined
       }
+      admin_restore_deleted: { Args: { p_id: number }; Returns: undefined }
       admin_set_booking_price: {
         Args: { p_booking_id: string; p_total: number }
-        Returns: undefined
-      }
-      admin_settle_pay_after: {
-        Args: {
-          p_booking_id: string
-          p_method?: Database["public"]["Enums"]["pay_method"]
-          p_outcome: string
-        }
         Returns: undefined
       }
       admin_set_car_notes: {
@@ -1515,6 +1513,14 @@ export type Database = {
         Args: {
           p_profile_id: string
           p_role: Database["public"]["Enums"]["user_role"]
+        }
+        Returns: undefined
+      }
+      admin_settle_pay_after: {
+        Args: {
+          p_booking_id: string
+          p_method?: Database["public"]["Enums"]["pay_method"]
+          p_outcome: string
         }
         Returns: undefined
       }
@@ -1592,7 +1598,6 @@ export type Database = {
           source_booking_id: string
         }[]
       }
-      drop_push_subscription: { Args: { p_endpoint: string }; Returns: number }
       licence_images_due_for_purge: {
         Args: { p_limit?: number }
         Returns: {
@@ -1611,7 +1616,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      mark_incidents_notified: { Args: { p_ids: string[] }; Returns: number }
       mark_licences_purged: {
         Args: { p_booking_ids: string[] }
         Returns: number
@@ -1624,29 +1628,6 @@ export type Database = {
           amount: number
           handover_id: string
         }[]
-      }
-      pending_incident_notifications: {
-        Args: { p_limit?: number }
-        Returns: {
-          booking_ref: string
-          id: string
-          note: string
-          plate: string
-          raised_at: string
-        }[]
-      }
-      push_targets: {
-        Args: { p_kind: string }
-        Returns: {
-          endpoint: string
-          keys: Json
-          lang: string
-          profile_id: string
-        }[]
-      }
-      adjust_period_prices: {
-        Args: { p_delta: number; p_period_id: string }
-        Returns: undefined
       }
       pay_after_upfront: { Args: { p_booking_id: string }; Returns: number }
       quote: {
@@ -1666,17 +1647,6 @@ export type Database = {
         Returns: string
       }
       rental_days: { Args: { p_end: string; p_start: string }; Returns: number }
-      rep_day_movements: {
-        Args: { p_on: string; p_profile_id: string }
-        Returns: {
-          at: string
-          booking_id: string
-          guest: string
-          kind: string
-          plate: string
-          room: string
-        }[]
-      }
       rep_device_matches: {
         Args: { p_device_id: string; p_profile_id: string }
         Returns: boolean
@@ -1689,6 +1659,8 @@ export type Database = {
         Args: { p_boss_issued: boolean; p_hash: string; p_profile_id: string }
         Returns: undefined
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       staff_hotels: {
         Args: never
         Returns: {
@@ -1856,3 +1828,4 @@ export const Constants = {
     },
   },
 } as const
+
