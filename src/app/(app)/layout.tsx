@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { requireUnlocked } from '@/lib/auth/session'
+import { gratisUnlocked } from '@/lib/auth/gratis'
+import { GratisLock } from './admin/GratisLock'
 import { Footer } from '@/components/Footer'
 import { SideNav, NavDrawer, type NavItem } from '@/components/SideNav'
 import { LinkProgress, NavProgressProvider } from '@/components/NavProgress'
@@ -26,6 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const locale = await getLocale()
 
   const admin = staff.role === 'admin'
+  const gratisOpen = admin && (await gratisUnlocked(staff.id))
 
   // The header's globe button used to open its own settings page — a second,
   // partial one for an admin (docs/04-SCREENS.md R8 vs A10) since the real
@@ -228,6 +231,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
         <div className="print:hidden"><Footer /></div>
       </div>
+      {admin ? <GratisLock unlocked={gratisOpen} /> : null}
     </NavProgressProvider>
   )
 }

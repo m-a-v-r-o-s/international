@@ -874,6 +874,25 @@
       "paidCard": "Paid card",
       "gratisAction": "Gratis",
       "gratisConfirm": "Waive {amount} for {name}? This cannot be undone."
+    },
+    "gratisLock": {
+      "title": "Manager code",
+      "code": "Code",
+      "confirm": "Type it again",
+      "setupHint": "No code yet. Choose 4 digits and type them twice.",
+      "unlock": "Unlock",
+      "unlockedFor": "Unlocked on this browser for 30 minutes.",
+      "lock": "Lock now",
+      "changeTitle": "New code",
+      "change": "Change code",
+      "changed": "Code changed.",
+      "close": "Close",
+      "error": {
+        "wrong": "Wrong code.",
+        "rateLimited": "Too many tries. Wait a few minutes.",
+        "mismatch": "The two codes do not match.",
+        "obvious": "Too easy to guess. Avoid repeats and runs like 1234."
+      }
     }
   },
   "errors": {

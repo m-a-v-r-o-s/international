@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth/session'
+import { gratisUnlocked } from '@/lib/auth/gratis'
 import { supabaseServer } from '@/lib/supabase/server'
 import { errorKey, type ErrorKey } from '@/lib/errors'
 
@@ -14,7 +15,7 @@ export type FormState = { error?: ErrorKey } | undefined
  * no grant, and the function works the amount out itself.
  */
 export async function settlePayAfter(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin()
+  const admin = await requireAdmin()
 
   const parsed = z.discriminatedUnion('outcome', [
     z.object({ booking_id: z.string().uuid(), outcome: z.literal('paid'), method: z.enum(['cash', 'card']) }),
@@ -25,6 +26,8 @@ export async function settlePayAfter(_prev: FormState, formData: FormData): Prom
     method: formData.get('method') ?? undefined,
   })
   if (!parsed.success) return { error: 'IR104' }
+  // §48: Gratis only from a browser unlocked with the code, not just a hidden button.
+  if (parsed.data.outcome === 'gratis' && !(await gratisUnlocked(admin.id))) return { error: 'forbidden' }
 
   const supabase = await supabaseServer()
   const { error } = await supabase.rpc('admin_settle_pay_after', {

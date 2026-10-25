@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { requireAdmin } from '@/lib/auth/session'
+import { gratisUnlocked } from '@/lib/auth/gratis'
 import { todayAthens } from '@/lib/dates'
 import { formatEuros } from '@/lib/money'
 import { supabaseServer } from '@/lib/supabase/server'
@@ -18,14 +19,18 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/
  * A14 · Money (docs/01-DECISIONS.md §47). What actually came in over a period,
  * cash and card, with gratis beside it and never inside it; then every
  * pay-after balance still open, each settled Paid or Gratis in one tap.
- * Defaults to this month so far.
+ * Defaults to this month so far. Gratis, both the total and the button, only
+ * shows on a browser unlocked under §48.
  */
 export default async function MoneyPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | undefined>>
 }) {
-  await requireAdmin()
+  const admin = await requireAdmin()
+  // §48: the manager account is shared, and gratis is not rendered at all
+  // until this browser has been unlocked with the code.
+  const showGratis = await gratisUnlocked(admin.id)
   const t = await getTranslations('admin.money')
   const tb = await getTranslations('admin.bookings')
   const te = await getTranslations('errors')
@@ -66,7 +71,7 @@ export default async function MoneyPage({
         <p className="ir-notice border-danger bg-danger-tint text-danger" role="alert">{te('IR104')}</p>
       ) : null}
 
-      <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <dl className={`grid grid-cols-1 gap-3 ${showGratis ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
         <div className="ir-card flex flex-col gap-1 p-4">
           <dt className="text-ink-soft">{t('received')}</dt>
           <dd className="text-[1.5rem] font-bold tabular-nums">{formatEuros(summary.cash + summary.card)}</dd>
@@ -79,11 +84,13 @@ export default async function MoneyPage({
           <dd className="text-[1.5rem] font-bold tabular-nums">{formatEuros(owed)}</dd>
           <dd className="text-[0.9375rem] text-ink-soft">{t('owedHint')}</dd>
         </div>
-        <div className="ir-card flex flex-col gap-1 p-4">
-          <dt className="text-ink-soft">{t('gratis')}</dt>
-          <dd className="text-[1.5rem] font-bold tabular-nums">{formatEuros(summary.gratis)}</dd>
-          <dd className="text-[0.9375rem] text-ink-soft">{t('gratisHint')}</dd>
-        </div>
+        {showGratis ? (
+          <div className="ir-card flex flex-col gap-1 p-4">
+            <dt className="text-ink-soft">{t('gratis')}</dt>
+            <dd className="text-[1.5rem] font-bold tabular-nums">{formatEuros(summary.gratis)}</dd>
+            <dd className="text-[0.9375rem] text-ink-soft">{t('gratisHint')}</dd>
+          </div>
+        ) : null}
       </dl>
 
       <section className="flex flex-col gap-3" aria-labelledby="unpaid-heading">
@@ -122,10 +129,12 @@ export default async function MoneyPage({
                       <div className="flex flex-wrap justify-end gap-2">
                         <SettleForm bookingId={row.booking_id} outcome="paid" method="cash" label={t('paidCash')} />
                         <SettleForm bookingId={row.booking_id} outcome="paid" method="card" label={t('paidCard')} />
-                        <SettleForm
-                          bookingId={row.booking_id} outcome="gratis" label={t('gratisAction')}
-                          confirmText={t('gratisConfirm', { amount: formatEuros(row.balance), name: row.cust_name || row.ref })}
-                        />
+                        {showGratis ? (
+                          <SettleForm
+                            bookingId={row.booking_id} outcome="gratis" label={t('gratisAction')}
+                            confirmText={t('gratisConfirm', { amount: formatEuros(row.balance), name: row.cust_name || row.ref })}
+                          />
+                        ) : null}
                       </div>
                     </td>
                   </tr>

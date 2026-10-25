@@ -130,6 +130,8 @@ describe('what the boss sees and settles', () => {
     await db.asUser(f.admin, () => db.sql(`select public.admin_settle_pay_after($1, 'gratis', null)`, [id]))
     expect(await summary()).toEqual({ cash: 35, card: 0, gratis: 55 })
     expect(await open()).toEqual([])
+    // Reads as settled anywhere `paid` is shown (§48); only A14 unlocked tells them apart.
+    expect((await db.one<{ paid: boolean }>(`select paid from public.bookings where id = $1`, [id])).paid).toBe(true)
     expect(await errcode(() => db.asUser(f.admin, () =>
       db.sql(`select public.admin_settle_pay_after($1, 'paid', 'cash')`, [id])))).toBe('IR126')
   })
@@ -140,6 +142,15 @@ describe('what the boss sees and settles', () => {
     for (const [outcome, method] of [['paid', null], ['gratis', 'cash'], ['paid', 'transfer']] as const) {
       expect(await errcode(() => db.asUser(f.admin, () =>
         db.sql(`select public.admin_settle_pay_after($1, $2, $3::public.pay_method)`, [id, outcome, method])))).toBe('IR104')
+    }
+  })
+})
+
+describe('the gratis code (§48)', () => {
+  test('its hash is out of reach of every signed-in user, the boss included', async () => {
+    await db.sql(`insert into public.gratis_lock (code_hash) values ('x') on conflict (id) do nothing`)
+    for (const who of [f.admin, f.repA]) {
+      expect(await errcode(() => db.asUser(who, () => db.sql(`select code_hash from public.gratis_lock`)))).toBe('42501')
     }
   })
 })

@@ -242,4 +242,5 @@ What actually came in over a period (defaults to this month so far): cash and ca
 with **gratis** beside it and never inside it, and what is **still owed** on pay-after rentals
 right now. Below it, every open pay-after balance, oldest pickup first: booking, guest, dates,
 rep, amount, and three buttons, `Paid cash`, `Paid card`, `Gratis` (asks first, cannot be
-undone). docs/01-DECISIONS.md §47.
+undone). docs/01-DECISIONS.md §47. The gratis total and button only appear on a browser
+unlocked with `Ctrl+Alt+G` and the manager code (§48).

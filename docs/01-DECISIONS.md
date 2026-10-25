@@ -2510,3 +2510,38 @@ The dead `transfer` value (§43 answer 11) is no longer offered on the rep's pay
 
 See `supabase/migrations/20261025120000_pay_after.sql`, `tests/db/pay-after.test.ts`,
 `src/app/(app)/admin/money/` and `src/app/(app)/bookings/[id]/pickup/PaymentForm.tsx`.
+
+## 48. Gratis is hidden on the shared manager account until it is unlocked
+
+25 Oct 2026, owner. The boss's father, who ran the business before him, sometimes acts as
+manager on busy days, **always on the boss's own account**, and disapproves of gratis. So the
+manager side has two states on any one browser:
+
+- **Locked (the default):** no mention of gratis anywhere. A14 shows received and still owed,
+  and Paid cash / Paid card, but no gratis total and no Gratis button. `settlePayAfter` refuses
+  a gratis settlement outright, so the button being absent is not the only control.
+- **Unlocked:** `Ctrl+Alt+G` (matched on the physical key, so any keyboard layout) opens a
+  dialog asking for a 4-digit code. The code is checked on the server against an argon2 hash,
+  rate-limited to 6 tries per 5 minutes, failures security-logged. Success sets `ir_gratis`, a
+  signed httpOnly cookie for **30 minutes on that browser only**. The same shortcut locks it
+  again, or changes the code. The very first unlock chooses the code, typed twice; repeats and
+  runs like 1234 are refused.
+
+**Gratis now also sets `paid`**, so a waived balance reads as settled anywhere `paid` is shown,
+and only A14, unlocked, tells it apart from Paid. Income is unchanged: only `settled_amount`
+where `settlement = 'paid'`.
+
+The code hash lives in its own table, `gratis_lock`, with no grant but the service role's and
+no audit trigger. Not `app_settings`, which every signed-in user can read and whose every
+change lands in the audit log.
+
+**What this does not hide, recorded so nobody is surprised:**
+- a waived balance leaves "still owed" without ever appearing in "received";
+- the shortcut needs a keyboard, so on the phones gratis is simply never shown;
+- the message catalogue is sent to the browser whole, so the words are in the page source;
+- the accountant questionnaire (q19) and these docs describe gratis.
+- Advised, and declined: a separate login for the father would have needed no code and kept
+  the audit log's actor true. On the shared account, his actions are logged as the boss's.
+
+See `supabase/migrations/20261025130000_gratis_lock.sql`, `src/lib/auth/gratis.ts`,
+`src/app/(app)/admin/gratis-actions.ts` and `src/app/(app)/admin/GratisLock.tsx`.
