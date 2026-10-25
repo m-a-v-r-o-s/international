@@ -1609,6 +1609,8 @@ controls.
 24-month price: €359/24 months is €179.50/yr, beside Pro's €169/yr. The €279 figure is the
 12-month tier and is the wrong basis for the decision. The All-in-One tiers also bundle a
 device.
+*(Superseded 25 Oct 2026: Wrapp's written prices replace this whole tier analysis, and the
+plan is locked at €169 + ΦΠΑ. See the last subsection of §44.)*
 
 **And none of it is payable before cutover.** The sandbox is free with no commitment, so the
 integration is built and tested at no cost and the subscription starts when the app goes
@@ -1705,6 +1707,8 @@ The becomeapartner track is multi-tenant: partners provision tenants programmati
 Wrapp still bills each end client directly, with custom pricing only past roughly 500 active
 tenants. For a single client it buys nothing and adds a provisioning layer. **This build
 integrates directly against the client's own Pro All-in-One API key.**
+*(Reversed 25 Oct 2026: International is onboarded through Partners Onboarding. It still
+issues on its own API key and still pays Wrapp directly. See the last subsection of §44.)*
 
 **The partner track is rejected outright, not deferred** (owner, 4 Sep 2026). It had been
 left open as a separate business decision for Akos across other clients. It is closed:
@@ -1872,6 +1876,8 @@ ours.
 Nothing below costs extra. Pro All-in-One carries API access, POS and Ψηφιακό Πελατολόγιο
 together, issuance is unlimited, and the API documentation states no rate limit, quota or
 per-item charge anywhere in it.
+*(Corrected 25 Oct 2026: the €169 plan has annual caps, 18.000 documents and 45.000 API
+calls. There is still no per-item charge. See the last subsection of §44.)*
 
 **Handed over:**
 
@@ -2193,6 +2199,8 @@ app's configuration until a second client actually exists. One question to ask o
 does, and not before: whether a merchant onboarded through the partner API is still billed
 directly by Wrapp, per the arrangement §44 recorded as an ordinary vendor relationship, or
 billed through us, which would be a different business entirely.
+*(Both settled 25 Oct 2026: the key is in use for International itself, and a partner-onboarded
+merchant is billed directly by Wrapp. See the last subsection of §44.)*
 
 **The 5.1 billing book is ours to create, not theirs to grant.** The answer is
 `POST /billing_books`, with a pointer to the documented endpoint. So the gap the staging
@@ -2338,6 +2346,50 @@ in the same action category across cycles, and many Kos businesses consumed thei
 ταμειακή in the earlier rounds. **Ask the owner's accountant whether International already
 redeemed one.** None of this is money that exists today, and nothing in the design should assume
 it will.
+
+### The plan is locked at €169, and International goes on through Partners Onboarding (25 Oct 2026)
+
+**Wrapp's prices, in writing** (Constantinos Skanavis, 2 Oct 2026). These replace the tiers read
+off the public plans page above, which no longer describe the offer:
+
+| Plan | Price per year | Documents per year | API calls per year | POS connection |
+|---|---|---|---|---|
+| Cheapest with an API key | €109 + ΦΠΑ (€135,16) | 6.000 | 15.000 | no |
+| **Locked** | **€169 + ΦΠΑ (€209,56)** | **18.000** | **45.000** | **yes** |
+
+The caps count per ΑΦΜ, not across all of our clients. A plan that runs out before its 12 months
+renews for a new period. There is no charge per document.
+
+**€169, not €109 (owner, 25 Oct 2026).** POS connection starts at €169, and it stops being
+optional once the ΦΗΜ is stood down (§43). With four card terminals at the desk, the €109 plan
+would leave every card payment unconnected. At about 100 cars the volume fits with room to
+spare: a season is a few thousand receipts against 18.000. API calls run at roughly four to five
+per rental (issue, fetch a pending ΜΑΡΚ, registry entry and its completion, plus the daily
+login), about 20.000 a season. That is inside 45.000 and would already have broken €109's
+15.000.
+
+**Wrapp's own POS device is not bought.** The four terminals already in use (Worldline via
+Eurobank, Viva, epay via Πειραιώς) all connect under the €169 plan. A bundled device would be one
+more terminal to register, and it can issue documents on its own, which is a second issuance
+path beside the app. The integration is the same either way: every terminal is just a
+`pos_device_id`.
+
+**Partners Onboarding, reversing "Direct, not through the partner programme" (owner, 25 Oct
+2026).** International is registered as a merchant with the partner key, through
+`POST /external_login`. Its own API key comes back on the `tenant-details` webhook. The answers
+behind this, 2 Oct 2026:
+
+- **Billing is direct.** Every merchant has its own subscription, sized to its own volume, and
+  pays Wrapp itself. There is no discount for bringing several clients. This settles the
+  partner-billing question deferred on 9 Sep: under the partner route no provider cost lands on
+  our books.
+- **Issuance does not change.** The app still issues with International's own API key, so the
+  adapter and everything decided above stand as they are. Only how the account is created
+  changes.
+- **The partner key is now a live credential.** It goes the same way as every other secret:
+  server-side environment only, never in the repository, never in the browser. The
+  `tenant-details` webhook carries a tenant's API key, so its signature is verified before
+  anything in it is trusted.
 
 ## 45. Cars have a base, and the night before is when they get to it
 
