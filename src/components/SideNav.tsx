@@ -2,7 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useId, useRef } from 'react'
+import { useCallback, useEffect, useId, useRef } from 'react'
+import { animate, useMotionValue, type AnimationPlaybackControls } from 'motion/react'
+import { appleSpring, project, rubberband, velocityTracker, prefersReducedMotion } from '@/lib/spring'
 import { LinkProgress } from './NavProgress'
 
 export type NavItem = {
@@ -189,26 +191,144 @@ export function NavDrawer({
   const dialog = useRef<HTMLDialogElement>(null)
   const pathname = usePathname()
 
+  /*
+    The drawer's position is a motion value in px: 0 is open, -width is shut.
+    It is written straight to the element (no React render per frame) along
+    with --p, the open fraction the backdrop's opacity follows.
+
+    Gesture recipe (akosds-mobile-feel): 10px hysteresis before committing to
+    the horizontal axis, 1:1 tracking, rubber band past the open edge, release
+    velocity projected to decide open or shut, and the spring is interruptible
+    (a finger down mid-flight stops it and carries on from where it is). No
+    bounce: this is a tool used at speed, and nothing here delays a tap.
+  */
+  const x = useMotionValue(0)
+  const width = useRef(288)
+  const anim = useRef<AnimationPlaybackControls | null>(null)
+  const goal = useRef<'open' | 'shut'>('shut')
+
+  useEffect(() => {
+    const paint = (v: number) => {
+      const d = dialog.current
+      if (!d) return
+      d.style.transform = `translate3d(${v}px,0,0)`
+      d.style.setProperty('--p', String(Math.min(1, Math.max(0, 1 + v / width.current))))
+    }
+    return x.on('change', paint)
+  }, [x])
+
+  const settle = useCallback((to: 'open' | 'shut', velocity = 0) => {
+    const d = dialog.current
+    if (!d) return
+    goal.current = to
+    anim.current?.stop()
+    const target = to === 'open' ? 0 : -width.current
+    const done = () => { if (to === 'shut') d.close() }
+    if (prefersReducedMotion()) { x.set(target); done(); return }
+    anim.current = animate(x, target, {
+      type: 'spring', ...appleSpring(0.35, 0), velocity,
+      restDelta: 0.5, restSpeed: 10,
+      onComplete: done,
+    })
+  }, [x])
+
+  const openDrawer = () => {
+    const d = dialog.current
+    if (!d) return
+    d.showModal()
+    width.current = d.offsetWidth
+    x.jump(-width.current)
+    settle('open')
+  }
+  const closeDrawer = () => { if (dialog.current?.open) settle('shut') }
+  // No animation: for a route change or a rotation, where the page behind has
+  // already moved on and the drawer should simply be gone.
+  const hardClose = useCallback(() => {
+    anim.current?.stop()
+    dialog.current?.close()
+  }, [])
+
   // A tapped link navigates without unmounting the layout, so nothing else
   // would close the drawer over the new page.
-  useEffect(() => { dialog.current?.close() }, [pathname])
+  useEffect(() => { hardClose() }, [pathname, hardClose])
 
   // A tablet rotated into the desktop breakpoint hides this drawer in CSS but
   // would leave it open — and an open modal dialog holds the page inert, so
   // the sidebar it just revealed would be unclickable. Matches `lg`.
   useEffect(() => {
     const desktop = window.matchMedia('(min-width: 64rem)')
-    const close = () => { if (desktop.matches) dialog.current?.close() }
+    const close = () => { if (desktop.matches) hardClose() }
     desktop.addEventListener('change', close)
     return () => desktop.removeEventListener('change', close)
-  }, [])
+  }, [hardClose])
 
+  const dragged = useRef(false)
+  // Drag to close along the axis it opens on.
+  const drag = useRef<{
+    id: number; x0: number; y0: number; from: number; live: boolean; moved: boolean
+    vt: ReturnType<typeof velocityTracker>
+  } | null>(null)
+
+  // A catch that turned out to be a tap or a scroll: carry on to where it was headed.
+  const resume = () => { if (anim.current?.state === 'paused') settle(goal.current) }
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDialogElement>) => {
+    if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return
+    dragged.current = false
+    // Caught mid-flight: freeze at the live value; a plain tap resumes below.
+    const flying = anim.current && anim.current.state === 'running'
+    if (flying) anim.current?.pause()
+    const vt = velocityTracker()
+    vt.add(x.get())
+    drag.current = { id: e.pointerId, x0: e.clientX, y0: e.clientY, from: x.get(), live: false, moved: false, vt }
+  }
+  const onPointerMove = (e: React.PointerEvent<HTMLDialogElement>) => {
+    const g = drag.current
+    if (!g || g.id !== e.pointerId) return
+    const dx = e.clientX - g.x0
+    if (!g.live) {
+      const dy = e.clientY - g.y0
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return
+      if (Math.abs(dy) > Math.abs(dx)) { // vertical: the list scrolls
+        drag.current = null
+        resume()
+        return
+      }
+      g.live = true
+      anim.current?.stop()
+      e.currentTarget.setPointerCapture(e.pointerId)
+    }
+    g.moved = true
+    let v = g.from + dx
+    if (v > 0) v = rubberband(v, width.current)
+    if (v < -width.current) v = -width.current
+    x.set(v)
+    g.vt.add(v)
+  }
+  const onPointerUp = (e: React.PointerEvent<HTMLDialogElement>) => {
+    const g = drag.current
+    if (!g || g.id !== e.pointerId) return
+    drag.current = null
+    if (g.moved) dragged.current = true
+    if (!g.live) {
+      resume()
+      return
+    }
+    const v = e.type === 'pointercancel' ? 0 : g.vt.get()
+    const landing = x.get() + project(v)
+    settle(landing > -width.current / 2 ? 'open' : 'shut', v)
+  }
+  // The click that ends a drag lands on the dialog itself, which would read as
+  // a tap on the backdrop.
+  const swallowDragClick = (e: React.MouseEvent) => {
+    if (dragged.current) { e.stopPropagation(); e.preventDefault(); dragged.current = false }
+  }
   return (
     <>
       <button
         type="button"
         aria-label={openLabel}
-        onClick={() => dialog.current?.showModal()}
+        onClick={openDrawer}
         className={`-ml-2 flex size-11 items-center justify-center rounded-field lg:hidden print:hidden ${
           dark ? 'ir-rail text-brand-ink hover:bg-brand-ink/10' : 'text-ink hover:bg-brand-tint'
         }`}
@@ -222,20 +342,27 @@ export function NavDrawer({
       <dialog
         ref={dialog}
         aria-label={label}
-        onClick={(e) => { if (e.target === dialog.current) dialog.current?.close() }}
+        // Esc goes through the same spring as every other way out.
+        onCancel={(e) => { e.preventDefault(); closeDrawer() }}
+        onClickCapture={swallowDragClick}
+        onClick={(e) => { if (e.target === dialog.current) closeDrawer() }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
         className="ir-drawer m-0 mr-auto h-dvh max-h-none w-72 max-w-[85vw] rounded-none
-                   border-r border-line bg-surface p-0 backdrop:bg-ink/50 lg:hidden"
+                   border-r border-line bg-surface p-0 lg:hidden"
       >
-        <div className="flex h-full flex-col gap-2 overflow-y-auto p-4">
+        <div className="flex h-full touch-pan-y flex-col gap-2 overflow-y-auto overscroll-contain p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <button
             type="button"
-            onClick={() => dialog.current?.close()}
+            onClick={closeDrawer}
             className="ir-btn-quiet !w-auto self-start !px-4"
           >
             {closeLabel}
           </button>
           <nav aria-label={label}>
-            <NavList items={items} onNavigate={() => dialog.current?.close()} />
+            <NavList items={items} onNavigate={closeDrawer} />
           </nav>
         </div>
       </dialog>

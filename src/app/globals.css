@@ -203,11 +203,16 @@ button.ir-rail:focus-visible {
     @apply bg-danger text-white hover:brightness-90 disabled:hover:brightness-100;
   }
 
-  /* The phone nav drawer slides in from the edge it is anchored to, which is
-     the state change: it came from off-screen and it goes back there. The
-     reduced-motion rule above turns it off. */
-  .ir-drawer[open] {
-    animation: ir-drawer-in 160ms var(--ease-ui);
+  /* The phone nav drawer is moved by SideNav.tsx (a spring on translateX,
+     with --p the open fraction). The backdrop dims with that progress, and the
+     panel owns horizontal drags while the list keeps vertical scrolling. */
+  .ir-drawer {
+    touch-action: pan-y;
+    overscroll-behavior: contain;
+    will-change: transform;
+  }
+  .ir-drawer::backdrop {
+    background-color: rgb(11 20 32 / calc(0.5 * var(--p, 1)));
   }
 
   /*
@@ -274,11 +279,6 @@ button.ir-rail:focus-visible {
   .ir-notice {
     @apply rounded-field border px-3.5 py-3 text-[0.9375rem];
   }
-}
-
-@keyframes ir-drawer-in {
-  from { transform: translateX(-100%); }
-  to   { transform: none; }
 }
 
 @keyframes ir-pop-in {
