@@ -1024,7 +1024,6 @@
     "licenceExpires": "Expires",
     "payment": "Payment",
     "total": "Total",
-    "method": "Method",
     "condition": "Condition at pick-up",
     "damageNone": "No pre-existing damage was recorded.",
     "damageNote": "The marks below were recorded on the vehicle at pick-up.",

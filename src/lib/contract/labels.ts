@@ -77,7 +77,6 @@ export function contractLabels() {
     licenceExpires: c('licenceExpires'),
     payment: c('payment'),
     total: c('total'),
-    method: c('method'),
     condition: c('condition'),
     damageNone: c('damageNone'),
     damageNote: c('damageNote'),
@@ -107,11 +106,6 @@ export function contractLabels() {
       'midLeft', 'midCentre', 'midRight',
       'bottomLeft', 'bottomCentre', 'bottomRight',
     ] as const).map((z) => [z, pair(`damage.zone.${z}`)])) as Record<string, Bilingual>,
-    payMethod: {
-      cash: pair('admin.bookings.payMethodCash'),
-      card: pair('admin.bookings.payMethodCard'),
-      transfer: pair('admin.bookings.payMethodTransfer'),
-    },
   }
 }
 

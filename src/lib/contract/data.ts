@@ -62,7 +62,6 @@ export type ContractData = {
   marks: ContractMark[]
 
   total: number | null
-  payMethod: 'cash' | 'card' | 'transfer' | null
 
   /** PNG bytes of the on-screen signature, once there is one. */
   signature: Uint8Array | null

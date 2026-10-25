@@ -68,7 +68,6 @@ function contract(over: Partial<ContractData> = {}): ContractData {
       { view: 'left', x: 0.7, y: 0.3, zone: 'topRight', markType: 'dent', note: null, index: 2 },
     ],
     total: 90,
-    payMethod: 'cash',
     signature: new Uint8Array(signaturePng),
     signerName: 'Άννα Επισκέπτης',
     signedAt: '2026-07-06T06:12:00Z',

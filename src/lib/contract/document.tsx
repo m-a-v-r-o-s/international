@@ -179,11 +179,6 @@ export function ContractDocument({ data, labels }: { data: ContractData; labels:
         <Section title={labels.payment}>
           <View style={styles.row}>
             <Cell third label={labels.total} value={euros(data.total)} />
-            <Cell
-              third
-              label={labels.method}
-              value={data.payMethod ? both(labels.payMethod[data.payMethod]) : null}
-            />
           </View>
         </Section>
 

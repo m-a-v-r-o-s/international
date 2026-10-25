@@ -182,9 +182,9 @@ The app **generates the agreement as a PDF** and the customer **signs on screen*
 - Includes the damage diagram and both drivers' licence details.
 - Stored against the booking.
 - Optional email delivery at the signing step; skipped if the guest declines.
-- Its payment block shows the price and the method only. No amount collected and no paid /
-  unpaid line (owner, 25 Oct 2026): the guest signs before the payment step, so both would
-  read €0 and unpaid on nearly every agreement.
+- Its payment block shows the price only. No amount collected, no method and no paid /
+  unpaid line (owner, 25 Oct 2026): the guest signs before the payment step, so all three
+  would read €0, blank and unpaid on nearly every agreement.
 
 ## 17. Fleet management
 - Admin can **add, archive and delete** cars.
