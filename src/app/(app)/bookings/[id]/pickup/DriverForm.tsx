@@ -84,12 +84,12 @@ export function DriverForm({
 
         <div className="grid grid-cols-2 gap-3">
           <Field
-            id={`first_name_${driver?.id ?? 'new'}`} name="first_name" label={tn('firstName')}
+            id={`first_name_${driver?.id ?? 'new'}`} name="first_name" autoCapitalize="words" label={tn('firstName')}
             defaultValue={driver?.first_name ?? defaults?.first_name ?? undefined} required maxLength={80}
             autoComplete="off"
           />
           <Field
-            id={`last_name_${driver?.id ?? 'new'}`} name="last_name" label={tn('lastName')}
+            id={`last_name_${driver?.id ?? 'new'}`} name="last_name" autoCapitalize="words" label={tn('lastName')}
             defaultValue={driver?.last_name ?? defaults?.last_name ?? undefined} required maxLength={80}
             autoComplete="off"
           />

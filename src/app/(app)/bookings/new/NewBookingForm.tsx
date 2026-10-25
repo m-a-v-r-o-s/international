@@ -230,7 +230,7 @@ export function NewBookingForm({
             hotels={hotels} defaultHotelId={defaultHotelId} label={`${t('hotel')} *`}
             chooseLabel={t('chooseHotel')} otherLabel={t('otherHotel')} otherNameLabel={t('otherHotelName')}
           />
-          <Field id="room_number" name="room_number" label={t('room')} maxLength={16} />
+          <Field id="room_number" name="room_number" autoComplete="off" label={t('room')} maxLength={16} />
         </div>
       </section>
 
@@ -238,7 +238,7 @@ export function NewBookingForm({
         <h2 className="mb-3 text-[1.0625rem] font-semibold">{t('guestTitle')}</h2>
         <div className="mb-3">
           <Field
-            id="cust_phone" name="cust_phone" type="tel" label={`${t('phone')} *`} required maxLength={32}
+            id="cust_phone" name="cust_phone" type="tel" autoComplete="off" label={`${t('phone')} *`} required maxLength={32}
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             onBlur={askLedger}
@@ -260,11 +260,11 @@ export function NewBookingForm({
 
         <div className="grid grid-cols-2 gap-3">
           <Field
-            id="cust_first" name="cust_first" label={t('firstName')} maxLength={80}
+            id="cust_first" name="cust_first" autoCapitalize="words" autoComplete="off" label={t('firstName')} maxLength={80}
             value={first} onChange={(e) => setFirst(e.target.value)}
           />
           <Field
-            id="cust_last" name="cust_last" label={t('lastName')} maxLength={80}
+            id="cust_last" name="cust_last" autoCapitalize="words" autoComplete="off" label={t('lastName')} maxLength={80}
             value={last} onChange={(e) => setLast(e.target.value)}
           />
         </div>
@@ -276,7 +276,7 @@ export function NewBookingForm({
         </div>
         <div className="mt-3">
           <Field
-            id="cust_email" name="cust_email" type="email"
+            id="cust_email" name="cust_email" type="email" autoComplete="off"
             label={pickupException ? t('email') : `${t('email')} *`} maxLength={254}
             required={!pickupException}
           />

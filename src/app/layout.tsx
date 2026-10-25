@@ -41,6 +41,11 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  // Android Chrome: the keyboard shrinks the layout viewport, so dvh and
+  // bottom-pinned buttons follow it.
+  interactiveWidget: 'resizes-content',
+  colorScheme: 'light',
+  // Must equal manifest theme_color (tests/unit/manifest.test.ts).
   themeColor: '#10456a',
 }
 

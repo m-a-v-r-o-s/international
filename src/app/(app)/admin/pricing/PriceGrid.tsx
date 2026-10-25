@@ -71,7 +71,7 @@ export function PriceGridRow({
           <label key={day} className="flex flex-col gap-1">
             <span className="text-[0.75rem] text-ink-soft">{t('day', { n: day })}</span>
             <input
-              type="number" step={1} min={0} name={`day-${day}`}
+              type="number" inputMode="numeric" step={1} min={0} name={`day-${day}`}
               defaultValue={byDay.get(day)}
               aria-label={t('totalForDays', { n: day, category: category.code })}
               className="ir-field !min-h-10 !px-2 !text-[0.9375rem]"
@@ -81,7 +81,7 @@ export function PriceGridRow({
         <label className="flex flex-col gap-1">
           <span className="text-[0.75rem] text-ink-soft">{t('extraShort')}</span>
           <input
-            type="number" step={1} min={0} name="extra"
+            type="number" inputMode="numeric" step={1} min={0} name="extra"
             defaultValue={extra?.price}
             aria-label={t('extraDayRateFor', { category: category.code })}
             className="ir-field !min-h-10 !px-2 !text-[0.9375rem]"

@@ -25,12 +25,22 @@ export function Field({
   const hintId = hint ? `${id}-hint` : undefined
   const errorId = error ? `${id}-error` : undefined
   const toggle = revealable && props.type === 'password'
+  // Soft-keyboard defaults from the input type, so a call site only has to say
+  // what is unusual. Anything the caller passes wins (spread below).
+  const kb: InputHTMLAttributes<HTMLInputElement> =
+    props.type === 'tel' ? { inputMode: 'tel', autoComplete: 'tel' }
+    : props.type === 'email' ? { inputMode: 'email', autoCapitalize: 'none', autoComplete: 'email', spellCheck: false }
+    : props.type === 'number'
+      ? { inputMode: props.step !== undefined && !Number.isInteger(Number(props.step)) ? 'decimal' : 'numeric' }
+      : {}
 
   return (
     <div>
       <label className="ir-label" htmlFor={id}>{label}</label>
       <div className={toggle ? 'relative' : undefined}>
         <input
+          enterKeyHint="next"
+          {...kb}
           {...props}
           type={toggle && visible ? 'text' : props.type}
           id={id}

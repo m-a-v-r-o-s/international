@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* Hover only where a mouse can really hover. Tailwind 4's own variant is
+   (hover: hover); a stylus or an Android phone that claims hover still got
+   sticky hover states after a tap, so it also asks for a fine pointer. */
+@custom-variant hover {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover { @slot; }
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────────────────────
    Design tokens — International Rentals
    
@@ -58,13 +67,63 @@
   --ease-ui: cubic-bezier(0.2, 0, 0.2, 1);
 }
 
+/* Akos DS mobile feel tokens (akosds-mobile-feel/mobile-feel.css; regenerate
+   with spring.js --css). The -ms values are settle times, far too long for an
+   operational tool, so this app plays them over a shorter duration (see
+   --spring-enter-ms) and never lets one delay input. */
+:root {
+  --spring-smooth: linear(0, 0.017, 0.06, 0.119, 0.187, 0.258, 0.33, 0.4, 0.467, 0.528, 0.585, 0.637, 0.683, 0.724, 0.761, 0.794, 0.822, 0.847, 0.868, 0.887, 0.904, 0.918, 0.93, 0.94, 0.949, 0.957, 0.963, 0.969, 0.974, 0.978, 0.981, 0.984, 0.987, 0.989, 0.99, 0.992, 0.993, 0.994, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.998, 0.999, 0.999, 1);
+  --spring-smooth-ms: 736ms;
+  --spring-snappy: linear(0, 0.017, 0.062, 0.124, 0.198, 0.277, 0.357, 0.435, 0.51, 0.58, 0.643, 0.7, 0.751, 0.795, 0.834, 0.867, 0.895, 0.919, 0.938, 0.954, 0.967, 0.977, 0.985, 0.992, 0.997, 1, 1.003, 1.004, 1.005, 1.006, 1.006, 1.006, 1.006, 1.006, 1.005, 1.005, 1.004, 1.004, 1.003, 1.003, 1.002, 1.002, 1.002, 1.001, 1.001, 1);
+  --spring-snappy-ms: 704ms;
+  --spring-enter-ms: 240ms;
+  --press-ms: 120ms;
+  --press-scale: 0.97;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+@supports not (transition-timing-function: linear(0, 1)) {
+  :root {
+    --spring-smooth: cubic-bezier(0.25, 1, 0.5, 1);
+    --spring-snappy: cubic-bezier(0.2, 0.9, 0.3, 1);
+  }
+}
+
 :root {
   color-scheme: light;
 }
 
 html {
   -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  /* An installed, app-shaped tool (DECISIONS §23): no pull-to-refresh and no
+     page bounce. Inner scrollers use `contain`. */
+  overscroll-behavior: none;
 }
+
+a, button, [role="button"], label, summary, select, input[type="range"] {
+  touch-action: manipulation;
+}
+button, [role="button"], summary {
+  -webkit-user-select: none;
+  user-select: none;
+}
+@media (pointer: coarse) {
+  input, textarea, select { font-size: max(16px, 1em); }
+}
+
+/* Touch-down press state on every tappable, for every input type. `scale` is
+   its own property so it never fights a transform or Tailwind's colour
+   transition; on release it snaps back (utilities that set `transition`
+   override this base rule, which is fine at a 3% change). */
+@layer base {
+  :where(a[href], button, [role="button"], summary, label[for], select) {
+    transition: scale var(--press-ms) var(--ease-out);
+  }
+}
+:where(a[href], button:not(:disabled), [role="button"], summary, label[for]):active {
+  scale: var(--press-scale);
+}
+:where(.no-press):active { scale: 1; }
 
 body {
   background: var(--color-canvas);
@@ -73,6 +132,7 @@ body {
   /* The TWA sits under the Android status bar; keep content clear of it. */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
+  overscroll-behavior: none;
 }
 
 /* A visible, unmissable focus ring. Reps navigate with a keyboard on the
@@ -93,6 +153,7 @@ button.ir-rail:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  :root { --spring-smooth: ease; --spring-snappy: ease; --press-scale: 1; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
@@ -210,4 +271,31 @@ button.ir-rail:focus-visible {
   body {
     background: #fff;
   }
+}
+
+/* Range inputs (the fuel gauge): a thumb big enough for a thumb, 28px against
+   the 24px WCAG 2.2 minimum. Native range keeps its keyboard and screen
+   reader behaviour; only the grip is enlarged. */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  touch-action: pan-y;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px; border-radius: 3px; background: var(--color-line-strong);
+}
+input[type="range"]::-moz-range-track {
+  height: 6px; border-radius: 3px; background: var(--color-line-strong);
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px; height: 28px; margin-top: -11px; border-radius: 50%;
+  background: var(--color-brand); border: 3px solid var(--color-surface);
+  box-shadow: 0 0 0 1px var(--color-control);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--color-brand); border: 3px solid var(--color-surface);
+  box-shadow: 0 0 0 1px var(--color-control);
 }

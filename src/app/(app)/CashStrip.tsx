@@ -40,7 +40,7 @@ export function CashStrip({ cash, ready }: { cash: number; ready: number }) {
   return (
     <aside
       aria-labelledby="cash-strip-title"
-      className="sticky bottom-0 -mx-5 border-t border-line bg-surface px-5 py-3"
+      className="sticky bottom-0 -mx-5 border-t border-line bg-surface px-5 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>

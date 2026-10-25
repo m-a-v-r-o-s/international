@@ -122,7 +122,7 @@ export function QuickBookingForm({
       <section className="ir-card p-4">
         <h2 className="mb-3 text-[1.0625rem] font-semibold">{t('guestTitle')}</h2>
         <Field
-          id="cust_phone" name="cust_phone" type="tel" label={`${tn('phone')} *`} required maxLength={32}
+          id="cust_phone" name="cust_phone" type="tel" autoComplete="off" label={`${tn('phone')} *`} required maxLength={32}
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           onBlur={askLedger}
@@ -143,17 +143,17 @@ export function QuickBookingForm({
 
         <div className="mt-3 grid grid-cols-2 gap-3">
           <Field
-            id="cust_first" name="cust_first" label={tn('firstName')} maxLength={80}
+            id="cust_first" name="cust_first" autoCapitalize="words" autoComplete="off" label={tn('firstName')} maxLength={80}
             value={first} onChange={(e) => setFirst(e.target.value)}
           />
           <Field
-            id="cust_last" name="cust_last" label={tn('lastName')} maxLength={80}
+            id="cust_last" name="cust_last" autoCapitalize="words" autoComplete="off" label={tn('lastName')} maxLength={80}
             value={last} onChange={(e) => setLast(e.target.value)}
           />
         </div>
         <div className="mt-3">
           <Field
-            id="cust_email" name="cust_email" type="email"
+            id="cust_email" name="cust_email" type="email" autoComplete="off"
             label={pickupException ? tn('email') : `${tn('email')} *`} maxLength={254}
             required={!pickupException}
           />
@@ -167,7 +167,7 @@ export function QuickBookingForm({
             hotels={hotels} defaultHotelId={defaultHotelId} label={`${tn('hotel')} *`}
             chooseLabel={tn('chooseHotel')} otherLabel={tn('otherHotel')} otherNameLabel={tn('otherHotelName')}
           />
-          <Field id="room_number" name="room_number" label={tn('room')} maxLength={16} />
+          <Field id="room_number" name="room_number" autoComplete="off" label={tn('room')} maxLength={16} />
         </div>
       </section>
 

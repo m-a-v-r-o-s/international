@@ -60,7 +60,7 @@ export function NavProgressProvider({
       */}
       <div role="status" aria-live="polite" className="print:hidden">
         {active ? (
-          <div className="ir-progress fixed inset-x-0 top-0 z-50 h-1 overflow-hidden bg-brand-tint">
+          <div className="ir-progress fixed inset-x-0 top-[env(safe-area-inset-top,0px)] z-50 h-1 overflow-hidden bg-brand-tint">
             <span aria-hidden="true" className="ir-progress-bar block h-full w-2/5 bg-brand" />
           </div>
         ) : null}

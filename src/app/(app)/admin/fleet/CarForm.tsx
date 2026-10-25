@@ -30,7 +30,7 @@ export function CarForm({
         </p>
       ) : null}
 
-      <Field id="plate" name="plate" label={t('plate')} defaultValue={car?.plate} required maxLength={16} />
+      <Field id="plate" name="plate" autoCapitalize="characters" autoComplete="off" spellCheck={false} label={t('plate')} defaultValue={car?.plate} required maxLength={16} />
 
       <div>
         <label className="ir-label" htmlFor="model_id">{t('model')}</label>

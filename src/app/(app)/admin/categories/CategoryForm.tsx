@@ -25,7 +25,7 @@ export function CategoryForm({ category, onDone }: { category?: CategoryRow; onD
       ) : null}
 
       <div className="grid grid-cols-2 gap-3">
-        <Field id="code" name="code" label={t('code')} defaultValue={category?.code} required maxLength={4} />
+        <Field id="code" name="code" autoCapitalize="characters" autoComplete="off" label={t('code')} defaultValue={category?.code} required maxLength={4} />
         <Field
           id="sort_order" name="sort_order" type="number" label={t('sortOrder')}
           defaultValue={category?.sort_order} required min={0} max={999}

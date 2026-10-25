@@ -53,16 +53,16 @@ export function AdminEditBookingForm({
           label={tn('hotel')} chooseLabel={tn('chooseHotel')} otherLabel={tn('otherHotel')}
           otherNameLabel={tn('otherHotelName')} required={false} allowNone noneLabel="–"
         />
-        <Field id="room_number" name="room_number" label={tn('room')} defaultValue={booking.room_number ?? undefined} maxLength={16} />
+        <Field id="room_number" name="room_number" autoComplete="off" label={tn('room')} defaultValue={booking.room_number ?? undefined} maxLength={16} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <Field id="cust_first" name="cust_first" label={tn('firstName')} defaultValue={booking.cust_first ?? undefined} required maxLength={80} />
-        <Field id="cust_last" name="cust_last" label={tn('lastName')} defaultValue={booking.cust_last ?? undefined} required maxLength={80} />
+        <Field id="cust_first" name="cust_first" autoCapitalize="words" autoComplete="off" label={tn('firstName')} defaultValue={booking.cust_first ?? undefined} required maxLength={80} />
+        <Field id="cust_last" name="cust_last" autoCapitalize="words" autoComplete="off" label={tn('lastName')} defaultValue={booking.cust_last ?? undefined} required maxLength={80} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <Field id="cust_phone" name="cust_phone" type="tel" label={tn('phone')} defaultValue={booking.cust_phone ?? undefined} required maxLength={32} />
+        <Field id="cust_phone" name="cust_phone" type="tel" autoComplete="off" label={tn('phone')} defaultValue={booking.cust_phone ?? undefined} required maxLength={32} />
         <Field id="cust_dob" name="cust_dob" type="date" label={tn('dob')} defaultValue={booking.cust_dob ?? undefined} required />
       </div>
 
