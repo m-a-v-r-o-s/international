@@ -236,6 +236,38 @@ button.ir-rail:focus-visible {
     animation: ir-skeleton-pulse 1600ms var(--ease-ui) 200ms infinite;
   }
 
+  /* Native <dialog> (showModal): spring-token enter and exit via
+     @starting-style, so closing is as smooth as opening and neither waits on
+     input. Scroll never chains out of an open dialog. */
+  .ir-dialog {
+    overscroll-behavior: contain;
+    opacity: 0;
+    scale: 0.96;
+    transition:
+      opacity var(--spring-enter-ms) var(--ease-out),
+      scale var(--spring-enter-ms) var(--spring-smooth),
+      overlay var(--spring-enter-ms) allow-discrete,
+      display var(--spring-enter-ms) allow-discrete;
+  }
+  .ir-dialog[open] { opacity: 1; scale: 1; }
+  .ir-dialog::backdrop {
+    opacity: 0;
+    transition:
+      opacity var(--spring-enter-ms) var(--ease-out),
+      overlay var(--spring-enter-ms) allow-discrete,
+      display var(--spring-enter-ms) allow-discrete;
+  }
+  .ir-dialog[open]::backdrop { opacity: 1; }
+  @starting-style {
+    .ir-dialog[open] { opacity: 0; scale: 0.96; }
+    .ir-dialog[open]::backdrop { opacity: 0; }
+  }
+
+  /* The two confirm overlays (sign out, remove access) are conditionally
+     rendered, so they enter by animation; leaving is instant on purpose. */
+  .ir-scrim { animation: ir-fade-in var(--spring-enter-ms) var(--ease-out) both; overscroll-behavior: contain; }
+  .ir-sheet-pop { animation: ir-pop-in var(--spring-enter-ms) var(--spring-smooth) both; }
+
   .ir-card {
     @apply rounded-card border border-line bg-surface;
   }
@@ -247,6 +279,11 @@ button.ir-rail:focus-visible {
 @keyframes ir-drawer-in {
   from { transform: translateX(-100%); }
   to   { transform: none; }
+}
+
+@keyframes ir-pop-in {
+  from { opacity: 0; scale: 0.96; }
+  to   { opacity: 1; scale: 1; }
 }
 
 @keyframes ir-fade-in {

@@ -332,7 +332,7 @@ export function RemoveAccessForm({
       {open && (
         <div
           role="presentation"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4"
+          className="ir-scrim fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
           onClick={() => setOpen(false)}
         >
           <div
@@ -340,7 +340,7 @@ export function RemoveAccessForm({
             aria-modal="true"
             aria-labelledby={titleId}
             aria-describedby={bodyId}
-            className="ir-card w-full max-w-sm bg-surface p-5 shadow-[0_12px_32px_rgba(11,20,32,0.18)]"
+            className="ir-card ir-sheet-pop w-full max-w-sm bg-surface p-5 shadow-[0_12px_32px_rgba(11,20,32,0.18)]"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 id={titleId} className="text-[1.0625rem] font-semibold text-ink">

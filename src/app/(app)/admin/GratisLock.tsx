@@ -57,7 +57,7 @@ export function GratisLock({ unlocked }: { unlocked: boolean }) {
     <dialog
       ref={dialog}
       aria-labelledby="gratis-lock-title"
-      className="m-auto w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-line bg-surface p-5 text-ink backdrop:bg-black/50"
+      className="ir-dialog m-auto w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-line bg-surface p-5 text-ink backdrop:bg-black/50"
     >
       <div className="flex flex-col gap-4">
         <h2 id="gratis-lock-title" className="text-[1.125rem] font-semibold">{t('title')}</h2>
