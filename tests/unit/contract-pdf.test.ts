@@ -165,20 +165,20 @@ describe('the render boundary', () => {
     expect(euros(90)).toBe('€90')
     expect(euros(5)).toBe('€5')
     expect(euros(0)).toBe('€0')
-    expect(euros(null)).toBe('—')
+    expect(euros(null)).toBe('–')
   })
 
-  test('a calendar date stays a calendar date — no timezone shift', () => {
+  test('a calendar date stays a calendar date, no timezone shift', () => {
     // `start_date` is a `date`, not an instant. Parsing it into a Date would
     // move it by the machine's UTC offset, which is the one class of bug the
     // inclusive-day rule cannot afford (HANDOFF.md).
     expect(calendarDate('2026-07-06')).toBe('06/07/2026')
-    expect(calendarDate(null)).toBe('—')
+    expect(calendarDate(null)).toBe('–')
   })
 
   test('pick-up and drop-off times print in Athens time', () => {
-    // 06:00 UTC in July is 09:00 in Athens — inside the 08:30–11:30 window.
+    // 06:00 UTC in July is 09:00 in Athens, inside the 08:30–11:30 window.
     expect(athensTime('2026-07-06T06:00:00Z')).toBe('09:00')
-    expect(athensTime(null)).toBe('—')
+    expect(athensTime(null)).toBe('–')
   })
 })
