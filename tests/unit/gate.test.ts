@@ -17,8 +17,10 @@ function gate(overrides: Partial<Gate> = {}): Gate {
 
 describe('the gate cookie', () => {
   test('round-trips what was put in it', async () => {
-    const value = await signGate(gate(), SECRET)
-    expect(await readGate(value, SECRET)).toEqual(gate())
+    // One gate(): two calls can straddle a second and differ in unlockedUntil.
+    const original = gate()
+    const value = await signGate(original, SECRET)
+    expect(await readGate(value, SECRET)).toEqual(original)
   })
 
   test('a tampered payload is rejected', async () => {

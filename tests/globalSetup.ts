@@ -2,7 +2,7 @@ import { createServer } from 'node:net'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
-import type { GlobalSetupContext } from 'vitest/node'
+import type { TestProject } from 'vitest/node'
 import { Client } from 'pg'
 import { applySchema } from './helpers/schema'
 
@@ -24,7 +24,7 @@ function freePort(): Promise<number> {
  * constraint, RLS, SECURITY DEFINER and two racing transactions are the things
  * under test, and none of them survive being simulated.
  */
-export default async function setup({ provide }: GlobalSetupContext) {
+export default async function setup({ provide }: TestProject) {
   // The bundled Postgres links against shared objects shipped beside it.
   const libDirs = [
     'linux-x64', 'linux-arm64', 'darwin-x64', 'darwin-arm64',
